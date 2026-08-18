@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personaletavle</title>
+
+  <style>
+    *{ margin:0; padding:0; box-sizing:border-box; }
+
+    body{
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f0f2f5;
+      color: #1f2937;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ---- Navigation ---- */
+
+    #topVenstre{
+      position: fixed;
+      top: 14px;
+      left: 20px;
+      z-index: 999;
+    }
+
+    #topVenstre nav{
+      display: flex;
+      gap: 6px;
+    }
+
+    #topVenstre nav button{
+      padding: 6px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      background: #1e40af;
+      color: white;
+      transition: background 0.2s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+
+    #topVenstre nav button:hover{
+      background: #1d4ed8;
+    }
+
+    .activeTab{
+      background: #16a34a !important;
+      box-shadow: 0 0 12px rgba(22,163,74,.35);
+    }
+
+    /* ---- Ur + QR ---- */
+
+    #topHøjreInfo{
+      position: fixed;
+      top: 12px;
+      right: 20px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #ur{
+      text-align: right;
+      font-size: 17px;
+      font-weight: 600;
+      color: #374151;
+      line-height: 1.3;
+    }
+
+    #qrBoks{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border-radius: 10px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    #qrBoks img{
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+    }
+
+    #qrBoks .qrTekst{
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #374151;
+      line-height: 1.3;
+      max-width: 95px;
+    }
+
+    /* ---- Sider ---- */
+
+    .side{
+      display: none;
+      padding: 58px 20px 20px 20px;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .active{ display: block; }
+
+    /* ---- Grids ---- */
+
+    .beskedGrid{
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      padding: 10px;
+    }
+
+    .dagsplanGrid{
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+      padding: 10px;
+    }
+
+    /* ---- Kort ---- */
+
+    .card{
+      background: white;
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.06);
+      min-height: 140px;
+      overflow: hidden;
+    }
+
+    .dagsplanGrid .card{ min-height: 220px; }
+
+    .kortHeader{
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 11px 14px;
+      margin: -16px -16px 14px -16px;
+      border-radius: 14px 14px 0 0;
+    }
+
+    /* ---- Beboer-farver ---- */
+
+    .kortHeader.kenneth{ background: #2563eb; }
+    .kortHeader.louie{ background: #9333ea; }
+    .kortHeader.leyla{ background: #16a34a; }
+    .kortHeader.niels{ background: #ea580c; }
+    .kortHeader.lars{ background: #dc2626; }
+    .kortHeader.manfred{ background: #0891b2; }
+    .kortHeader.personale{ background: #374151; }
+
+    /* ---- Lister ---- */
+
+    ul{
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .beskedGrid li{
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding-bottom: 7px;
+      margin-bottom: 7px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .beskedGrid li:last-child{
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .beskedTekst{
+      flex: 1;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .beskedMeta{
+      color: #9ca3af;
+      font-size: 8.5px;
+      font-style: italic;
+    }
+
+    .dagsplanGrid ul{
+      font-size: 9.5px;
+      line-height: 1.2;
+    }
+
+    /* ---- Prioritetsprikker ---- */
+
+    .rødPrik, .gulPrik, .grønPrik{
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    .rødPrik{ background: #ef4444; }
+    .gulPrik{ background: #f59e0b; }
+    .grønPrik{ background: #22c55e; }
+
+    /* ---- Personalbjælke ---- */
+
+    .personaleBjælke{
+      width: 55%;
+      max-width: 850px;
+      margin: 0 auto 14px auto;
+      background: #374151;
+      color: white;
+      border-radius: 10px;
+      padding: 10px 20px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(0,0,0,.12);
+    }
+
+    /* ---- Overskrifter ---- */
+
+    .sideOverskrift{
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    .forklaring{
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      margin: 8px 0 4px 0;
+    }
+
+    /* ---- Dagsplan: NU/overstået/kommende ---- */
+
+    .aktivitetOverstået{ opacity: 0.35; }
+
+    .aktivitetNu{
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      border-radius: 4px;
+      padding: 3px 6px;
+      margin: -3px -6px;
+      display: block;
+      font-weight: 700;
+      animation: pulseNu 2s ease-in-out infinite;
+    }
+
+    .aktivitetKommende{
+      border-left: 4px solid #1e3a8a;
+      border-radius: 4px;
+      padding: 3px 6px;
+      margin: -3px -6px;
+      display: block;
+    }
+
+    @keyframes pulseNu{
+      0%, 100%{ box-shadow: 0 0 0 0 rgba(245,158,11,.5); }
+      50%{ box-shadow: 0 0 0 4px rgba(245,158,11,0); }
+    }
+
+    .nuLabel{
+      display: inline-block;
+      background: #f59e0b;
+      color: white;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 6px;
+      margin-left: 6px;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+    }
+
+    /* ---- Afkrydsning / Overlap opgaverækker ---- */
+
+    .opgaveRække{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 0;
+      font-size: 11px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .opgaveRække:last-child{ border-bottom: none; }
+
+    .opgaveRække.ikkeRelevant{ opacity: 0.6; }
+    .opgaveRække.ikkeRelevant span:first-child{ font-style: italic; }
+
+    /* ---- Overlap tjekliste ---- */
+
+    .overlapTjeklisteKort{
+      background: white;
+      max-width: 750px;
+      margin: 12px auto 0 auto;
+      padding: 14px 22px;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.06);
+    }
+
+    .overlapTjeklisteKort ul{
+      columns: 2;
+      column-gap: 30px;
+    }
+
+    .overlapTjeklisteKort li{ break-inside: avoid; }
+
+    /* ---- Loading ---- */
+
+    .loading{
+      text-align: center;
+      color: #9ca3af;
+      padding: 40px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ============================================================ -->
+<!-- KONFIGURATION: Indsæt din Supabase URL og anon key herunder  -->
+<!-- ============================================================ -->
+<script>
+  const SUPABASE_URL  = 'https://lumxvqhlmokspqnazhso.supabase.co';
+  const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1bXh2cWhsbW9rc3BxbmF6aHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzc3NTMsImV4cCI6MjA5OTYxMzc1M30.WvVrbqZWaY1V-6sC4XwoYDOciBULeCxcnxvB7TlAMno';
+</script>
+
+<!-- Supabase JS client (v2 UMD) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<div id="topVenstre">
+  <nav>
+    <button id="btnBeskeder" class="activeTab" onclick="visSide('beskeder')">Beskeder</button>
+    <button id="btnUgeplaner" onclick="visSide('ugeplaner')">Dagsplan</button>
+    <button id="btnAfkrydsning" onclick="visSide('afkrydsning')">Afkrydsning</button>
+    <button id="btnOverlap" onclick="visSide('overlap')">Overlap</button>
+  </nav>
+</div>
+
+<div id="topHøjreInfo">
+  <div id="qrBoks">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbxvTL5sC_-AXfEstJS30jjIoAR6W5QZLiD_A2FIbpSt3Z8teEUQS9kpGXwl76CZ7Gkk%2Fexec"
+         alt="QR-kode">
+    <span class="qrTekst">Scan for at åbne<br>Møllebakken app</span>
+  </div>
+  <div id="ur"></div>
+</div>
+
+<!-- ==================== BESKEDER ==================== -->
+
+<div id="beskeder" class="side active">
+  <div id="personaleBjælke" class="personaleBjælke" style="display:none;"></div>
+  <div class="forklaring">
+    🔴 Akut / vigtigt &nbsp;&nbsp;&nbsp; 🟡 Vær opmærksom &nbsp;&nbsp;&nbsp; 🟢 Information
+  </div>
+  <div id="beskederContainer" class="beskedGrid">
+    <div class="loading">Henter beskeder...</div>
+  </div>
+</div>
+
+<!-- ==================== DAGSPLAN ==================== -->
+
+<div id="ugeplaner" class="side">
+  <div id="dagOverskrift" class="sideOverskrift"></div>
+  <div id="ugeplanerContainer" class="dagsplanGrid">
+    <div class="loading">Henter dagsplan...</div>
+  </div>
+</div>
+
+<!-- ==================== AFKRYDSNING ==================== -->
+
+<div id="afkrydsning" class="side">
+  <div id="afkrydsningOverskrift" class="sideOverskrift"></div>
+  <div id="afkrydsningContainer" class="dagsplanGrid">
+    <div class="loading">Henter afkrydsningsskema...</div>
+  </div>
+</div>
+
+<!-- ==================== OVERLAP ==================== -->
+
+<div id="overlap" class="side">
+  <div id="overlapOverskrift" class="sideOverskrift"></div>
+  <div id="overlapFarveContainer" class="dagsplanGrid"></div>
+  <div id="overlapTjeklisteContainer"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPT                                                        -->
+<!-- ============================================================ -->
+<script>
+
+// ---- Supabase-klient ----
+// Klientoprettelse kastes synkront hvis URL/nøgle er ugyldig (fx uudfyldte
+// placeholders). Uret og fane-rotationen skal virke uanset — dette er en
+// uovervåget skærm — så en fejl her må ALDRIG stoppe resten af scriptet.
+
+let supabase = null;
+
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) {
+  console.error('Kunne ikke oprette Supabase-klient:', e);
+}
+
+function visSupabaseFejl(){
+  document.querySelectorAll('.loading').forEach(el => {
+    el.textContent = 'Kan ikke forbinde til Supabase — tjek SUPABASE_URL/SUPABASE_KEY i index.html.';
+  });
+}
+
+if(!supabase) visSupabaseFejl();
+
+// ---- Tilstand ----
+
+let aktuelSide = 'beskeder';
+let personaleBeskeder = [];
+let personaleIndex = 0;
+let sidsteUgeplanData = null;
+
+const knapIdPerSide = {
+  beskeder:     'btnBeskeder',
+  ugeplaner:    'btnUgeplaner',
+  afkrydsning:  'btnAfkrydsning',
+  overlap:      'btnOverlap'
+};
+
+const UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+const OVERLAP_TIDSPUNKTER = ['Kl. 08','Kl. 13','Kl. 18','Kl. 22','Kl. 03 (nattevagt)'];
+
+// ---- Fanevisning ----
+
+function visSide(side){
+  document.querySelectorAll('.side').forEach(d => d.classList.remove('active'));
+  document.getElementById(side).classList.add('active');
+
+  document.querySelectorAll('#topVenstre nav button').forEach(b => b.classList.remove('activeTab'));
+  document.getElementById(knapIdPerSide[side]).classList.add('activeTab');
+
+  aktuelSide = side;
+
+  if(side === 'afkrydsning') hentAfkrydsningsskema();
+  if(side === 'overlap') hentOverlap();
+}
+
+// ---- Hjælpefunktioner ----
+
+function datoISO(d){
+  const år = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dag = String(d.getDate()).padStart(2,'0');
+  return år + '-' + m + '-' + dag;
+}
+
+function datoLabel(datoStr){
+  if(!datoStr) return '';
+  const d = new Date(datoStr + 'T00:00:00');
+  if(isNaN(d.getTime())) return '';
+
+  const nu = new Date();
+  const dD = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const nD = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());
+  const forskel = Math.round((nD - dD) / 86400000);
+
+  if(forskel === 0) return 'i dag';
+  if(forskel === 1) return 'i går';
+  if(forskel > 1 && forskel < 7) return forskel + ' dage siden';
+  return String(d.getDate()).padStart(2,'0') + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+function prioritetRang(p){
+  if(p === 'Rød') return 0;
+  if(p === 'Gul') return 1;
+  if(p === 'Grøn') return 2;
+  return 3;
+}
+
+function tidTilMinutter(tid){
+  if(!tid) return null;
+  const m = tid.toString().trim().match(/^(\d{1,2})[:.](\d{2})/);
+  if(!m) return null;
+  const t = parseInt(m[1],10);
+  const min = parseInt(m[2],10);
+  if(isNaN(t) || isNaN(min)) return null;
+  return t * 60 + min;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ---- BESKEDER ----
+
+async function hentBeskeder(){
+  if(!supabase) return;
+  const { data, error } = await supabase
+    .from('beskeder')
+    .select('*')
+    .eq('aktiv', true)
+    .order('created_at', { ascending: true });
+
+  if(error){ console.error('Fejl beskeder:', error); return; }
+  visBeskeder(data || []);
+}
+
+function visBeskeder(data){
+  const container = document.getElementById('beskederContainer');
+  container.innerHTML = '';
+  personaleBeskeder = [];
+
+  const grupper = {};
+
+  data.forEach(r => {
+    if(r.beboer === 'Personale'){
+      personaleBeskeder.push(r.besked);
+      return;
+    }
+    if(!grupper[r.beboer]) grupper[r.beboer] = [];
+    grupper[r.beboer].push(r);
+  });
+
+  for(const beboer in grupper){
+    grupper[beboer].sort((a,b) => prioritetRang(a.prioritet) - prioritetRang(b.prioritet));
+  }
+
+  for(const beboer in grupper){
+    const items = grupper[beboer];
+
+    const kort = document.createElement('div');
+    kort.className = 'card';
+
+    let liHtml = items.map(item => {
+      let prikClass = 'grønPrik';
+      if(item.prioritet === 'Rød') prikClass = 'rødPrik';
+      else if(item.prioritet === 'Gul') prikClass = 'gulPrik';
+
+      const label = datoLabel(item.dato);
+      const metaDele = [];
+      if(label) metaDele.push(label);
+      if(item.afsender) metaDele.push(escapeHtml(item.afsender));
+      const meta = metaDele.length
+        ? '<span class="beskedMeta"> &middot; ' + metaDele.join(' &middot; ') + '</span>'
+        : '';
+
+      return '<li><span class="' + prikClass + '"></span><span class="beskedTekst">' +
+        escapeHtml(item.besked) + meta + '</span></li>';
+    }).join('');
+
+    kort.innerHTML =
+      '<div class="kortHeader ' + beboer.toLowerCase() + '">' + beboer.toUpperCase() + '</div>' +
+      '<ul>' + liHtml + '</ul>';
+
+    container.appendChild(kort);
+  }
+
+  const bjælke = document.getElementById('personaleBjælke');
+  if(personaleBeskeder.length > 0){
+    bjælke.style.display = 'block';
+    bjælke.textContent = 'PERSONALE: ' + personaleBeskeder[0];
+    personaleIndex = 0;
+  } else {
+    bjælke.style.display = 'none';
+  }
+}
+
+// ---- UGEPLANER / DAGSPLAN ----
+
+async function hentUgeplaner(){
+  if(!supabase) return;
+  const { data, error } = await supabase
+    .from('ugeplaner')
+    .select('*');
+
+  if(error){ console.error('Fejl ugeplaner:', error); return; }
+  sidsteUgeplanData = data || [];
+  tegnUgeplaner();
+}
+
+function tegnUgeplaner(){
+  if(!sidsteUgeplanData) return;
+
+  const container = document.getElementById('ugeplanerContainer');
+  container.innerHTML = '';
+
+  let nu = new Date();
+  let visesForMorgendagen = false;
+
+  if(nu.getHours() >= 20){
+    nu.setDate(nu.getDate() + 1);
+    visesForMorgendagen = true;
+  }
+
+  const dagensDag = UGEDAGE[nu.getDay()];
+  const nuMinutter = nu.getHours() * 60 + nu.getMinutes();
+
+  document.getElementById('dagOverskrift').innerHTML = visesForMorgendagen
+    ? 'Dagsplan &bull; ' + dagensDag + ' <span style="color:#9ca3af;font-weight:400">(i morgen)</span>'
+    : 'Dagsplan &bull; ' + dagensDag;
+
+  const grupper = {};
+  sidsteUgeplanData.forEach(r => {
+    if(r.ugedag !== dagensDag) return;
+    const nøgle = r.beboer;
+    if(!grupper[nøgle]) grupper[nøgle] = { beboer: r.beboer, aktiviteter: [] };
+    grupper[nøgle].aktiviteter.push({ tid: r.tid, aktivitet: r.aktivitet });
+  });
+
+  for(const nøgle in grupper){
+    const gruppe = grupper[nøgle];
+
+    const aMedMin = gruppe.aktiviteter.map(item => ({
+      ...item,
+      minutter: tidTilMinutter(item.tid)
+    }));
+
+    aMedMin.sort((a,b) => {
+      if(a.minutter === null) return 1;
+      if(b.minutter === null) return -1;
+      return a.minutter - b.minutter;
+    });
+
+    let nuIndeks = -1;
+    if(!visesForMorgendagen){
+      aMedMin.forEach((item, i) => {
+        if(item.minutter !== null && item.minutter <= nuMinutter) nuIndeks = i;
+      });
+    }
+
+    const kort = document.createElement('div');
+    kort.className = 'card';
+
+    let liHtml = aMedMin.map((item, i) => {
+      let klasse = '';
+      let label = '';
+
+      if(i === nuIndeks){
+        klasse = 'aktivitetNu';
+        label = '<span class="nuLabel">NU</span>';
+      } else if(nuIndeks !== -1 && i === nuIndeks + 1){
+        klasse = 'aktivitetKommende';
+      } else if(nuIndeks === -1 && i === 0){
+        klasse = 'aktivitetKommende';
+      } else if(i < nuIndeks){
+        klasse = 'aktivitetOverstået';
+      }
+
+      return '<li><span class="' + klasse + '"><strong>' +
+        escapeHtml(item.tid) + '</strong> ' +
+        escapeHtml(item.aktivitet) + label + '</span></li>';
+    }).join('');
+
+    kort.innerHTML =
+      '<div class="kortHeader ' + gruppe.beboer.toLowerCase() + '">' + gruppe.beboer.toUpperCase() + '</div>' +
+      '<ul>' + liHtml + '</ul>';
+
+    container.appendChild(kort);
+  }
+}
+
+// ---- AFKRYDSNINGSSKEMA ----
+
+function afkrydsningVisningsdato(){
+  const nu = new Date();
+  const minutter = nu.getHours() * 60 + nu.getMinutes();
+
+  if(minutter < 555){
+    const igår = new Date(nu);
+    igår.setDate(igår.getDate() - 1);
+    return { dato: igår, visesSomIgår: true };
+  }
+  return { dato: nu, visesSomIgår: false };
+}
+
+function opdaterAfkrydsningOverskrift(){
+  const el = document.getElementById('afkrydsningOverskrift');
+  if(!el) return;
+  const { dato, visesSomIgår } = afkrydsningVisningsdato();
+  const ugedag = UGEDAGE[dato.getDay()];
+  el.innerHTML = visesSomIgår
+    ? 'Afkrydsningsskema fra i går (' + ugedag + ')'
+    : 'Afkrydsningsskema (' + ugedag + ')';
+}
+
+function afkrydsningStatusFraCelle(val){
+  const t = (val || '').toString().trim().toLowerCase();
+  if(t === 'ja' || t === 'udført') return 'udført';
+  if(t === 'ikkerelevant' || t === 'ikkeRelevant') return 'ikkeRelevant';
+  return 'ikkeGjort';
+}
+
+function statusIkon(status){
+  if(status === 'udført') return '✅';
+  if(status === 'ikkeRelevant') return '➖';
+  return '❌';
+}
+
+async function hentAfkrydsningsskema(){
+  opdaterAfkrydsningOverskrift();
+  if(!supabase) return;
+
+  const { dato } = afkrydsningVisningsdato();
+  const datoStr = datoISO(dato);
+
+  const [opgaverRes, afkrydsRes] = await Promise.all([
+    supabase.from('opgavelister').select('*').order('sortering'),
+    supabase.from('afkrydsninger').select('*').eq('dato', datoStr)
+  ]);
+
+  if(opgaverRes.error){ console.error('Fejl opgavelister:', opgaverRes.error); return; }
+  if(afkrydsRes.error){ console.error('Fejl afkrydsninger:', afkrydsRes.error); return; }
+
+  const statusSæt = {};
+  (afkrydsRes.data || []).forEach(r => {
+    statusSæt[r.beboer + '|' + r.opgave] = r.status;
+  });
+
+  const beboerOrden = [];
+  const opgaverPerBeboer = {};
+
+  (opgaverRes.data || []).forEach(r => {
+    if(!opgaverPerBeboer[r.beboer]){
+      opgaverPerBeboer[r.beboer] = [];
+      beboerOrden.push(r.beboer);
+    }
+    opgaverPerBeboer[r.beboer].push({
+      opgave: r.opgave,
+      status: statusSæt[r.beboer + '|' + r.opgave] || 'ikkeGjort'
+    });
+  });
+
+  visAfkrydsningsskema(beboerOrden.map(b => ({
+    beboer: b,
+    opgaver: opgaverPerBeboer[b]
+  })));
+}
+
+function visAfkrydsningsskema(beboere){
+  const container = document.getElementById('afkrydsningContainer');
+  container.innerHTML = '';
+
+  beboere.forEach(beboerData => {
+    const kort = document.createElement('div');
+    kort.className = 'card';
+
+    let liHtml = beboerData.opgaver.map(o => {
+      const irKlasse = o.status === 'ikkeRelevant' ? ' ikkeRelevant' : '';
+      return '<li class="opgaveRække' + irKlasse + '">' +
+        '<span>' + escapeHtml(o.opgave) + '</span>' +
+        '<span>' + statusIkon(o.status) + '</span>' +
+        '</li>';
+    }).join('');
+
+    kort.innerHTML =
+      '<div class="kortHeader ' + beboerData.beboer.toLowerCase() + '">' +
+        beboerData.beboer.toUpperCase() +
+      '</div><ul>' + liHtml + '</ul>';
+
+    container.appendChild(kort);
+  });
+}
+
+// ---- OVERLAP ----
+
+async function hentOverlap(){
+  if(!supabase) return;
+  const { dato } = afkrydsningVisningsdato();
+  const datoStr = datoISO(new Date());
+
+  const [farveRes, journalRes, punktRes, tjekRes, dvRes] = await Promise.all([
+    supabase.from('overlap_farver').select('*').eq('dato', datoStr),
+    supabase.from('overlap_journal').select('*').eq('dato', datoStr),
+    supabase.from('overlap_tjekliste_opgaver').select('*').order('sortering'),
+    supabase.from('overlap_tjekliste').select('*').eq('dato', datoStr),
+    supabase.from('overlap_dognvagt').select('*').eq('dato', datoStr).limit(1)
+  ]);
+
+  const farverPerBeboer = {};
+  (farveRes.data || []).forEach(r => {
+    if(!farverPerBeboer[r.beboer]) farverPerBeboer[r.beboer] = {};
+    farverPerBeboer[r.beboer][r.farve] = true;
+  });
+
+  const journalPerNøgle = {};
+  (journalRes.data || []).forEach(r => {
+    journalPerNøgle[r.beboer + '|' + r.tidspunkt] = r.skrevet;
+  });
+
+  const BEBOERE = ['Louie','Kenneth','Lars','Niels','Leyla','Manfred'];
+  const beboere = BEBOERE.map(beboer => ({
+    beboer,
+    farver: ['rød','gul','grøn'].filter(f => farverPerBeboer[beboer] && farverPerBeboer[beboer][f]),
+    journal: OVERLAP_TIDSPUNKTER.map(t => ({
+      tidspunkt: t,
+      skrevet: !!journalPerNøgle[beboer + '|' + t]
+    }))
+  }));
+
+  const punkter = (punktRes.data || []).map(r => r.opgave);
+
+  const udførtSæt = {};
+  (tjekRes.data || []).forEach(r => {
+    if(r.udfoert) udførtSæt[r.opgave] = true;
+  });
+
+  const tjekliste = punkter.map(p => ({ opgave: p, udført: !!udførtSæt[p] }));
+
+  const døgnvagt = dvRes.data && dvRes.data.length > 0 ? dvRes.data[0].navn : null;
+
+  visOverlap({
+    dato: datoStr,
+    beboere,
+    tjekliste,
+    døgnvagt
+  });
+}
+
+function overlapFarvePrikHtml(farver){
+  if(!farver || farver.length === 0){
+    return '<span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#d1d5db"></span>';
+  }
+  const koder = { 'rød': '#ef4444', 'gul': '#f59e0b', 'grøn': '#22c55e' };
+  return farver.map(f =>
+    '<span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:' +
+    koder[f] + ';margin:0 3px"></span>'
+  ).join('');
+}
+
+function visOverlap(data){
+  const formatDato = data.dato.split('-').reverse().join('-');
+
+  document.getElementById('overlapOverskrift').innerHTML =
+    'Overlap-skema (' + formatDato + ') &middot; Døgnvagt: <strong>' +
+    (data.døgnvagt ? escapeHtml(data.døgnvagt) : 'ikke fundet') + '</strong>';
+
+  const farveContainer = document.getElementById('overlapFarveContainer');
+  farveContainer.innerHTML = '';
+
+  data.beboere.forEach(b => {
+    const kort = document.createElement('div');
+    kort.className = 'card';
+
+    let journalHtml = b.journal.map(j =>
+      '<li class="opgaveRække"><span>' + escapeHtml(j.tidspunkt) +
+      '</span><span>' + (j.skrevet ? '✅' : '❌') + '</span></li>'
+    ).join('');
+
+    kort.innerHTML =
+      '<div class="kortHeader ' + b.beboer.toLowerCase() + '">' + b.beboer.toUpperCase() + '</div>' +
+      '<div style="text-align:center;margin:8px 0 12px 0">' + overlapFarvePrikHtml(b.farver) + '</div>' +
+      '<ul>' + journalHtml + '</ul>';
+
+    farveContainer.appendChild(kort);
+  });
+
+  const tjekContainer = document.getElementById('overlapTjeklisteContainer');
+  if(data.tjekliste.length === 0){
+    tjekContainer.innerHTML = '';
+    return;
+  }
+
+  let tjekHtml = '<div class="overlapTjeklisteKort"><ul>';
+  data.tjekliste.forEach(p => {
+    tjekHtml += '<li class="opgaveRække"><span>' + escapeHtml(p.opgave) +
+      '</span><span>' + (p.udført ? '✅' : '❌') + '</span></li>';
+  });
+  tjekHtml += '</ul></div>';
+  tjekContainer.innerHTML = tjekHtml;
+}
+
+// ---- TIDSSTYRET ROTATION ----
+
+let normalIndex = 0;
+const normaleSider = ['beskeder', 'ugeplaner'];
+
+let rotationTilstand = 'NORMAL';
+let sidsteNormaltSkift = Date.now();
+
+let faseIndex = 0;
+let faseStart = 0;
+
+const morgenFaser = [
+  { side: 'beskeder',    varighed: 30000 },
+  { side: 'afkrydsning', varighed: 15000 },
+  { side: 'ugeplaner',   varighed: 30000 },
+  { side: 'overlap',     varighed: 15000 }
+];
+
+const aftenFaser = [
+  { side: 'afkrydsning', varighed: 60000 },
+  { side: 'beskeder',    varighed: 15000 },
+  { side: 'overlap',     varighed: 60000 },
+  { side: 'ugeplaner',   varighed: 15000 }
+];
+
+function minutterNu(){
+  const nu = new Date();
+  return nu.getHours() * 60 + nu.getMinutes();
+}
+
+function tjekRotation(){
+  const minutter = minutterNu();
+  const erMorgen = minutter >= 540 && minutter < 555;
+  const erAften = minutter >= 1230 && minutter < 1290;
+
+  if(erMorgen || erAften){
+    const ønsket = erAften ? 'AFTEN' : 'MORGEN';
+    const faser = erAften ? aftenFaser : morgenFaser;
+
+    if(rotationTilstand !== ønsket){
+      rotationTilstand = ønsket;
+      faseIndex = 0;
+      faseStart = Date.now();
+      visSide(faser[faseIndex].side);
+    } else {
+      if(Date.now() - faseStart >= faser[faseIndex].varighed){
+        faseIndex = (faseIndex + 1) % faser.length;
+        faseStart = Date.now();
+        visSide(faser[faseIndex].side);
+      }
+    }
+    return;
+  }
+
+  if(rotationTilstand !== 'NORMAL'){
+    rotationTilstand = 'NORMAL';
+    normalIndex = 0;
+    visSide(normaleSider[normalIndex]);
+    sidsteNormaltSkift = Date.now();
+    return;
+  }
+
+  if(Date.now() - sidsteNormaltSkift >= 30000){
+    normalIndex = (normalIndex + 1) % normaleSider.length;
+    visSide(normaleSider[normalIndex]);
+    sidsteNormaltSkift = Date.now();
+  }
+}
+
+// ---- UR ----
+
+function opdaterUr(){
+  const nu = new Date();
+  const dag = UGEDAGE[nu.getDay()];
+  const dato = String(nu.getDate()).padStart(2,'0');
+  const måned = String(nu.getMonth()+1).padStart(2,'0');
+  const timer = String(nu.getHours()).padStart(2,'0');
+  const min = String(nu.getMinutes()).padStart(2,'0');
+
+  document.getElementById('ur').innerHTML = dag + '<br>' + dato + '/' + måned + ' ' + timer + ':' + min;
+}
+
+// ---- PERSONALE-BJÆLKE ROTATION ----
+
+function rotérPersonaleBjælke(){
+  if(personaleBeskeder.length < 2) return;
+  personaleIndex = (personaleIndex + 1) % personaleBeskeder.length;
+  document.getElementById('personaleBjælke').textContent =
+    'PERSONALE: ' + personaleBeskeder[personaleIndex];
+}
+
+// ---- INITIALISER ----
+
+visSide('beskeder');
+hentBeskeder();
+hentUgeplaner();
+opdaterAfkrydsningOverskrift();
+opdaterUr();
+
+setInterval(tjekRotation, 1000);
+setInterval(opdaterUr, 1000);
+setInterval(rotérPersonaleBjælke, 10000);
+setInterval(opdaterAfkrydsningOverskrift, 60000);
+
+setInterval(() => {
+  hentBeskeder();
+  hentUgeplaner();
+}, 60000);
+
+setInterval(tegnUgeplaner, 60000);
+
+// ---- REALTIME SUBSCRIPTIONS ----
+// Kun relevant når klienten faktisk kunne oprettes (se try/catch øverst) —
+// uden gyldige nøgler skal skærmen falde tilbage til bare at vise fejlen,
+// ikke kaste yderligere exceptions her.
+
+if(supabase){
+
+  supabase
+    .channel('beskeder-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'beskeder' }, () => {
+      hentBeskeder();
+    })
+    .subscribe();
+
+  supabase
+    .channel('afkrydsning-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'afkrydsninger' }, () => {
+      if(aktuelSide === 'afkrydsning') hentAfkrydsningsskema();
+    })
+    .subscribe();
+
+  supabase
+    .channel('overlap-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'overlap_farver' }, () => {
+      if(aktuelSide === 'overlap') hentOverlap();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'overlap_journal' }, () => {
+      if(aktuelSide === 'overlap') hentOverlap();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'overlap_tjekliste' }, () => {
+      if(aktuelSide === 'overlap') hentOverlap();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'overlap_dognvagt' }, () => {
+      if(aktuelSide === 'overlap') hentOverlap();
+    })
+    .subscribe();
+
+}
+
+</script>
+
+</body>
+</html>

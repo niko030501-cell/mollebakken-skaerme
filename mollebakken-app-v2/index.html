@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Møllebakken</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --mørk:#1e3937;
+    --grøn:#2f6b52;
+    --grøn-lys:#3f8064;
+    --guld:#d89b2b;
+    --guld-lys:#f0b94a;
+    --baggrund:#eef2ef;
+    --kort:#ffffff;
+    --tekst-svag:#5b6b68;
+    --rød:#dc2626;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    font-family:'Inter', sans-serif;
+    background:var(--baggrund);
+    color:var(--mørk);
+    min-height:100vh;
+  }
+
+  h1,h2,h3{ font-family:'Fraunces', serif; }
+
+  button{
+    font-family:'Inter', sans-serif;
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+  }
+
+  input, select, textarea{
+    font-family:'Inter', sans-serif;
+    border:1px solid #d1d9d6;
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:14px;
+  }
+
+  #app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--baggrund);
+    position:relative;
+    padding-bottom:70px;
+  }
+
+  @media (min-width:600px){
+    #app{
+      max-width:560px;
+      margin:20px auto;
+      border-radius:16px;
+      box-shadow:0 10px 40px rgba(30,57,55,.15);
+      overflow:hidden;
+      min-height:calc(100vh - 40px);
+    }
+  }
+
+  @media (min-width:900px){
+    #app{
+      max-width:1100px;
+      display:grid;
+      grid-template-columns:220px 1fr;
+      padding-bottom:0;
+    }
+  }
+
+  .side{ display:none; padding:20px; }
+  .side.aktiv{ display:block; }
+
+  #topbar{
+    padding:16px 20px;
+    background:var(--mørk);
+    color:white;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  #topbar h1{ font-size:18px; margin:0; flex:1; }
+
+  #tilbageKnap{
+    background:none;
+    color:white;
+    font-size:20px;
+    padding:4px 8px;
+    display:none;
+  }
+
+  #tilbageKnap.vis{ display:inline-block; }
+
+  @media (min-width:900px){
+    #topbar{ display:none; }
+  }
+
+  /* ---- Bundnav / sidemenu ---- */
+
+  #bundNav{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    max-width:480px;
+    margin:0 auto;
+    background:var(--mørk);
+    display:flex;
+    flex-wrap:wrap;
+    z-index:999;
+  }
+
+  @media (min-width:600px){
+    #bundNav{ max-width:560px; }
+  }
+
+  #bundNav button{
+    flex:1 0 33.33%;
+    background:none;
+    color:#c9d6d3;
+    padding:10px 4px;
+    font-size:10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+  }
+
+  #bundNav button .ikon{ font-size:18px; }
+
+  #bundNav button.aktivFane{ color:var(--guld-lys); }
+
+  #bundNav .skjultPaaForside,
+  #bundNav .skjultPaaValg{ display:flex; }
+
+  body.paaForside #bundNav,
+  body.paaValg #bundNav{ display:none; }
+
+  @media (min-width:900px){
+    #bundNav{
+      position:static;
+      max-width:none;
+      flex-direction:column;
+      flex-wrap:nowrap;
+      width:220px;
+      padding:20px 0;
+    }
+    #bundNav button{
+      flex-direction:row;
+      justify-content:flex-start;
+      gap:10px;
+      padding:12px 20px;
+      font-size:13px;
+    }
+    body.paaForside #bundNav,
+    body.paaValg #bundNav{ display:flex; }
+  }
+
+  /* ---- Valg-skærm ---- */
+
+  #valg{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    text-align:center;
+    padding:40px 20px;
+    background:var(--mørk);
+    color:white;
+  }
+
+  #valg h1{ font-size:28px; margin-bottom:30px; }
+
+  #valg button{
+    width:220px;
+    padding:14px;
+    margin:8px 0;
+    font-size:15px;
+    font-weight:600;
+    background:var(--guld);
+    color:var(--mørk);
+  }
+
+  #valg button.sekundær{
+    background:transparent;
+    border:1px solid rgba(255,255,255,.4);
+    color:white;
+  }
+
+  #adminKodeBoks{
+    display:none;
+    margin-top:16px;
+  }
+
+  #adminKodeBoks input{
+    width:150px;
+    text-align:center;
+    font-size:18px;
+    letter-spacing:4px;
+  }
+
+  #adminFejl{ color:#f87171; font-size:13px; margin-top:8px; height:16px; }
+
+  /* ---- Forside ---- */
+
+  .kortGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+
+  .featureKort{
+    background:var(--kort);
+    border-radius:14px;
+    padding:20px 14px;
+    text-align:center;
+    box-shadow:0 4px 14px rgba(30,57,55,.08);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+
+  .featureKort .ikon{ font-size:30px; }
+  .featureKort .titel{ font-weight:600; font-size:13px; }
+
+  /* ---- Generelle kort/formularer ---- */
+
+  .kort{
+    background:var(--kort);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:14px;
+    box-shadow:0 4px 14px rgba(30,57,55,.06);
+  }
+
+  .modeVælger{
+    width:100%;
+    padding:10px;
+    margin-bottom:16px;
+    font-size:14px;
+    font-weight:600;
+    background:var(--mørk);
+    color:white;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  .beboerHeader{
+    color:white;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.5px;
+    padding:8px 12px;
+    border-radius:8px 8px 0 0;
+    margin:-16px -16px 12px -16px;
+  }
+
+  .knap{
+    background:var(--grøn);
+    color:white;
+    padding:10px 16px;
+    font-size:13px;
+    font-weight:600;
+  }
+  .knap:hover{ background:var(--grøn-lys); }
+
+  .knapGuld{ background:var(--guld); color:var(--mørk); }
+
+  .knapLille{ padding:5px 10px; font-size:11px; border-radius:6px; }
+
+  .knapFare{ background:var(--rød); color:white; }
+
+  .prioritetVælg{ display:flex; gap:6px; margin:8px 0; }
+  .prioritetVælg button{
+    flex:1;
+    padding:8px;
+    font-size:12px;
+    border:2px solid transparent;
+    color:white;
+  }
+  .prioritetVælg button[data-p="Rød"]{ background:#ef4444; }
+  .prioritetVælg button[data-p="Gul"]{ background:#f59e0b; }
+  .prioritetVælg button[data-p="Grøn"]{ background:#22c55e; }
+  .prioritetVælg button.valgt{ border-color:var(--mørk); }
+
+  .beskedRække{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+    padding:8px 0;
+    border-bottom:1px solid #eef2ef;
+    font-size:13px;
+  }
+  .beskedRække:last-child{ border-bottom:none; }
+  .beskedMeta{ color:var(--tekst-svag); font-size:11px; }
+
+  .formRække{ display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
+  .formRække label{ font-size:12px; font-weight:600; color:var(--tekst-svag); }
+
+  .ugedagFaner{ display:flex; gap:4px; overflow-x:auto; margin-bottom:12px; }
+  .ugedagFaner button{
+    padding:6px 10px;
+    font-size:11px;
+    background:#e2e8e6;
+    color:var(--mørk);
+    white-space:nowrap;
+  }
+  .ugedagFaner button.aktivDag{ background:var(--mørk); color:white; }
+
+  .dagsplanRække{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    padding:6px 0;
+    border-bottom:1px solid #eef2ef;
+    font-size:13px;
+  }
+
+  .madplanRække{
+    display:grid;
+    grid-template-columns:90px 1fr;
+    gap:8px;
+    align-items:center;
+    padding:6px 0;
+  }
+  .madplanRække input{ width:100%; }
+
+  .loading{ text-align:center; color:var(--tekst-svag); padding:30px; font-size:13px; }
+
+  .toast{
+    position:fixed;
+    bottom:80px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--mørk);
+    color:white;
+    padding:10px 18px;
+    border-radius:20px;
+    font-size:13px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s;
+    z-index:1000;
+  }
+  .toast.vis{ opacity:1; }
+
+  .listeOpgave{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:6px 0;
+    border-bottom:1px solid #eef2ef;
+    font-size:13px;
+  }
+
+  .indstillingRække{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid #eef2ef;
+  }
+
+  .toggleSwitch{
+    position:relative;
+    width:42px;
+    height:24px;
+    background:#d1d9d6;
+    border-radius:12px;
+    cursor:pointer;
+    transition:background .2s;
+  }
+  .toggleSwitch.til{ background:var(--grøn); }
+  .toggleSwitch .knop{
+    position:absolute;
+    top:2px; left:2px;
+    width:20px; height:20px;
+    background:white;
+    border-radius:50%;
+    transition:left .2s;
+  }
+  .toggleSwitch.til .knop{ left:20px; }
+
+  .kommerSnart{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--tekst-svag);
+  }
+  .kommerSnart .ikon{ font-size:40px; margin-bottom:12px; }
+</style>
+</head>
+
+<body class="paaValg">
+
+<!-- ============================================================ -->
+<!-- KONFIGURATION -->
+<!-- ============================================================ -->
+<script>
+  const SUPABASE_URL = 'https://lumxvqhlmokspqnazhso.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1bXh2cWhsbW9rc3BxbmF6aHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzc3NTMsImV4cCI6MjA5OTYxMzc1M30.WvVrbqZWaY1V-6sC4XwoYDOciBULeCxcnxvB7TlAMno';
+  const ADMIN_KODE = '1234'; // Samme som den gamle Apps Script-version — kun et menu-synligheds-gate, ikke reel sikkerhed.
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<div id="app">
+
+  <div id="topbar">
+    <button id="tilbageKnap" onclick="visSide('forside')">←</button>
+    <h1 id="topbarTitel">Møllebakken</h1>
+  </div>
+
+  <!-- ============ VALG (gate) ============ -->
+  <div id="valg" class="side aktiv">
+    <h1>Møllebakken</h1>
+    <button onclick="gåTilForside()">Normal brug</button>
+    <button class="sekundær" onclick="visAdminKodeBoks()">Admin</button>
+    <div id="adminKodeBoks">
+      <input type="password" id="adminKodeInput" maxlength="4" inputmode="numeric" placeholder="Kode">
+      <div id="adminFejl"></div>
+      <button onclick="tjekAdminKode()" style="margin-top:8px;">Log ind</button>
+    </div>
+  </div>
+
+  <!-- ============ FORSIDE ============ -->
+  <div id="forside" class="side">
+    <h2 style="margin-top:0;">Forside</h2>
+    <div class="kortGrid" id="forsideKort"></div>
+  </div>
+
+  <!-- ============ OPGAVER (Besked & opgaver) ============ -->
+  <div id="opgaver" class="side">
+    <select class="modeVælger" id="opgaverMode" onchange="visOpgaverMode()">
+      <option value="besked">📝 Besked</option>
+      <option value="dagsplan">📋 Dagsplan</option>
+      <option value="afkrydsning">✅ Afkrydsning</option>
+      <option value="overlap">🚦 Overlap</option>
+    </select>
+
+    <div id="opgaverBesked">
+      <div class="kort">
+        <h3 style="margin-top:0;">Ny besked</h3>
+        <div class="formRække">
+          <label>Beboer</label>
+          <select id="beskedBeboer"></select>
+        </div>
+        <div class="formRække">
+          <label>Prioritet</label>
+          <div class="prioritetVælg" id="beskedPrioritetVælg">
+            <button data-p="Rød" onclick="vælgPrioritet('Rød')">Rød</button>
+            <button data-p="Gul" onclick="vælgPrioritet('Gul')">Gul</button>
+            <button data-p="Grøn" class="valgt" onclick="vælgPrioritet('Grøn')">Grøn</button>
+          </div>
+        </div>
+        <div class="formRække">
+          <label>Besked</label>
+          <textarea id="beskedTekst" rows="3"></textarea>
+        </div>
+        <div class="formRække">
+          <label>Dit navn (valgfrit)</label>
+          <input id="beskedAfsender" type="text">
+        </div>
+        <button class="knap" onclick="sendBesked()">Send besked</button>
+      </div>
+
+      <div id="beskederListe"><div class="loading">Henter beskeder...</div></div>
+    </div>
+
+    <div id="opgaverDagsplan" style="display:none;">
+      <div class="kort">
+        <div class="formRække">
+          <label>Beboer</label>
+          <select id="dagsplanBeboer" onchange="hentDagsplan()"></select>
+        </div>
+        <div class="ugedagFaner" id="dagsplanUgedagFaner"></div>
+        <div id="dagsplanListe"></div>
+        <hr style="border:none; border-top:1px solid #eef2ef; margin:12px 0;">
+        <div class="formRække">
+          <label>Ny aktivitet — tid (fx 09:30)</label>
+          <input id="dagsplanNyTid" type="text" placeholder="09:30">
+        </div>
+        <div class="formRække">
+          <label>Aktivitet</label>
+          <input id="dagsplanNyAktivitet" type="text">
+        </div>
+        <button class="knap" onclick="tilføjDagsplanAktivitet()">Tilføj</button>
+      </div>
+    </div>
+
+    <div id="opgaverAfkrydsning" style="display:none;">
+      <div id="afkrydsningOverskrift" style="font-weight:600; margin-bottom:10px;"></div>
+      <div id="afkrydsningListe"><div class="loading">Henter afkrydsningsskema...</div></div>
+      <div class="kort">
+        <h3 style="margin-top:0; font-size:14px;">Tilføj opgave</h3>
+        <div class="formRække">
+          <label>Beboer</label>
+          <select id="afkrydsningNyBeboer"></select>
+        </div>
+        <div class="formRække">
+          <label>Opgave</label>
+          <input id="afkrydsningNyOpgave" type="text">
+        </div>
+        <button class="knap knapLille" onclick="tilføjOpgave()">Tilføj opgave</button>
+      </div>
+      <button class="knap" style="width:100%; margin-top:6px;" onclick="gemAfkrydsninger()">Gem ændringer</button>
+    </div>
+
+    <div id="opgaverOverlap" style="display:none;">
+      <select class="modeVælger" id="overlapMode" onchange="visOverlapMode()">
+        <option value="farver">🚦 Farver</option>
+        <option value="journal">📓 Journal</option>
+        <option value="tjekliste">📋 Tjekliste</option>
+      </select>
+
+      <div id="overlapDøgnvagtVisning" class="kort" style="text-align:center; font-size:13px;"></div>
+
+      <div id="overlapFarver">
+        <div id="overlapFarverListe"></div>
+        <button class="knap" style="width:100%; margin-top:6px;" onclick="gemOverlapFarver()">Gem ændringer</button>
+      </div>
+
+      <div id="overlapJournal" style="display:none;">
+        <div id="overlapJournalListe"></div>
+        <button class="knap" style="width:100%; margin-top:6px;" onclick="gemOverlapJournal()">Gem ændringer</button>
+      </div>
+
+      <div id="overlapTjekliste" style="display:none;">
+        <div id="overlapTjeklisteListe"></div>
+        <div class="kort">
+          <div class="formRække">
+            <label>Nyt punkt til fælles tjekliste</label>
+            <input id="overlapNytPunkt" type="text">
+          </div>
+          <button class="knap knapLille" onclick="tilføjOverlapPunkt()">Tilføj</button>
+        </div>
+        <button class="knap" style="width:100%; margin-top:6px;" onclick="gemOverlapTjekliste()">Gem ændringer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PROGRAM (Mad & aktivitet) ============ -->
+  <div id="program" class="side">
+    <select class="modeVælger" id="programMode" onchange="visProgramMode()">
+      <option value="madplan">🍽️ Madplan</option>
+      <option value="aktivitet">🎯 Aktivitet</option>
+    </select>
+
+    <div id="programMadplan">
+      <div class="kort">
+        <h3 id="madplanOverskrift" style="margin-top:0;"></h3>
+        <div id="madplanListe"></div>
+        <button class="knap" style="margin-top:10px;" onclick="gemMadplan()">Gem madplan</button>
+      </div>
+    </div>
+
+    <div id="programAktivitet" style="display:none;">
+      <div class="kort">
+        <h3 id="aktivitetOverskrift" style="margin-top:0;"></h3>
+        <div id="aktivitetListe"></div>
+        <button class="knap" style="margin-top:10px;" onclick="gemAktiviteter()">Gem aktiviteter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LA2-PLANER ============ -->
+  <div id="la2" class="side">
+    <div class="kommerSnart">
+      <div class="ikon">📘</div>
+      LA2-planer kommer i næste del af opbygningen.
+    </div>
+  </div>
+
+  <!-- ============ HVEM ER DU MED ============ -->
+  <div id="sammenMed" class="side">
+    <div class="kort">
+      <div class="formRække">
+        <label>Vælg beboer</label>
+        <select id="sammenMedBeboer" onchange="visSammenMed()"></select>
+      </div>
+    </div>
+    <div id="sammenMedIndhold"></div>
+  </div>
+
+  <!-- ============ RENGØRING ============ -->
+  <div id="rengoring" class="side">
+    <div id="rengoringAktuel" class="kort" style="border-left:6px solid var(--guld);"></div>
+    <div class="kort">
+      <h3 style="margin-top:0;">Hele ugen</h3>
+      <div id="rengoringUge"><div class="loading">Henter rengøringsplan...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ §104 ============ -->
+  <div id="paragraf104" class="side">
+    <select class="modeVælger" id="p104Mode" onchange="visP104Mode()">
+      <option value="ny">➕ Ny idé</option>
+      <option value="liste">📋 Idéer</option>
+    </select>
+
+    <div id="p104Ny">
+      <div class="kort">
+        <div class="formRække">
+          <label>Beboer</label>
+          <select id="p104Beboer"></select>
+        </div>
+        <div class="formRække">
+          <label>Kategori</label>
+          <select id="p104Kategori">
+            <option>Udflugt</option>
+            <option>Kreativ</option>
+            <option>Motion</option>
+            <option>Social</option>
+            <option>Indkøb</option>
+            <option>Andet</option>
+          </select>
+        </div>
+        <div class="formRække">
+          <label>Beskrivelse</label>
+          <textarea id="p104Beskrivelse" rows="3"></textarea>
+        </div>
+        <div class="formRække">
+          <label>Dit navn</label>
+          <input id="p104OprettetAf" type="text">
+        </div>
+        <button class="knap" onclick="opretParagraf104Idé()">Gem idé</button>
+      </div>
+    </div>
+
+    <div id="p104Liste" style="display:none;">
+      <div id="p104ListeIndhold"><div class="loading">Henter idéer...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ ADMIN ============ -->
+  <div id="admin" class="side">
+    <div class="kort">
+      <h3 style="margin-top:0;">Synlige faner</h3>
+      <div id="adminIndstillinger"></div>
+    </div>
+  </div>
+
+  <div id="bundNav">
+    <button class="skjultPaaValg" id="navForside" onclick="visSide('forside')"><span class="ikon">🏠</span>Forside</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navOpgaver" onclick="visSide('opgaver')"><span class="ikon">📝</span>Opgaver</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navProgram" onclick="visSide('program')"><span class="ikon">🍽️</span>Mad/akt.</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navLa2" onclick="visSide('la2')"><span class="ikon">📘</span>LA2</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navSammenMed" onclick="visSide('sammenMed')"><span class="ikon">🤝</span>Med</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navRengoring" onclick="visSide('rengoring')"><span class="ikon">🧹</span>Rengøring</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navP104" onclick="visSide('paragraf104')"><span class="ikon">💡</span>§104</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ==================================================================
+// SUPABASE-KLIENT (defensiv init, se personaletavle-v2 for baggrund)
+// ==================================================================
+
+let supabase = null;
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) {
+  console.error('Kunne ikke oprette Supabase-klient:', e);
+}
+
+function visToast(tekst){
+  const toast = document.getElementById('toast');
+  toast.textContent = tekst;
+  toast.classList.add('vis');
+  setTimeout(() => toast.classList.remove('vis'), 2200);
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : str;
+  return d.innerHTML;
+}
+
+const UGEDAGE = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
+
+// ==================================================================
+// BEBOERE (delt tabel fra Fase 1 — farve bruges direkte som baggrund)
+// ==================================================================
+
+let beboereListe = []; // [{navn, farve, sortering}]
+
+async function hentBeboere(){
+  if(!supabase) return;
+  const { data, error } = await supabase.from('beboere').select('*').order('sortering');
+  if(error){ console.error('Fejl beboere:', error); return; }
+  beboereListe = data || [];
+  fyldBeboerSelects();
+}
+
+function farveForBeboer(navn){
+  const b = beboereListe.find(x => x.navn === navn);
+  return b ? b.farve : '#374151';
+}
+
+function fyldBeboerSelects(){
+  const selects = ['beskedBeboer', 'dagsplanBeboer', 'sammenMedBeboer', 'p104Beboer'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = beboereListe.map(b => `<option value="${escapeHtml(b.navn)}">${escapeHtml(b.navn)}</option>`).join('');
+  });
+  // Beskeder kan også målrettes "Personale"
+  const beskedSelect = document.getElementById('beskedBeboer');
+  if(beskedSelect) beskedSelect.innerHTML += '<option value="Personale">Personale (fælles opslag)</option>';
+
+  if(beboereListe.length > 0){
+    document.getElementById('dagsplanBeboer').value = beboereListe[0].navn;
+    hentDagsplan();
+  }
+}
+
+// ==================================================================
+// NAVIGATION
+// ==================================================================
+
+const sideTitler = {
+  forside: 'Forside',
+  opgaver: 'Besked & opgaver',
+  program: 'Mad & aktivitet',
+  la2: 'LA2-planer',
+  sammenMed: 'Hvem er du med',
+  rengoring: 'Rengøring',
+  paragraf104: '§104',
+  admin: 'Admin'
+};
+
+const navKnapPerSide = {
+  forside: 'navForside', opgaver: 'navOpgaver', program: 'navProgram',
+  la2: 'navLa2', sammenMed: 'navSammenMed', rengoring: 'navRengoring', paragraf104: 'navP104'
+};
+
+let aktuelSide = 'valg';
+
+function visSide(side){
+  document.querySelectorAll('.side').forEach(el => el.classList.remove('aktiv'));
+  document.getElementById(side).classList.add('aktiv');
+
+  document.body.classList.remove('paaForside', 'paaValg');
+  if(side === 'forside') document.body.classList.add('paaForside');
+  if(side === 'valg') document.body.classList.add('paaValg');
+
+  document.getElementById('tilbageKnap').classList.toggle('vis', side !== 'forside' && side !== 'valg');
+  document.getElementById('topbarTitel').textContent = sideTitler[side] || 'Møllebakken';
+
+  document.querySelectorAll('#bundNav button').forEach(b => b.classList.remove('aktivFane'));
+  const navId = navKnapPerSide[side];
+  if(navId) document.getElementById(navId).classList.add('aktivFane');
+
+  aktuelSide = side;
+
+  if(side === 'opgaver') visOpgaverMode();
+  if(side === 'program') visProgramMode();
+  if(side === 'sammenMed') visSammenMed();
+  if(side === 'paragraf104') visP104Mode();
+  if(side === 'admin') hentIndstillingerAdmin();
+  if(side === 'rengoring') hentRengoring();
+}
+
+function gåTilForside(){
+  tegnForside();
+  visSide('forside');
+}
+
+function visAdminKodeBoks(){
+  document.getElementById('adminKodeBoks').style.display = 'block';
+}
+
+function tjekAdminKode(){
+  const kode = document.getElementById('adminKodeInput').value.trim();
+  if(kode === ADMIN_KODE){
+    visSide('admin');
+    document.body.classList.remove('paaValg');
+  } else {
+    document.getElementById('adminFejl').textContent = 'Forkert kode';
+  }
+}
+
+// ==================================================================
+// FORSIDE — 6 feature-kort, filtreret af Indstillinger
+// ==================================================================
+
+const FEATURE_KORT = [
+  { fane: 'opgaver',     ikon: '📝', titel: 'Besked & opgaver', side: 'opgaver' },
+  { fane: 'program',     ikon: '🍽️', titel: 'Mad & aktivitet',  side: 'program' },
+  { fane: 'la2',         ikon: '📘', titel: 'LA2-planer',       side: 'la2' },
+  { fane: 'sammenMed',   ikon: '🤝', titel: 'Hvem er du med',   side: 'sammenMed' },
+  { fane: 'rengøring',   ikon: '🧹', titel: 'Rengøring',        side: 'rengoring' },
+  { fane: 'paragraf104', ikon: '💡', titel: '§104',             side: 'paragraf104' }
+];
+
+let indstillingerCache = {};
+
+async function tegnForside(){
+  if(!supabase) return;
+  const { data, error } = await supabase.from('indstillinger').select('*');
+  if(error){ console.error('Fejl indstillinger:', error); return; }
+
+  indstillingerCache = {};
+  (data || []).forEach(r => { indstillingerCache[r.fane] = r.aktiv; });
+
+  const container = document.getElementById('forsideKort');
+  container.innerHTML = FEATURE_KORT
+    .filter(k => indstillingerCache[k.fane] !== false)
+    .map(k => `
+      <div class="featureKort" onclick="visSide('${k.side}')">
+        <div class="ikon">${k.ikon}</div>
+        <div class="titel">${k.titel}</div>
+      </div>
+    `).join('');
+}
+
+// ==================================================================
+// BESKEDER
+// ==================================================================
+
+let valgtPrioritet = 'Grøn';
+
+function vælgPrioritet(p){
+  valgtPrioritet = p;
+  document.querySelectorAll('#beskedPrioritetVælg button').forEach(b => {
+    b.classList.toggle('valgt', b.dataset.p === p);
+  });
+}
+
+async function sendBesked(){
+  if(!supabase) return;
+
+  const beboer = document.getElementById('beskedBeboer').value;
+  const besked = document.getElementById('beskedTekst').value.trim();
+  const afsender = document.getElementById('beskedAfsender').value.trim();
+
+  if(!besked){ visToast('Skriv en besked først'); return; }
+
+  const { error } = await supabase.from('beskeder').insert({
+    beboer, prioritet: valgtPrioritet, besked,
+    dato: new Date().toISOString().slice(0,10),
+    afsender: afsender || null,
+    aktiv: true,
+    oprettet_af: 'manuel'
+  });
+
+  if(error){ console.error(error); visToast('Fejl: kunne ikke sende besked'); return; }
+
+  document.getElementById('beskedTekst').value = '';
+  document.getElementById('beskedAfsender').value = '';
+  visToast('Besked sendt');
+  hentBeskeder();
+}
+
+async function hentBeskeder(){
+  if(!supabase) return;
+  const { data, error } = await supabase
+    .from('beskeder')
+    .select('*')
+    .eq('aktiv', true)
+    .order('created_at', { ascending: false });
+
+  if(error){ console.error(error); return; }
+
+  const container = document.getElementById('beskederListe');
+  if(!data || data.length === 0){
+    container.innerHTML = '<div class="loading">Ingen aktive beskeder</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(b => `
+    <div class="kort">
+      <div class="beskedRække">
+        <div>
+          <strong>${escapeHtml(b.beboer)}</strong> · <span style="color:${prioritetFarve(b.prioritet)}">${b.prioritet}</span><br>
+          ${escapeHtml(b.besked)}<br>
+          <span class="beskedMeta">${b.dato}${b.afsender ? ' · ' + escapeHtml(b.afsender) : ''}</span>
+        </div>
+        <button class="knap knapLille knapFare" onclick="skjulBesked('${b.id}')">Skjul</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function prioritetFarve(p){
+  if(p === 'Rød') return '#dc2626';
+  if(p === 'Gul') return '#d97706';
+  return '#16a34a';
+}
+
+async function skjulBesked(id){
+  if(!supabase) return;
+  const { error } = await supabase.from('beskeder').update({ aktiv: false }).eq('id', id);
+  if(error){ console.error(error); visToast('Fejl: kunne ikke skjule besked'); return; }
+  visToast('Besked skjult');
+  hentBeskeder();
+}
+
+function visOpgaverMode(){
+  const mode = document.getElementById('opgaverMode').value;
+  document.getElementById('opgaverBesked').style.display = mode === 'besked' ? 'block' : 'none';
+  document.getElementById('opgaverDagsplan').style.display = mode === 'dagsplan' ? 'block' : 'none';
+  document.getElementById('opgaverAfkrydsning').style.display = mode === 'afkrydsning' ? 'block' : 'none';
+  document.getElementById('opgaverOverlap').style.display = mode === 'overlap' ? 'block' : 'none';
+
+  if(mode === 'besked') hentBeskeder();
+  if(mode === 'dagsplan') hentDagsplan();
+  if(mode === 'afkrydsning') hentAfkrydsningsskema();
+  if(mode === 'overlap') hentOverlap();
+}
+
+// ==================================================================
+// DAGSPLANER (deler ugeplaner-tabellen med Personaletavle)
+// ==================================================================
+
+let valgtDagsplanUgedag = UGEDAGE[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+let sidsteDagsplanData = [];
+
+function tegnDagsplanFaner(){
+  const container = document.getElementById('dagsplanUgedagFaner');
+  container.innerHTML = UGEDAGE.map(d => `
+    <button class="${d === valgtDagsplanUgedag ? 'aktivDag' : ''}" onclick="vælgDagsplanDag('${d}')">${d.slice(0,3)}</button>
+  `).join('');
+}
+
+function vælgDagsplanDag(dag){
+  valgtDagsplanUgedag = dag;
+  tegnDagsplanFaner();
+  tegnDagsplanListe();
+}
+
+async function hentDagsplan(){
+  if(!supabase) return;
+  const beboer = document.getElementById('dagsplanBeboer').value;
+  if(!beboer) return;
+
+  tegnDagsplanFaner();
+
+  const { data, error } = await supabase
+    .from('ugeplaner')
+    .select('*')
+    .eq('beboer', beboer);
+
+  if(error){ console.error(error); return; }
+  sidsteDagsplanData = data || [];
+  tegnDagsplanListe();
+}
+
+function tidTilMinutter(tid){
+  const m = (tid || '').toString().trim().match(/^(\d{1,2})[:.](\d{2})/);
+  if(!m) return 9999;
+  return parseInt(m[1],10) * 60 + parseInt(m[2],10);
+}
+
+function tegnDagsplanListe(){
+  const container = document.getElementById('dagsplanListe');
+  const rækker = sidsteDagsplanData
+    .filter(r => r.ugedag === valgtDagsplanUgedag)
+    .sort((a,b) => tidTilMinutter(a.tid) - tidTilMinutter(b.tid));
+
+  if(rækker.length === 0){
+    container.innerHTML = '<div class="loading">Ingen aktiviteter denne dag</div>';
+    return;
+  }
+
+  container.innerHTML = rækker.map(r => `
+    <div class="dagsplanRække">
+      <span><strong>${escapeHtml(r.tid)}</strong> ${escapeHtml(r.aktivitet)}</span>
+      <button class="knap knapLille knapFare" onclick="fjernDagsplanAktivitet('${r.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+async function tilføjDagsplanAktivitet(){
+  if(!supabase) return;
+
+  const beboer = document.getElementById('dagsplanBeboer').value;
+  const tid = document.getElementById('dagsplanNyTid').value.trim();
+  const aktivitet = document.getElementById('dagsplanNyAktivitet').value.trim();
+
+  if(!tid || !aktivitet){ visToast('Udfyld både tid og aktivitet'); return; }
+
+  const { error } = await supabase.from('ugeplaner').insert({
+    beboer, ugedag: valgtDagsplanUgedag, tid, aktivitet
+  });
+
+  if(error){ console.error(error); visToast('Fejl: kunne ikke tilføje'); return; }
+
+  document.getElementById('dagsplanNyTid').value = '';
+  document.getElementById('dagsplanNyAktivitet').value = '';
+  visToast('Tilføjet');
+  hentDagsplan();
+}
+
+async function fjernDagsplanAktivitet(id){
+  if(!supabase) return;
+  const { error } = await supabase.from('ugeplaner').delete().eq('id', id);
+  if(error){ console.error(error); visToast('Fejl: kunne ikke fjerne'); return; }
+  visToast('Fjernet');
+  hentDagsplan();
+}
+
+// ==================================================================
+// MADPLAN / AKTIVITET
+// ==================================================================
+// Ugepartitioneret med samme "efter søndag kl. 20 = næste uge"-regel
+// som den oprindelige effektivMandag_() i Kode.js.
+
+let programUgeValg = 0; // 0 = denne (effektive) uge, 1 = ugen efter
+
+function effektivMandag(ugeForskydning){
+  const nu = new Date();
+  const basis = new Date(nu);
+  if(nu.getDay() === 0 && nu.getHours() >= 20){
+    basis.setDate(basis.getDate() + 1);
+  }
+  const dag = basis.getDay(); // 0=søndag
+  const diffTilMandag = dag === 0 ? -6 : 1 - dag;
+  const mandag = new Date(basis);
+  mandag.setDate(mandag.getDate() + diffTilMandag + (ugeForskydning * 7));
+  mandag.setHours(0,0,0,0);
+  return mandag;
+}
+
+function datoISO(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function visProgramMode(){
+  const mode = document.getElementById('programMode').value;
+  document.getElementById('programMadplan').style.display = mode === 'madplan' ? 'block' : 'none';
+  document.getElementById('programAktivitet').style.display = mode === 'aktivitet' ? 'block' : 'none';
+
+  if(mode === 'madplan') hentMadplan();
+  if(mode === 'aktivitet') hentAktiviteter();
+}
+
+async function hentMadplan(){
+  if(!supabase) return;
+
+  const ugeStart = datoISO(effektivMandag(programUgeValg));
+  document.getElementById('madplanOverskrift').innerHTML =
+    'Madplan <span style="font-weight:400;color:var(--tekst-svag);font-size:12px">(uge fra ' + ugeStart + ')</span>' +
+    '<div style="margin-top:8px;"><button class="knap knapLille ' + (programUgeValg===0?'knapGuld':'') + '" onclick="skiftProgramUge(0)">Denne uge</button> ' +
+    '<button class="knap knapLille ' + (programUgeValg===1?'knapGuld':'') + '" onclick="skiftProgramUge(1)">Næste uge</button></div>';
+
+  const { data, error } = await supabase.from('madplan').select('*').eq('uge_start', ugeStart);
+  if(error){ console.error(error); return; }
+
+  const perDag = {};
+  (data || []).forEach(r => { perDag[r.dag] = r.ret; });
+
+  document.getElementById('madplanListe').innerHTML = UGEDAGE.map(dag => `
+    <div class="madplanRække">
+      <label style="font-size:12px;font-weight:600;">${dag}</label>
+      <input type="text" data-dag="${dag}" class="madplanInput" value="${escapeHtml(perDag[dag] || '')}">
+    </div>
+  `).join('');
+}
+
+async function gemMadplan(){
+  if(!supabase) return;
+  const ugeStart = datoISO(effektivMandag(programUgeValg));
+
+  const poster = [...document.querySelectorAll('.madplanInput')].map(input => ({
+    dag: input.dataset.dag,
+    ret: input.value.trim(),
+    uge_start: ugeStart
+  }));
+
+  const { error } = await supabase.from('madplan').upsert(poster, { onConflict: 'dag,uge_start' });
+  if(error){ console.error(error); visToast('Fejl: kunne ikke gemme madplan'); return; }
+  visToast('Madplan gemt');
+}
+
+async function hentAktiviteter(){
+  if(!supabase) return;
+
+  const ugeStart = datoISO(effektivMandag(programUgeValg));
+  document.getElementById('aktivitetOverskrift').innerHTML =
+    'Aktiviteter <span style="font-weight:400;color:var(--tekst-svag);font-size:12px">(uge fra ' + ugeStart + ')</span>' +
+    '<div style="margin-top:8px;"><button class="knap knapLille ' + (programUgeValg===0?'knapGuld':'') + '" onclick="skiftProgramUge(0)">Denne uge</button> ' +
+    '<button class="knap knapLille ' + (programUgeValg===1?'knapGuld':'') + '" onclick="skiftProgramUge(1)">Næste uge</button></div>';
+
+  const { data, error } = await supabase.from('aktiviteter').select('*').eq('uge_start', ugeStart);
+  if(error){ console.error(error); return; }
+
+  const perDag = {};
+  (data || []).forEach(r => { perDag[r.dag] = r.aktivitet; });
+
+  document.getElementById('aktivitetListe').innerHTML = UGEDAGE.map(dag => `
+    <div class="madplanRække">
+      <label style="font-size:12px;font-weight:600;">${dag}</label>
+      <input type="text" data-dag="${dag}" class="aktivitetInput" value="${escapeHtml(perDag[dag] || '')}">
+    </div>
+  `).join('') + `
+    <button class="knap knapLille" style="margin-top:8px;" onclick="sætIngenFællesAktivitet()">∅ Sæt "Ingen fælles aktivitet" for i dag</button>
+  `;
+}
+
+async function gemAktiviteter(){
+  if(!supabase) return;
+  const ugeStart = datoISO(effektivMandag(programUgeValg));
+
+  const poster = [...document.querySelectorAll('.aktivitetInput')].map(input => ({
+    dag: input.dataset.dag,
+    aktivitet: input.value.trim(),
+    uge_start: ugeStart
+  }));
+
+  const { error } = await supabase.from('aktiviteter').upsert(poster, { onConflict: 'dag,uge_start' });
+  if(error){ console.error(error); visToast('Fejl: kunne ikke gemme aktiviteter'); return; }
+  visToast('Aktiviteter gemt');
+}
+
+async function sætIngenFællesAktivitet(){
+  if(!supabase) return;
+  const dagensDag = UGEDAGE[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+  const ugeStart = datoISO(effektivMandag(programUgeValg));
+
+  const { error } = await supabase.from('aktiviteter').upsert(
+    { dag: dagensDag, aktivitet: 'Ingen fælles aktivitet', uge_start: ugeStart },
+    { onConflict: 'dag,uge_start' }
+  );
+  if(error){ console.error(error); visToast('Fejl'); return; }
+  visToast('Sat for ' + dagensDag);
+  hentAktiviteter();
+}
+
+function skiftProgramUge(valg){
+  programUgeValg = valg;
+  visProgramMode();
+}
+
+// ==================================================================
+// HVEM ER DU MED (afledt visning over ugeplaner, ingen ny tabel)
+// ==================================================================
+
+async function visSammenMed(){
+  if(!supabase) return;
+  const beboer = document.getElementById('sammenMedBeboer').value;
+  if(!beboer) return;
+
+  const dagensDag = UGEDAGE[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+  const nuMinutter = new Date().getHours() * 60 + new Date().getMinutes();
+
+  const { data, error } = await supabase.from('ugeplaner').select('*').eq('beboer', beboer).eq('ugedag', dagensDag);
+  if(error){ console.error(error); return; }
+
+  const sorteret = (data || [])
+    .map(r => ({ ...r, minutter: tidTilMinutter(r.tid) }))
+    .sort((a,b) => a.minutter - b.minutter);
+
+  let nuIndeks = -1;
+  sorteret.forEach((r,i) => { if(r.minutter <= nuMinutter) nuIndeks = i; });
+
+  const nu = nuIndeks >= 0 ? sorteret[nuIndeks] : null;
+  const kommende = sorteret.slice(nuIndeks + 1, nuIndeks + 4);
+
+  document.getElementById('sammenMedIndhold').innerHTML = `
+    <div class="kort" style="border-left:6px solid var(--guld);">
+      <div style="font-size:12px;color:var(--tekst-svag);">LIGE NU</div>
+      <div style="font-size:16px;font-weight:600;">${nu ? escapeHtml(nu.tid) + ' — ' + escapeHtml(nu.aktivitet) : 'Ingen aktivitet fundet'}</div>
+    </div>
+    <div class="kort">
+      <div style="font-size:12px;color:var(--tekst-svag);margin-bottom:6px;">KOMMENDE</div>
+      ${kommende.length === 0 ? '<div style="font-size:13px;">Intet planlagt resten af dagen</div>' :
+        kommende.map(r => `<div class="dagsplanRække"><span><strong>${escapeHtml(r.tid)}</strong> ${escapeHtml(r.aktivitet)}</span></div>`).join('')}
+    </div>
+  `;
+}
+
+// ==================================================================
+// §104 IDÉER
+// ==================================================================
+
+function visP104Mode(){
+  const mode = document.getElementById('p104Mode').value;
+  document.getElementById('p104Ny').style.display = mode === 'ny' ? 'block' : 'none';
+  document.getElementById('p104Liste').style.display = mode === 'liste' ? 'block' : 'none';
+  if(mode === 'liste') hentParagraf104Idéer();
+}
+
+async function opretParagraf104Idé(){
+  if(!supabase) return;
+
+  const beboer = document.getElementById('p104Beboer').value;
+  const kategori = document.getElementById('p104Kategori').value;
+  const beskrivelse = document.getElementById('p104Beskrivelse').value.trim();
+  const oprettetAf = document.getElementById('p104OprettetAf').value.trim();
+
+  if(!beskrivelse){ visToast('Skriv en beskrivelse'); return; }
+
+  const { error } = await supabase.from('paragraf104_ideer').insert({
+    beboer, kategori, beskrivelse,
+    oprettet_af: oprettetAf || null,
+    dato: new Date().toISOString().slice(0,10),
+    status: 'Ny'
+  });
+
+  if(error){ console.error(error); visToast('Fejl: kunne ikke gemme idé'); return; }
+
+  document.getElementById('p104Beskrivelse').value = '';
+  document.getElementById('p104OprettetAf').value = '';
+  visToast('Idé gemt');
+}
+
+async function hentParagraf104Idéer(){
+  if(!supabase) return;
+  const { data, error } = await supabase.from('paragraf104_ideer').select('*').order('created_at', { ascending: false });
+  if(error){ console.error(error); return; }
+
+  const container = document.getElementById('p104ListeIndhold');
+  if(!data || data.length === 0){
+    container.innerHTML = '<div class="loading">Ingen idéer endnu</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(i => `
+    <div class="kort">
+      <div class="beboerHeader" style="background:${farveForBeboer(i.beboer)}">${escapeHtml(i.beboer)} · ${escapeHtml(i.kategori || '')}</div>
+      <div style="font-size:13px;">${escapeHtml(i.beskrivelse)}</div>
+      <div class="beskedMeta" style="margin-top:6px;">${i.dato} · ${escapeHtml(i.oprettet_af || 'ukendt')} · Status: ${escapeHtml(i.status)}</div>
+    </div>
+  `).join('');
+}
+
+// ==================================================================
+// AFKRYDSNINGSSKEMA
+// ==================================================================
+// Deler afkrydsninger + opgavelister-tabellerne med Personaletavle.
+// 2 uafhængige knapper pr. opgave (✓ udført / – ikke relevant), IKKE en
+// cyklende 3-trins-knap — samme som den oprindelige app. Ændringer buffres
+// lokalt og gemmes samlet med "Gem ændringer" (matcher gemAfkrydsninger()-
+// mønsteret fra Kode.js, der erstattede en langsom ét-kald-pr-klik-version).
+
+let opgavelisterCache = [];
+let afkrydsningBuffer = {}; // "beboer|opgave" -> status
+
+function datoISOIdag(){
+  return new Date().toISOString().slice(0,10);
+}
+
+async function hentAfkrydsningsskema(){
+  if(!supabase) return;
+
+  const dato = datoISOIdag();
+  document.getElementById('afkrydsningOverskrift').textContent = 'Afkrydsningsskema (' + dato + ')';
+
+  const [opgRes, afkRes] = await Promise.all([
+    supabase.from('opgavelister').select('*').order('sortering'),
+    supabase.from('afkrydsninger').select('*').eq('dato', dato)
+  ]);
+
+  if(opgRes.error){ console.error(opgRes.error); return; }
+  if(afkRes.error){ console.error(afkRes.error); return; }
+
+  opgavelisterCache = opgRes.data || [];
+  afkrydsningBuffer = {};
+  (afkRes.data || []).forEach(r => { afkrydsningBuffer[r.beboer + '|' + r.opgave] = r.status; });
+
+  const beboerSelect = document.getElementById('afkrydsningNyBeboer');
+  beboerSelect.innerHTML = beboereListe.map(b => `<option value="${escapeHtml(b.navn)}">${escapeHtml(b.navn)}</option>`).join('');
+
+  tegnAfkrydsningsskema();
+}
+
+function tegnAfkrydsningsskema(){
+  const grupper = {};
+  opgavelisterCache.forEach(o => {
+    if(!grupper[o.beboer]) grupper[o.beboer] = [];
+    grupper[o.beboer].push(o);
+  });
+
+  const container = document.getElementById('afkrydsningListe');
+  container.innerHTML = Object.keys(grupper).map(beboer => `
+    <div class="kort">
+      <div class="beboerHeader" style="background:${farveForBeboer(beboer)}">${escapeHtml(beboer.toUpperCase())}</div>
+      ${grupper[beboer].map(o => {
+        const nøgle = beboer + '|' + o.opgave;
+        const status = afkrydsningBuffer[nøgle] || 'ikkeGjort';
+        return `
+          <div class="listeOpgave">
+            <span>${escapeHtml(o.opgave)}</span>
+            <span style="display:flex; gap:4px;">
+              <button class="knap knapLille ${status==='udført' ? 'knapGuld' : ''}" onclick="sætAfkrydsningStatus('${beboer}','${escapeHtml(o.opgave).replace(/'/g,"\\'")}','udført')">✓</button>
+              <button class="knap knapLille ${status==='ikkeRelevant' ? 'knapGuld' : ''}" onclick="sætAfkrydsningStatus('${beboer}','${escapeHtml(o.opgave).replace(/'/g,"\\'")}','ikkeRelevant')">–</button>
+              <button class="knap knapLille knapFare" onclick="fjernOpgave('${o.id}')" title="Fjern opgave">✕</button>
+            </span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function sætAfkrydsningStatus(beboer, opgave, status){
+  const nøgle = beboer + '|' + opgave;
+  // Klik på en allerede-aktiv knap nulstiller til "ikke gjort" (toggle af).
+  afkrydsningBuffer[nøgle] = afkrydsningBuffer[nøgle] === status ? 'ikkeGjort' : status;
+  tegnAfkrydsningsskema();
+}
+
+async function gemAfkrydsninger(){
+  if(!supabase) return;
+
+  const dato = datoISOIdag();
+  const poster = Object.keys(afkrydsningBuffer).map(nøgle => {
+    const [beboer, opgave] = nøgle.split('|');
+    return { dato, beboer, opgave, status: afkrydsningBuffer[nøgle] };
+  });
+
+  if(poster.length === 0){ visToast('Ingen ændringer at gemme'); return; }
+
+  const { error } = await supabase.from('afkrydsninger').upsert(poster, { onConflict: 'dato,beboer,opgave' });
+  if(error){ console.error(error); visToast('Fejl: kunne ikke gemme'); return; }
+  visToast('Afkrydsninger gemt');
+}
+
+async function tilføjOpgave(){
+  if(!supabase) return;
+
+  const beboer = document.getElementById('afkrydsningNyBeboer').value;
+  const opgave = document.getElementById('afkrydsningNyOpgave').value.trim();
+  if(!opgave){ visToast('Skriv en opgave'); return; }
+
+  const { error } = await supabase.from('opgavelister').insert({ beboer, opgave, sortering: 999 });
+  if(error){ console.error(error); visToast('Fejl'); return; }
+
+  document.getElementById('afkrydsningNyOpgave').value = '';
+  visToast('Opgave tilføjet');
+  hentAfkrydsningsskema();
+}
+
+async function fjernOpgave(id){
+  if(!supabase) return;
+  const { error } = await supabase.from('opgavelister').delete().eq('id', id);
+  if(error){ console.error(error); visToast('Fejl'); return; }
+  visToast('Opgave fjernet');
+  hentAfkrydsningsskema();
+}
+
+// ==================================================================
+// OVERLAP-SKEMA
+// ==================================================================
+// Deler alle 5 overlap_*-tabeller med Personaletavle (som kun læser).
+// Farve: 3 uafhængige til/fra-knapper pr. beboer (0-3 samtidig, "eksistens
+// = valgt"-mønster). Journal: 5 faste tidspunkter, simpel afkrydsning.
+// Tjekliste: fælles liste. Alle tre buffres lokalt og gemmes samlet.
+// Døgnvagt-navnet er READ-ONLY her — det skrives af workfeed-sync Edge
+// Function, ikke af denne app.
+
+const OVERLAP_TIDSPUNKTER = ['Kl. 08','Kl. 13','Kl. 18','Kl. 22','Kl. 03 (nattevagt)'];
+
+let overlapFarveBuffer = {};  // "beboer|farve" -> true/false
+let overlapJournalBuffer = {}; // "beboer|tidspunkt" -> true/false
+let overlapTjeklisteOpgaver = [];
+let overlapTjeklisteBuffer = {}; // opgave -> true/false
+
+function visOverlapMode(){
+  const mode = document.getElementById('overlapMode').value;
+  document.getElementById('overlapFarver').style.display = mode === 'farver' ? 'block' : 'none';
+  document.getElementById('overlapJournal').style.display = mode === 'journal' ? 'block' : 'none';
+  document.getElementById('overlapTjekliste').style.display = mode === 'tjekliste' ? 'block' : 'none';
+}
+
+async function hentOverlap(){
+  if(!supabase) return;
+
+  const dato = datoISOIdag();
+
+  const [farveRes, journalRes, punktRes, tjekRes, dvRes] = await Promise.all([
+    supabase.from('overlap_farver').select('*').eq('dato', dato),
+    supabase.from('overlap_journal').select('*').eq('dato', dato),
+    supabase.from('overlap_tjekliste_opgaver').select('*').order('sortering'),
+    supabase.from('overlap_tjekliste').select('*').eq('dato', dato),
+    supabase.from('overlap_dognvagt').select('*').eq('dato', dato).limit(1)
+  ]);
+
+  overlapFarveBuffer = {};
+  (farveRes.data || []).forEach(r => { overlapFarveBuffer[r.beboer + '|' + r.farve] = true; });
+
+  overlapJournalBuffer = {};
+  (journalRes.data || []).forEach(r => { overlapJournalBuffer[r.beboer + '|' + r.tidspunkt] = r.skrevet; });
+
+  overlapTjeklisteOpgaver = punktRes.data || [];
+  overlapTjeklisteBuffer = {};
+  (tjekRes.data || []).forEach(r => { overlapTjeklisteBuffer[r.opgave] = r.udfoert; });
+
+  const døgnvagt = dvRes.data && dvRes.data.length > 0 ? dvRes.data[0].navn : null;
+  document.getElementById('overlapDøgnvagtVisning').innerHTML =
+    '🌙 Døgnvagt i dag: <strong>' + (døgnvagt ? escapeHtml(døgnvagt) : 'ikke fundet') + '</strong>';
+
+  tegnOverlapFarver();
+  tegnOverlapJournal();
+  tegnOverlapTjekliste();
+}
+
+function tegnOverlapFarver(){
+  const farver = [
+    { navn: 'rød', ikon: '🔴' }, { navn: 'gul', ikon: '🟡' }, { navn: 'grøn', ikon: '🟢' }
+  ];
+  document.getElementById('overlapFarverListe').innerHTML = beboereListe.map(b => `
+    <div class="kort">
+      <div class="beboerHeader" style="background:${b.farve}">${escapeHtml(b.navn.toUpperCase())}</div>
+      <div style="display:flex; gap:6px;">
+        ${farver.map(f => {
+          const aktiv = !!overlapFarveBuffer[b.navn + '|' + f.navn];
+          return `<button class="knap ${aktiv ? 'knapGuld' : ''}" style="flex:1;" onclick="toggleOverlapFarve('${b.navn}','${f.navn}')">${f.ikon}</button>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleOverlapFarve(beboer, farve){
+  const nøgle = beboer + '|' + farve;
+  overlapFarveBuffer[nøgle] = !overlapFarveBuffer[nøgle];
+  tegnOverlapFarver();
+}
+
+async function gemOverlapFarver(){
+  if(!supabase) return;
+  const dato = datoISOIdag();
+
+  // Eksistens = valgt: slet alle dagens rækker og genindsæt kun de aktive.
+  await supabase.from('overlap_farver').delete().eq('dato', dato);
+
+  const poster = Object.keys(overlapFarveBuffer)
+    .filter(nøgle => overlapFarveBuffer[nøgle])
+    .map(nøgle => { const [beboer, farve] = nøgle.split('|'); return { dato, beboer, farve }; });
+
+  if(poster.length > 0){
+    const { error } = await supabase.from('overlap_farver').insert(poster);
+    if(error){ console.error(error); visToast('Fejl: kunne ikke gemme'); return; }
+  }
+  visToast('Farver gemt');
+}
+
+function tegnOverlapJournal(){
+  document.getElementById('overlapJournalListe').innerHTML = beboereListe.map(b => `
+    <div class="kort">
+      <div class="beboerHeader" style="background:${b.farve}">${escapeHtml(b.navn.toUpperCase())}</div>
+      ${OVERLAP_TIDSPUNKTER.map(t => {
+        const skrevet = !!overlapJournalBuffer[b.navn + '|' + t];
+        return `
+          <div class="listeOpgave">
+            <span>${t}</span>
+            <button class="knap knapLille ${skrevet ? 'knapGuld' : ''}" onclick="toggleOverlapJournal('${b.navn}','${t}')">${skrevet ? '✅' : '❌'}</button>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function toggleOverlapJournal(beboer, tidspunkt){
+  const nøgle = beboer + '|' + tidspunkt;
+  overlapJournalBuffer[nøgle] = !overlapJournalBuffer[nøgle];
+  tegnOverlapJournal();
+}
+
+async function gemOverlapJournal(){
+  if(!supabase) return;
+  const dato = datoISOIdag();
+
+  const poster = [];
+  beboereListe.forEach(b => {
+    OVERLAP_TIDSPUNKTER.forEach(t => {
+      poster.push({ dato, beboer: b.navn, tidspunkt: t, skrevet: !!overlapJournalBuffer[b.navn + '|' + t] });
+    });
+  });
+
+  const { error } = await supabase.from('overlap_journal').upsert(poster, { onConflict: 'dato,beboer,tidspunkt' });
+  if(error){ console.error(error); visToast('Fejl: kunne ikke gemme'); return; }
+  visToast('Journal gemt');
+}
+
+function tegnOverlapTjekliste(){
+  document.getElementById('overlapTjeklisteListe').innerHTML = `
+    <div class="kort">
+      ${overlapTjeklisteOpgaver.map(o => {
+        const udført = !!overlapTjeklisteBuffer[o.opgave];
+        return `
+          <div class="listeOpgave">
+            <span>${escapeHtml(o.opgave)}</span>
+            <button class="knap knapLille ${udført ? 'knapGuld' : ''}" onclick="toggleOverlapTjekliste('${escapeHtml(o.opgave).replace(/'/g,"\\'")}')">${udført ? '✅' : '❌'}</button>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function toggleOverlapTjekliste(opgave){
+  overlapTjeklisteBuffer[opgave] = !overlapTjeklisteBuffer[opgave];
+  tegnOverlapTjekliste();
+}
+
+async function tilføjOverlapPunkt(){
+  if(!supabase) return;
+  const opgave = document.getElementById('overlapNytPunkt').value.trim();
+  if(!opgave){ visToast('Skriv et punkt'); return; }
+
+  const { error } = await supabase.from('overlap_tjekliste_opgaver').insert({ opgave, sortering: 999 });
+  if(error){ console.error(error); visToast('Fejl'); return; }
+
+  document.getElementById('overlapNytPunkt').value = '';
+  visToast('Punkt tilføjet');
+  hentOverlap();
+}
+
+async function gemOverlapTjekliste(){
+  if(!supabase) return;
+  const dato = datoISOIdag();
+
+  const poster = overlapTjeklisteOpgaver.map(o => ({
+    dato, opgave: o.opgave, udfoert: !!overlapTjeklisteBuffer[o.opgave]
+  }));
+
+  if(poster.length === 0){ visToast('Ingen punkter'); return; }
+
+  const { error } = await supabase.from('overlap_tjekliste').upsert(poster, { onConflict: 'dato,opgave' });
+  if(error){ console.error(error); visToast('Fejl: kunne ikke gemme'); return; }
+  visToast('Tjekliste gemt');
+}
+
+// ==================================================================
+// RENGØRING
+// ==================================================================
+// rengoring_uge = ugentlig fast opgaveliste + checkbox (nulstilles søndag
+// via pg_cron). rengoring_ansvarlig = dato→navn, skrevet af workfeed-sync
+// Edge Function (Rådighedsvagtens SLUTTID afgør hvilken dag). Regel bevaret
+// fra den oprindelige Kode.js: før kl. 10:00 vises DAGENS ansvar, fra kl.
+// 10:00 vises MORGENDAGENS (den nyligt mødte døgnvagt er ansvarlig for at
+// gøre rent inden den tager hjem næste morgen).
+
+function rengoringAktueltDato(){
+  const nu = new Date();
+  if(nu.getHours() >= 10){
+    nu.setDate(nu.getDate() + 1);
+  }
+  return nu;
+}
+
+async function hentRengoring(){
+  if(!supabase) return;
+
+  const aktuelDato = rengoringAktueltDato();
+  const aktuelDatoISO = datoISO(aktuelDato);
+  const aktuelUgedag = UGEDAGE[aktuelDato.getDay() === 0 ? 6 : aktuelDato.getDay() - 1];
+
+  const mandag = effektivMandag(0);
+  const ugensDatoer = UGEDAGE.map((dag, i) => {
+    const d = new Date(mandag);
+    d.setDate(d.getDate() + i);
+    return { dag, datoISO: datoISO(d) };
+  });
+
+  const [ugeRes, ansvarligRes] = await Promise.all([
+    supabase.from('rengoring_uge').select('*'),
+    supabase.from('rengoring_ansvarlig').select('*').in('dato', ugensDatoer.map(d => d.datoISO))
+  ]);
+
+  if(ugeRes.error){ console.error(ugeRes.error); return; }
+
+  const ugePerDag = {};
+  (ugeRes.data || []).forEach(r => { ugePerDag[r.dag] = r; });
+
+  const ansvarligPerDato = {};
+  (ansvarligRes.data || []).forEach(r => { ansvarligPerDato[r.dato] = r.navn; });
+
+  const aktuel = ugePerDag[aktuelUgedag];
+  const aktuelAnsvarlig = ansvarligPerDato[aktuelDatoISO];
+
+  document.getElementById('rengoringAktuel').innerHTML = `
+    <div style="font-size:12px; color:var(--tekst-svag);">${aktuelDatoISO === datoISO(new Date()) ? 'I DAG' : 'I MORGEN'} — ${aktuelUgedag}</div>
+    <div style="font-size:16px; font-weight:600;">Ansvarlig: ${aktuelAnsvarlig ? escapeHtml(aktuelAnsvarlig) : 'ikke fundet'}</div>
+    <div style="font-size:13px; margin-top:6px;">${aktuel ? escapeHtml(aktuel.opgave) : 'Ingen opgaver angivet'}</div>
+  `;
+
+  document.getElementById('rengoringUge').innerHTML = ugensDatoer.map(({dag, datoISO: dISO}) => {
+    const række = ugePerDag[dag];
+    const ansvarlig = ansvarligPerDato[dISO];
+    return `
+      <div class="dagsplanRække">
+        <span>
+          <strong>${dag}</strong> — ${ansvarlig ? escapeHtml(ansvarlig) : '–'}<br>
+          <span style="font-size:11px; color:var(--tekst-svag);">${række ? escapeHtml(række.opgave) : ''}</span>
+        </span>
+        <button class="knap knapLille ${række && række.afkrydset ? 'knapGuld' : ''}" onclick="toggleRengoringDag('${dag}')">
+          ${række && række.afkrydset ? '✅' : '❌'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+async function toggleRengoringDag(dag){
+  if(!supabase) return;
+
+  const { data } = await supabase.from('rengoring_uge').select('*').eq('dag', dag).maybeSingle();
+  const nyStatus = !(data && data.afkrydset);
+
+  const { error } = await supabase.from('rengoring_uge').upsert(
+    { dag, opgave: data ? data.opgave : '', afkrydset: nyStatus },
+    { onConflict: 'dag' }
+  );
+
+  if(error){ console.error(error); visToast('Fejl'); return; }
+  hentRengoring();
+}
+
+// ==================================================================
+// ADMIN — fane-toggles
+// ==================================================================
+
+async function hentIndstillingerAdmin(){
+  if(!supabase) return;
+  const { data, error } = await supabase.from('indstillinger').select('*').order('fane');
+  if(error){ console.error(error); return; }
+
+  document.getElementById('adminIndstillinger').innerHTML = (data || []).map(i => `
+    <div class="indstillingRække">
+      <span>${escapeHtml(i.fane)}</span>
+      <div class="toggleSwitch ${i.aktiv ? 'til' : ''}" onclick="toggleIndstilling('${i.fane}', ${i.aktiv})">
+        <div class="knop"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function toggleIndstilling(fane, nuværendeVærdi){
+  if(!supabase) return;
+  const { error } = await supabase.from('indstillinger').update({ aktiv: !nuværendeVærdi }).eq('fane', fane);
+  if(error){ console.error(error); visToast('Fejl'); return; }
+  hentIndstillingerAdmin();
+}
+
+// ==================================================================
+// INITIALISER
+// ==================================================================
+
+hentBeboere();
+
+</script>
+
+</body>
+</html>
