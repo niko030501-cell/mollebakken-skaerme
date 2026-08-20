@@ -593,6 +593,20 @@
         <div id="aktivitetListe"></div>
         <button class="knap" style="margin-top:10px;" onclick="gemAktiviteter()">Gem aktiviteter</button>
       </div>
+
+      <div class="kort">
+        <h3 style="margin-top:0; font-size:14px;">📷 Upload billede til aktivitet</h3>
+        <div class="formRække">
+          <label>Vælg dag</label>
+          <select id="billedeDag" onchange="visBilledeGalleri()"></select>
+        </div>
+        <div class="formRække">
+          <label>Billede</label>
+          <input type="file" id="billedeInput" accept="image/*">
+        </div>
+        <button class="knap knapGuld" onclick="uploadAktivitetsBillede()">Upload</button>
+        <div id="billedeGalleri" style="margin-top:12px;"></div>
+      </div>
     </div>
   </div>
 
@@ -1154,6 +1168,137 @@ async function hentAktiviteter(){
   `).join('') + `
     <button class="knap knapLille" style="margin-top:8px;" onclick="sætIngenFællesAktivitet()">∅ Sæt "Ingen fælles aktivitet" for i dag</button>
   `;
+
+  // Billed-upload: dag-vælgeren skal vise den aktivitetstekst der reelt
+  // er gemt for dagen (billeder knyttes til aktivitetsNAVNET, ikke dagen).
+  const billedeDagSelect = document.getElementById('billedeDag');
+  const forrigeValg = billedeDagSelect.value;
+  billedeDagSelect.innerHTML = UGEDAGE
+    .filter(dag => perDag[dag])
+    .map(dag => `<option value="${escapeHtml(dag)}">${dag} — ${escapeHtml(perDag[dag])}</option>`)
+    .join('');
+  if(UGEDAGE.includes(forrigeValg) && perDag[forrigeValg]) billedeDagSelect.value = forrigeValg;
+
+  window.__aktivitetPerDag = perDag;
+  visBilledeGalleri();
+}
+
+// ==================================================================
+// AKTIVITETS-BILLEDER (Supabase Storage)
+// ==================================================================
+// Samme client-side komprimering som den oprindelige upload-funktion i
+// Møllebakken-appen: skaler ned til maks 1000px bredde, gem som JPEG.
+// For almindelige aktiviteter erstattes gamle billeder (kun ét ad gangen).
+// For sentinel-værdien "Ingen fælles aktivitet" ophobes billeder i stedet
+// til et diasshow på Personaleskærmen.
+
+const AKTIVITET_SENTINEL = 'Ingen fælles aktivitet';
+
+function komprimerBillede(fil){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxBredde = 1000;
+        const skala = Math.min(1, maxBredde / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * skala;
+        canvas.height = img.height * skala;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(fil);
+  });
+}
+
+async function uploadAktivitetsBillede(){
+  if(!sb) return;
+
+  const dag = document.getElementById('billedeDag').value;
+  const aktivitetNavn = window.__aktivitetPerDag ? window.__aktivitetPerDag[dag] : null;
+  const fil = document.getElementById('billedeInput').files[0];
+
+  if(!aktivitetNavn){ visToast('Vælg en dag med en aktivitet angivet'); return; }
+  if(!fil){ visToast('Vælg et billede først'); return; }
+
+  visToast('Komprimerer og uploader...');
+
+  try {
+    const blob = await komprimerBillede(fil);
+    const sti = aktivitetNavn.replace(/[^a-zA-Z0-9æøåÆØÅ]/g, '_') + '-' + Date.now() + '.jpg';
+
+    const { error: uploadFejl } = await sb.storage.from('aktivitet-billeder').upload(sti, blob, {
+      contentType: 'image/jpeg'
+    });
+    if(uploadFejl){ console.error(uploadFejl); visToast('Fejl: kunne ikke uploade'); return; }
+
+    // Ikke-sentinel aktiviteter: kun ét billede ad gangen — ryd op i gamle.
+    if(aktivitetNavn !== AKTIVITET_SENTINEL){
+      const { data: gamle } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitetNavn);
+      if(gamle && gamle.length > 0){
+        await sb.storage.from('aktivitet-billeder').remove(gamle.map(g => g.storage_path));
+        await sb.from('aktivitet_billeder').delete().eq('aktivitet_navn', aktivitetNavn);
+      }
+    }
+
+    const { error: indsætFejl } = await sb.from('aktivitet_billeder').insert({
+      aktivitet_navn: aktivitetNavn,
+      storage_path: sti
+    });
+    if(indsætFejl){ console.error(indsætFejl); visToast('Fejl: kunne ikke gemme'); return; }
+
+    document.getElementById('billedeInput').value = '';
+    visToast('Billede uploadet');
+    visBilledeGalleri();
+  } catch(e){
+    console.error(e);
+    visToast('Fejl under komprimering af billede');
+  }
+}
+
+async function visBilledeGalleri(){
+  if(!sb) return;
+
+  const dag = document.getElementById('billedeDag').value;
+  const aktivitetNavn = window.__aktivitetPerDag ? window.__aktivitetPerDag[dag] : null;
+  const container = document.getElementById('billedeGalleri');
+
+  if(!aktivitetNavn){
+    container.innerHTML = '';
+    return;
+  }
+
+  const { data, error } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitetNavn);
+  if(error){ console.error(error); return; }
+
+  if(!data || data.length === 0){
+    container.innerHTML = '<div style="font-size:12px;color:var(--tekst-svag);">Ingen billeder endnu for denne aktivitet</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(b => {
+    const { data: pub } = sb.storage.from('aktivitet-billeder').getPublicUrl(b.storage_path);
+    return `
+      <div style="display:inline-block; position:relative; margin:4px;">
+        <img src="${escapeHtml(pub.publicUrl)}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+        <button class="knap knapFare knapLille" style="position:absolute;top:-6px;right:-6px;padding:2px 6px;" onclick="fjernAktivitetsBillede('${b.id}','${escapeHtml(b.storage_path)}')">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+async function fjernAktivitetsBillede(id, sti){
+  if(!sb) return;
+  await sb.storage.from('aktivitet-billeder').remove([sti]);
+  const { error } = await sb.from('aktivitet_billeder').delete().eq('id', id);
+  if(error){ console.error(error); visToast('Fejl'); return; }
+  visToast('Billede fjernet');
+  visBilledeGalleri();
 }
 
 async function gemAktiviteter(){
