@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Møllebakken</title>
 
 <!-- PWA: gør appen installerbar ("Føj til startskærm") på telefonen -->
@@ -54,7 +54,7 @@
     border:1px solid #d1d9d6;
     border-radius:8px;
     padding:8px 10px;
-    font-size:14px;
+    font-size:16px; /* iOS auto-zoomer ellers ved fokus på felter under 16px */
   }
 
   #app{
@@ -95,7 +95,7 @@
   .side.aktiv{ display:block; }
 
   #topbar{
-    padding:16px 20px;
+    padding:calc(16px + env(safe-area-inset-top)) 20px 16px 20px;
     background:var(--mørk);
     color:white;
     display:flex;
@@ -128,8 +128,9 @@
     margin:0 auto;
     background:var(--mørk);
     display:flex;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
     z-index:999;
+    padding-bottom:env(safe-area-inset-bottom);
   }
 
   @media (min-width:600px){
@@ -137,18 +138,22 @@
   }
 
   #bundNav button{
-    flex:1 0 33.33%;
+    flex:1 1 0;
+    min-width:0;
     background:none;
     color:#c9d6d3;
-    padding:10px 4px;
-    font-size:10px;
+    padding:8px 2px;
+    font-size:9px;
     display:flex;
     flex-direction:column;
     align-items:center;
     gap:2px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
 
-  #bundNav button .ikon{ font-size:18px; }
+  #bundNav button .ikon{ font-size:16px; }
 
   #bundNav button.aktivFane{ color:var(--guld-lys); }
 
@@ -852,6 +857,19 @@ async function tegnForside(){
         <div class="titel">${k.titel}</div>
       </div>
     `).join('');
+
+  opdaterBundNavSynlighed();
+}
+
+// Skjuler bundmenu-knapper for faner der er slået fra i Admin — samme
+// filtrering som forsidens kort, så en slukket fane ikke stadig kan
+// tilgås via bundmenuen.
+function opdaterBundNavSynlighed(){
+  FEATURE_KORT.forEach(k => {
+    const knapId = navKnapPerSide[k.side];
+    const knap = knapId ? document.getElementById(knapId) : null;
+    if(knap) knap.style.display = indstillingerCache[k.fane] === false ? 'none' : '';
+  });
 }
 
 // ==================================================================
@@ -1674,6 +1692,8 @@ async function toggleIndstilling(fane, nuværendeVærdi){
   if(!sb) return;
   const { error } = await sb.from('indstillinger').update({ aktiv: !nuværendeVærdi }).eq('fane', fane);
   if(error){ console.error(error); visToast('Fejl'); return; }
+  indstillingerCache[fane] = !nuværendeVærdi;
+  opdaterBundNavSynlighed();
   hentIndstillingerAdmin();
 }
 
