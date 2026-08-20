@@ -2,8 +2,17 @@
 <html lang="da">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Møllebakken</title>
+
+<!-- PWA: gør appen installerbar ("Føj til startskærm") på telefonen -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e3937">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Møllebakken">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1673,6 +1682,15 @@ async function toggleIndstilling(fane, nuværendeVærdi){
 // ==================================================================
 
 hentBeboere();
+
+// PWA: registrér service worker, så appen kan installeres på telefonen.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch((e) => {
+      console.error('Kunne ikke registrere service worker:', e);
+    });
+  });
+}
 
 </script>
 
