@@ -73,11 +73,14 @@
 
   #gulv{
     display:grid;
-    grid-template-columns:repeat(5, 1fr);
+    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
     grid-auto-rows:min-content;
-    align-items:start;
-    gap:8px;
+    align-content:center;
+    justify-content:center;
+    gap:16px;
+    flex:1;
     min-height:0;
+    overflow:hidden;
   }
 
   .personKort{
@@ -89,6 +92,9 @@
     display:flex;
     flex-direction:column;
     aspect-ratio:1 / 1;
+    width:100%;
+    max-width:320px;
+    margin:0 auto;
   }
 
   .personKort .personKortTop{
