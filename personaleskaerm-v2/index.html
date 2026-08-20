@@ -57,11 +57,19 @@
   }
 
   #overskrift{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
     font-size:22px;
     font-weight:700;
     color:var(--mørk);
     padding-bottom:3px;
     border-bottom:2px solid var(--guld);
+  }
+
+  #ur{
+    font-variant-numeric:tabular-nums;
+    color:var(--grøn);
   }
 
   .kort{
@@ -93,7 +101,7 @@
     flex-direction:column;
     aspect-ratio:1 / 1;
     width:100%;
-    max-width:320px;
+    max-width:260px;
     margin:0 auto;
   }
 
@@ -252,7 +260,10 @@
 <div id="layout">
 
   <div id="venstre">
-    <div id="overskrift">Personale — <span id="overskriftDag"></span></div>
+    <div id="overskrift">
+      <span>Personale — <span id="overskriftDag"></span></span>
+      <span id="ur"></span>
+    </div>
 
     <div id="gulv"><div class="loading">Henter personale...</div></div>
 
@@ -375,6 +386,14 @@ function dagensDato(){
 
 function datoISO(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function opdaterUr(){
+  const nu = new Date();
+  document.getElementById('ur').textContent =
+    String(nu.getHours()).padStart(2,'0') + ':' +
+    String(nu.getMinutes()).padStart(2,'0') + ':' +
+    String(nu.getSeconds()).padStart(2,'0');
 }
 
 // ==================================================================
@@ -640,9 +659,11 @@ function hentAlt(){
 hentAlt();
 hentVejr();
 visSlide();
+opdaterUr();
 
 setInterval(hentAlt, 60000);
 setInterval(hentVejr, 1800000);
+setInterval(opdaterUr, 1000);
 setInterval(() => {
   slideIndex = (slideIndex + 1) % slides.length;
   visSlide();
