@@ -72,9 +72,10 @@
   }
 
   #gulv{
-    flex:1;
     display:grid;
     grid-template-columns:repeat(5, 1fr);
+    grid-auto-rows:min-content;
+    align-items:start;
     gap:8px;
     min-height:0;
   }
@@ -87,6 +88,7 @@
     box-shadow:0 4px 12px rgba(30,57,55,.08);
     display:flex;
     flex-direction:column;
+    aspect-ratio:1 / 1;
   }
 
   .personKort .personKortTop{
