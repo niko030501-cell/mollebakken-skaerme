@@ -158,12 +158,17 @@
 
   .personKortLille{
     display:flex;
+    flex-direction:column;
     align-items:center;
-    gap:6px;
-    padding:2px 0;
+    gap:2px;
+    padding:2px 4px;
     flex-shrink:0;
+    text-align:center;
+    width:64px;
   }
-  .personKortLille img{ width:26px; height:26px; }
+  .personKortLille img{ width:30px; height:30px; }
+  .personKortLille .navn{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:64px; }
+  .personKortLille .rolleLille{ font-size:9px; color:var(--tekst-svag); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:64px; }
   .personKortLille .navn{ font-weight:600; font-size:12px; }
 
   #vejrBoks{ text-align:center; border-top-color:var(--grøn-lys); display:flex; flex-direction:column; align-items:center; justify-content:center; }
@@ -461,8 +466,9 @@ function tegnLilleListe(elementId, personer, erNattevagt){
   }
   container.innerHTML = personer.map(p => `
     <div class="personKortLille">
-      ${billedeHtml(p.billede, 36)}
-      <span class="navn">${escapeHtml(fornavn(p.navn))}${erNattevagt ? '' : ' — ' + escapeHtml(p.rolle)}</span>
+      ${billedeHtml(p.billede, 30)}
+      <span class="navn">${escapeHtml(fornavn(p.navn))}</span>
+      ${erNattevagt ? '' : `<span class="rolleLille">${escapeHtml(p.rolle)}</span>`}
     </div>
   `).join('');
 }
