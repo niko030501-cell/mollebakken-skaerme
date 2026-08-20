@@ -418,7 +418,7 @@
   const ADMIN_KODE = '1234'; // Samme som den gamle Apps Script-version — kun et menu-synligheds-gate, ikke reel sikkerhed.
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@sb/sb-js@2/dist/umd/sb.min.js"></script>
+<script src="supabase-js.min.js"></script>
 
 <div id="app">
 
@@ -681,6 +681,14 @@ try {
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 } catch (e) {
   console.error('Kunne ikke oprette Supabase-klient:', e);
+}
+
+if(!sb){
+  document.body.innerHTML =
+    '<div style="max-width:400px;margin:60px auto;padding:24px;background:#fee2e2;color:#991b1b;border-radius:12px;font-family:sans-serif;text-align:center;">' +
+    '<strong>Kunne ikke forbinde til databasen.</strong><br><br>' +
+    'Tjek din internetforbindelse og genindlæs siden. Hvis problemet fortsætter, kontakt Nikolaj.' +
+    '</div>';
 }
 
 function visToast(tekst){
