@@ -350,21 +350,27 @@ const rolleTabel = {
 };
 
 // ==================================================================
-// Dag-omslag kl. 18:50 — client-side klok-check, IKKE en Apps
+// Dag-omslag kl. 19:30 — client-side klok-check, IKKE en Apps
 // Script-trigger (som var upræcis nok til at være en dokumenteret
 // læring på tværs af alle tre Møllebakken-projekter). Genberegnes ved
 // hvert poll, så der ikke er nogen "trigger" der kan ramme forkert.
+// Gælder KUN personale-listen — madplan og aktivitet skifter først
+// ved midnat, se dagensDato().
 // ==================================================================
 
 function skalViseImorgen(){
   const nu = new Date();
-  return nu.getHours() > 18 || (nu.getHours() === 18 && nu.getMinutes() >= 50);
+  return nu.getHours() > 19 || (nu.getHours() === 19 && nu.getMinutes() >= 30);
 }
 
 function måldato(){
   const nu = new Date();
   if(skalViseImorgen()) nu.setDate(nu.getDate() + 1);
   return nu;
+}
+
+function dagensDato(){
+  return new Date();
 }
 
 function datoISO(d){
@@ -509,7 +515,7 @@ function tegnPmøde(alle, nu){
 async function hentMadplan(){
   if(!sb) return;
 
-  const dato = måldato();
+  const dato = dagensDato();
   const dagensDag = UGEDAGE[dato.getDay()];
   const ugeStart = datoISO(effektivMandag());
 
@@ -546,7 +552,7 @@ function effektivMandag(){
 async function hentAktivitet(){
   if(!sb) return;
 
-  const dato = måldato();
+  const dato = dagensDato();
   const dagensDag = UGEDAGE[dato.getDay()];
   const ugeStart = datoISO(effektivMandag());
 
