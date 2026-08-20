@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personaleskærm</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --mørk:#1e3937;
+    --grøn:#2f6b52;
+    --grøn-lys:#3f8064;
+    --guld:#d89b2b;
+    --guld-lys:#f0b94a;
+    --baggrund:#eef2ef;
+    --kort:#ffffff;
+    --tekst-svag:#5b6b68;
+    --lilla:#8824bc;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    font-family:'Inter', sans-serif;
+    background:var(--baggrund);
+    color:var(--mørk);
+    height:100vh;
+    overflow:hidden;
+  }
+
+  h1,h2,h3{ font-family:'Fraunces', serif; margin:0; }
+
+  #layout{
+    display:grid;
+    grid-template-columns:73% 27%;
+    height:100vh;
+    padding:18px;
+    gap:16px;
+  }
+
+  #venstre{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    min-height:0;
+  }
+
+  #højre{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    min-height:0;
+  }
+
+  #overskrift{
+    font-size:24px;
+    color:var(--mørk);
+  }
+
+  .kort{
+    background:var(--kort);
+    border-radius:16px;
+    padding:16px 20px;
+    box-shadow:0 6px 20px rgba(30,57,55,.08);
+  }
+
+  #gulv{
+    flex:1;
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:14px;
+    min-height:0;
+  }
+
+  .personKort{
+    background:var(--kort);
+    border-radius:16px;
+    padding:14px;
+    text-align:center;
+    box-shadow:0 6px 20px rgba(30,57,55,.08);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+
+  .personKort img, .personKortLille img{
+    border-radius:50%;
+    object-fit:cover;
+    background:#d1d9d6;
+  }
+
+  .personKort img{ width:64px; height:64px; }
+  .personKort .navn{ font-weight:700; font-size:14px; }
+  .personKort .rolle{ font-size:11px; color:var(--tekst-svag); }
+  .personKort .tid{ font-size:10px; color:var(--tekst-svag); }
+
+  #bundRække{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    height:150px;
+  }
+
+  #vejrPmødeRække{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    height:110px;
+  }
+
+  .lilleBoks{
+    background:var(--kort);
+    border-radius:16px;
+    padding:12px 16px;
+    box-shadow:0 6px 20px rgba(30,57,55,.08);
+    overflow-y:auto;
+  }
+
+  .lilleBoks h3{ font-size:13px; color:var(--tekst-svag); margin-bottom:8px; }
+
+  .personKortLille{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:4px 0;
+  }
+  .personKortLille img{ width:36px; height:36px; }
+  .personKortLille .navn{ font-weight:600; font-size:12px; }
+
+  #vejrBoks{ text-align:center; }
+  #vejrBoks .temp{ font-size:28px; font-weight:700; }
+  #vejrBoks .ikon{ font-size:28px; }
+  #vejrBoks .beskrivelse{ font-size:12px; color:var(--tekst-svag); }
+
+  #pmødeBoks{ border-top:4px solid var(--lilla); }
+  .pillPerson{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:#f3e8ff;
+    border-radius:20px;
+    padding:3px 10px 3px 3px;
+    margin:2px;
+    font-size:11px;
+  }
+  .pillPerson img{ width:20px; height:20px; border-radius:50%; }
+
+  #dagensMad{
+    text-align:center;
+  }
+  #dagensMad h3{ font-size:13px; color:var(--tekst-svag); margin-bottom:6px; }
+  #dagensMadRet{ font-size:20px; font-weight:700; }
+
+  #slideContainer{
+    flex:1;
+    position:relative;
+    min-height:0;
+  }
+
+  .slide{
+    display:none;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.vis{ display:flex; }
+
+  #aktivitetSlide h3, #madplanSlide h3{ font-size:13px; color:var(--tekst-svag); margin-bottom:8px; }
+  #aktivitetNavn{ font-size:16px; font-weight:700; margin-bottom:8px; }
+  #aktivitetBilledeBoks{ flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:12px; background:#f3f4f6; }
+  #aktivitetBilledeBoks img{ max-width:100%; max-height:100%; object-fit:contain; }
+
+  .ugensMadGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0 16px;
+    font-size:11px;
+  }
+  .ugensMadRække{ padding:5px 0; border-bottom:1px solid #eef2ef; }
+  .ugensMadRække .dag{ font-weight:700; }
+
+  .loading{ text-align:center; color:var(--tekst-svag); padding:20px; font-size:12px; }
+</style>
+</head>
+
+<body>
+
+<!-- ============================================================ -->
+<!-- KONFIGURATION -->
+<!-- ============================================================ -->
+<script>
+  const SUPABASE_URL = 'https://lumxvqhlmokspqnazhso.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1bXh2cWhsbW9rc3BxbmF6aHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzc3NTMsImV4cCI6MjA5OTYxMzc1M30.WvVrbqZWaY1V-6sC4XwoYDOciBULeCxcnxvB7TlAMno';
+</script>
+
+<script src="supabase-js.min.js"></script>
+
+<div id="layout">
+
+  <div id="venstre">
+    <div id="overskrift">Personale — <span id="overskriftDag"></span></div>
+
+    <div id="gulv"><div class="loading">Henter personale...</div></div>
+
+    <div id="bundRække">
+      <div class="lilleBoks">
+        <h3>🌙 Nattevagt</h3>
+        <div id="nattevagtListe"></div>
+      </div>
+      <div class="lilleBoks">
+        <h3>🔧 Andre funktioner</h3>
+        <div id="funktionerListe"></div>
+      </div>
+    </div>
+
+    <div id="vejrPmødeRække">
+      <div class="lilleBoks" id="vejrBoks">
+        <div class="ikon" id="vejrIkon">–</div>
+        <div class="temp" id="vejrTemp">–</div>
+        <div class="beskrivelse" id="vejrBeskrivelse"></div>
+      </div>
+      <div class="lilleBoks" id="pmødeBoks">
+        <h3>🤝 Kommer efter P-møde</h3>
+        <div id="pmødeListe">Ingen lige nu</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="højre">
+    <div class="kort" id="dagensMad">
+      <h3>🍽 Dagens mad</h3>
+      <div id="dagensMadRet">–</div>
+    </div>
+
+    <div class="kort" id="slideContainer">
+      <div class="slide vis" id="aktivitetSlide">
+        <h3>🎯 Dagens aktivitet</h3>
+        <div id="aktivitetNavn">–</div>
+        <div id="aktivitetBilledeBoks"></div>
+      </div>
+
+      <div class="slide" id="madplanSlide">
+        <h3>📅 Ugens madplan</h3>
+        <div class="ugensMadGrid" id="ugensMadGrid"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+// ==================================================================
+// SUPABASE-KLIENT (defensiv init, samme mønster som de to andre skærme)
+// ==================================================================
+
+let sb = null;
+try {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) {
+  console.error('Kunne ikke oprette Supabase-klient:', e);
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : str;
+  return d.innerHTML;
+}
+
+const UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+
+// ==================================================================
+// Rolle-visningsnavne — rå Workfeed-rolle gemmes i databasen af
+// workfeed-sync, men VISES med samme omdøbning som den oprindelige
+// hentPersonale() i Kode.js. "Rådighedsvagt" (rå) → "Døgnvagt" (vist) —
+// filtrering nedenfor sker altid på det VISTE navn, matcher gammel logik.
+// ==================================================================
+
+function visningsRolle(raaRolle, tag){
+  if(tag === 'P-møde' || tag === 'P-møde m. vagt') return raaRolle === 'Rådighedsvagt' ? 'Døgnvagt' : (rolleTabel[raaRolle] || raaRolle);
+  const tabel = {
+    'Daglig leder': 'Leder',
+    'Køkkenpersonale': 'Køkken',
+    'Pedel': 'Pedel',
+    'Vågen nattevagt': 'Nattevagt',
+    'Socialfaglig medarbejder': 'Medarbejder',
+    'SSA': 'Medicinvagt',
+    'Rådighedsvagt': 'Døgnvagt'
+  };
+  return tabel[raaRolle] || raaRolle;
+}
+const rolleTabel = {
+  'Daglig leder': 'Leder', 'Køkkenpersonale': 'Køkken', 'Pedel': 'Pedel',
+  'Vågen nattevagt': 'Nattevagt', 'Socialfaglig medarbejder': 'Medarbejder',
+  'SSA': 'Medicinvagt', 'Rådighedsvagt': 'Døgnvagt'
+};
+
+// ==================================================================
+// Dag-omslag kl. 18:50 — client-side klok-check, IKKE en Apps
+// Script-trigger (som var upræcis nok til at være en dokumenteret
+// læring på tværs af alle tre Møllebakken-projekter). Genberegnes ved
+// hvert poll, så der ikke er nogen "trigger" der kan ramme forkert.
+// ==================================================================
+
+function skalViseImorgen(){
+  const nu = new Date();
+  return nu.getHours() > 18 || (nu.getHours() === 18 && nu.getMinutes() >= 50);
+}
+
+function måldato(){
+  const nu = new Date();
+  if(skalViseImorgen()) nu.setDate(nu.getDate() + 1);
+  return nu;
+}
+
+function datoISO(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ==================================================================
+// PERSONALE PÅ ARBEJDE
+// ==================================================================
+
+async function hentPersonale(){
+  if(!sb) return;
+
+  const visImorgen = skalViseImorgen();
+  const dato = måldato();
+  const datoStr = datoISO(dato);
+  document.getElementById('overskriftDag').textContent = UGEDAGE[dato.getDay()] + (visImorgen ? ' (i morgen)' : '');
+
+  const { data, error } = await sb.from('personaleskaerm_vagter').select('*').eq('dag', datoStr);
+  if(error){ console.error('Fejl personale:', error); return; }
+
+  const nu = new Date();
+  const nuMinutter = nu.getHours() * 60 + nu.getMinutes();
+
+  // Dedup på navn+rolle (midnatssplit kan give to rækker for samme
+  // døgnvagt/nattevagt-person samme dag).
+  const set = new Map();
+
+  (data || []).forEach(r => {
+    const rolle = visningsRolle(r.rolle, r.tag);
+    const nøgle = r.navn + '|' + rolle;
+    if(set.has(nøgle)) return;
+
+    const slut = new Date(r.slut);
+    const slutMinutter = slut.getHours() * 60 + slut.getMinutes();
+
+    // Ikke-Døgnvagt/Nattevagt personale forsvinder når vagten er slut —
+    // men kun når vi viser DAGENS egen liste, ikke en morgendags-forhåndsvisning.
+    if(!visImorgen && rolle !== 'Døgnvagt' && rolle !== 'Nattevagt'){
+      if(nuMinutter > slutMinutter) return;
+    }
+
+    set.set(nøgle, { ...r, rolle });
+  });
+
+  const alle = [...set.values()];
+
+  const gulv = alle.filter(p => p.rolle === 'Medarbejder' || p.rolle === 'Døgnvagt');
+  const nattevagt = alle.filter(p => p.rolle === 'Nattevagt');
+  const funktioner = alle.filter(p => p.rolle !== 'Medarbejder' && p.rolle !== 'Døgnvagt' && p.rolle !== 'Nattevagt');
+
+  tegnGulv(gulv);
+  tegnLilleListe('nattevagtListe', nattevagt, true);
+  tegnLilleListe('funktionerListe', funktioner, false);
+  tegnPmøde(alle, nu);
+}
+
+// Nogle Planday-navne bærer et rolle-præfiks direkte i fornavnet (fx
+// "Vikar: Dalal Abou Chouk", "Pedel: Jens", "Nat: ..."). Fjernes her, samme
+// oprensning som den oprindelige renspNavn() i Visning.js.
+function renspNavn(navn){
+  return (navn || '').replace(/^(Pedel|Vikar|Nat):\s*/i, '').trim();
+}
+
+function fornavn(navn){
+  const renset = renspNavn(navn);
+  return renset.split(' ')[0] || renset;
+}
+
+function billedeHtml(url, størrelse){
+  if(url) return `<img src="${escapeHtml(url)}" style="width:${størrelse}px;height:${størrelse}px" alt="">`;
+  return `<div style="width:${størrelse}px;height:${størrelse}px;border-radius:50%;background:#d1d9d6;"></div>`;
+}
+
+function tegnGulv(personer){
+  const container = document.getElementById('gulv');
+  if(personer.length === 0){
+    container.innerHTML = '<div class="loading">Ingen på arbejde lige nu</div>';
+    return;
+  }
+  container.innerHTML = personer.map(p => {
+    const label = p.rolle === 'Døgnvagt' ? '🛏️ DØGNVAGT' : '';
+    const tid = p.rolle === 'Døgnvagt' ? '' :
+      `<div class="tid">${new Date(p.start).toTimeString().slice(0,5)}–${new Date(p.slut).toTimeString().slice(0,5)}</div>`;
+    return `
+      <div class="personKort">
+        ${billedeHtml(p.billede, 64)}
+        <div class="navn">${escapeHtml(fornavn(p.navn))}</div>
+        <div class="rolle">${label}</div>
+        ${tid}
+      </div>
+    `;
+  }).join('');
+}
+
+function tegnLilleListe(elementId, personer, erNattevagt){
+  const container = document.getElementById(elementId);
+  if(personer.length === 0){
+    container.innerHTML = '<div style="font-size:11px;color:var(--tekst-svag);">Ingen</div>';
+    return;
+  }
+  container.innerHTML = personer.map(p => `
+    <div class="personKortLille">
+      ${billedeHtml(p.billede, 36)}
+      <span class="navn">${escapeHtml(fornavn(p.navn))}${erNattevagt ? '' : ' — ' + escapeHtml(p.rolle)}</span>
+    </div>
+  `).join('');
+}
+
+// Personale tagget "P-møde m. vagt" vises her indtil mødet er slut
+// (seneste sluttidspunkt for et P-møde den dag), IKKE med det samme.
+function tegnPmøde(alle, nu){
+  const pMødePersoner = alle.filter(p => p.tag === 'P-møde m. vagt');
+  const pMødeSlutTider = alle.filter(p => p.tag === 'P-møde').map(p => new Date(p.slut));
+
+  const senesteSlut = pMødeSlutTider.length > 0 ? new Date(Math.max(...pMødeSlutTider)) : null;
+  const mødeErSlut = !senesteSlut || nu >= senesteSlut;
+
+  const container = document.getElementById('pmødeListe');
+  if(mødeErSlut || pMødePersoner.length === 0){
+    container.innerHTML = '<div style="font-size:11px;color:var(--tekst-svag);">Ingen lige nu</div>';
+    return;
+  }
+
+  container.innerHTML = pMødePersoner.map(p => `
+    <span class="pillPerson">
+      ${billedeHtml(p.billede, 20)}
+      ${escapeHtml(fornavn(p.navn))}
+    </span>
+  `).join('');
+}
+
+// ==================================================================
+// MADPLAN / AKTIVITET
+// ==================================================================
+
+async function hentMadplan(){
+  if(!sb) return;
+
+  const dato = måldato();
+  const dagensDag = UGEDAGE[dato.getDay()];
+  const ugeStart = datoISO(effektivMandag());
+
+  const { data, error } = await sb.from('madplan').select('*').eq('uge_start', ugeStart);
+  if(error){ console.error('Fejl madplan:', error); return; }
+
+  const perDag = {};
+  (data || []).forEach(r => { perDag[r.dag] = r.ret; });
+
+  document.getElementById('dagensMadRet').textContent = perDag[dagensDag] || 'Ikke angivet';
+
+  const ugedageOrden = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
+  document.getElementById('ugensMadGrid').innerHTML = ugedageOrden.map(dag => `
+    <div class="ugensMadRække"><span class="dag">${dag}:</span> ${escapeHtml(perDag[dag] || '–')}</div>
+  `).join('');
+}
+
+// Samme Sunday-20:00-effektiv-mandag-regel som Møllebakken-appen bruger
+// til Madplan/Aktiviteter — sikrer samme "uge" vises begge steder.
+function effektivMandag(){
+  const nu = new Date();
+  const basis = new Date(nu);
+  if(nu.getDay() === 0 && nu.getHours() >= 20){
+    basis.setDate(basis.getDate() + 1);
+  }
+  const dag = basis.getDay();
+  const diffTilMandag = dag === 0 ? -6 : 1 - dag;
+  const mandag = new Date(basis);
+  mandag.setDate(mandag.getDate() + diffTilMandag);
+  mandag.setHours(0,0,0,0);
+  return mandag;
+}
+
+async function hentAktivitet(){
+  if(!sb) return;
+
+  const dato = måldato();
+  const dagensDag = UGEDAGE[dato.getDay()];
+  const ugeStart = datoISO(effektivMandag());
+
+  const { data, error } = await sb.from('aktiviteter').select('*').eq('uge_start', ugeStart).eq('dag', dagensDag);
+  if(error){ console.error('Fejl aktivitet:', error); return; }
+
+  const aktivitet = data && data.length > 0 ? data[0].aktivitet : null;
+  document.getElementById('aktivitetNavn').textContent = aktivitet || 'Ingen aktivitet angivet';
+
+  if(!aktivitet){
+    document.getElementById('aktivitetBilledeBoks').innerHTML = '';
+    return;
+  }
+
+  const { data: billeder } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet);
+  if(billeder && billeder.length > 0){
+    // Billeder ligger i Supabase Storage — storage_path er en offentlig sti.
+    const { data: pub } = sb.storage.from('aktivitet-billeder').getPublicUrl(billeder[0].storage_path);
+    document.getElementById('aktivitetBilledeBoks').innerHTML =
+      `<img src="${escapeHtml(pub.publicUrl)}" alt="">`;
+  } else {
+    document.getElementById('aktivitetBilledeBoks').innerHTML = '';
+  }
+}
+
+// ==================================================================
+// VEJR (Open-Meteo, ingen nøgle nødvendig — koordinater for Møllebakkevej 6, Ringe)
+// ==================================================================
+
+const VEJRKODER = {
+  0: ['☀️','Klar himmel'], 1: ['🌤','Mest klart'], 2: ['⛅','Delvist skyet'], 3: ['☁️','Overskyet'],
+  45: ['🌫','Tåge'], 48: ['🌫','Rimtåge'],
+  51: ['🌦','Let støvregn'], 53: ['🌦','Støvregn'], 55: ['🌧','Tæt støvregn'],
+  56: ['🌧','Underkølet støvregn'], 57: ['🌧','Tæt underkølet støvregn'],
+  61: ['🌧','Let regn'], 63: ['🌧','Regn'], 65: ['🌧','Kraftig regn'],
+  66: ['🌧','Underkølet regn'], 67: ['🌧','Kraftig underkølet regn'],
+  71: ['🌨','Let sne'], 73: ['🌨','Sne'], 75: ['❄️','Kraftig sne'], 77: ['❄️','Sne-korn'],
+  80: ['🌦','Lette byger'], 81: ['🌧','Byger'], 82: ['⛈','Voldsomme byger'],
+  85: ['🌨','Lette snebyger'], 86: ['❄️','Kraftige snebyger'],
+  95: ['⛈','Tordenvejr'], 96: ['⛈','Tordenvejr med hagl'], 99: ['⛈','Kraftigt tordenvejr med hagl']
+};
+
+async function hentVejr(){
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.28&longitude=10.46&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Europe/Copenhagen&forecast_days=1');
+    const data = await res.json();
+
+    const temp = Math.round(data.current.temperature_2m);
+    const kode = data.current.weather_code;
+    const [ikon, beskrivelse] = VEJRKODER[kode] || ['🌡','Ukendt'];
+    const max = Math.round(data.daily.temperature_2m_max[0]);
+    const min = Math.round(data.daily.temperature_2m_min[0]);
+
+    document.getElementById('vejrIkon').textContent = ikon;
+    document.getElementById('vejrTemp').textContent = temp + '°';
+    document.getElementById('vejrBeskrivelse').textContent = beskrivelse + ' · ' + min + '°/' + max + '°';
+  } catch(e){
+    console.error('Fejl vejr:', e);
+  }
+}
+
+// ==================================================================
+// SLIDE-ROTATION (Aktivitet ⇄ Ugens madplan, hvert 10. sekund)
+// ==================================================================
+
+let slideIndex = 0;
+const slides = ['aktivitetSlide', 'madplanSlide'];
+
+function visSlide(){
+  slides.forEach((id, i) => {
+    document.getElementById(id).classList.toggle('vis', i === slideIndex);
+  });
+}
+
+// ==================================================================
+// INITIALISER
+// ==================================================================
+
+function hentAlt(){
+  hentPersonale();
+  hentMadplan();
+  hentAktivitet();
+}
+
+hentAlt();
+hentVejr();
+visSlide();
+
+setInterval(hentAlt, 60000);
+setInterval(hentVejr, 1800000);
+setInterval(() => {
+  slideIndex = (slideIndex + 1) % slides.length;
+  visSlide();
+}, 10000);
+
+</script>
+
+</body>
+</html>
