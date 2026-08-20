@@ -337,12 +337,12 @@
 <!-- KONFIGURATION: Indsæt din Supabase URL og anon key herunder  -->
 <!-- ============================================================ -->
 <script>
-  const SUPABASE_URL  = 'https://lumxvqhlmokspqnazhso.supabase.co';
+  const SUPABASE_URL  = 'https://lumxvqhlmokspqnazhso.sb.co';
   const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1bXh2cWhsbW9rc3BxbmF6aHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzc3NTMsImV4cCI6MjA5OTYxMzc1M30.WvVrbqZWaY1V-6sC4XwoYDOciBULeCxcnxvB7TlAMno';
 </script>
 
 <!-- Supabase JS client (v2 UMD) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sb/sb-js@2/dist/umd/sb.min.js"></script>
 
 <div id="topVenstre">
   <nav>
@@ -410,10 +410,10 @@
 // placeholders). Uret og fane-rotationen skal virke uanset — dette er en
 // uovervåget skærm — så en fejl her må ALDRIG stoppe resten af scriptet.
 
-let supabase = null;
+let sb = null;
 
 try {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 } catch (e) {
   console.error('Kunne ikke oprette Supabase-klient:', e);
 }
@@ -424,7 +424,7 @@ function visSupabaseFejl(){
   });
 }
 
-if(!supabase) visSupabaseFejl();
+if(!sb) visSupabaseFejl();
 
 // ---- Tilstand ----
 
@@ -509,8 +509,8 @@ function escapeHtml(str){
 // ---- BESKEDER ----
 
 async function hentBeskeder(){
-  if(!supabase) return;
-  const { data, error } = await supabase
+  if(!sb) return;
+  const { data, error } = await sb
     .from('beskeder')
     .select('*')
     .eq('aktiv', true)
@@ -583,8 +583,8 @@ function visBeskeder(data){
 // ---- UGEPLANER / DAGSPLAN ----
 
 async function hentUgeplaner(){
-  if(!supabase) return;
-  const { data, error } = await supabase
+  if(!sb) return;
+  const { data, error } = await sb
     .from('ugeplaner')
     .select('*');
 
@@ -713,14 +713,14 @@ function statusIkon(status){
 
 async function hentAfkrydsningsskema(){
   opdaterAfkrydsningOverskrift();
-  if(!supabase) return;
+  if(!sb) return;
 
   const { dato } = afkrydsningVisningsdato();
   const datoStr = datoISO(dato);
 
   const [opgaverRes, afkrydsRes] = await Promise.all([
-    supabase.from('opgavelister').select('*').order('sortering'),
-    supabase.from('afkrydsninger').select('*').eq('dato', datoStr)
+    sb.from('opgavelister').select('*').order('sortering'),
+    sb.from('afkrydsninger').select('*').eq('dato', datoStr)
   ]);
 
   if(opgaverRes.error){ console.error('Fejl opgavelister:', opgaverRes.error); return; }
@@ -779,16 +779,16 @@ function visAfkrydsningsskema(beboere){
 // ---- OVERLAP ----
 
 async function hentOverlap(){
-  if(!supabase) return;
+  if(!sb) return;
   const { dato } = afkrydsningVisningsdato();
   const datoStr = datoISO(new Date());
 
   const [farveRes, journalRes, punktRes, tjekRes, dvRes] = await Promise.all([
-    supabase.from('overlap_farver').select('*').eq('dato', datoStr),
-    supabase.from('overlap_journal').select('*').eq('dato', datoStr),
-    supabase.from('overlap_tjekliste_opgaver').select('*').order('sortering'),
-    supabase.from('overlap_tjekliste').select('*').eq('dato', datoStr),
-    supabase.from('overlap_dognvagt').select('*').eq('dato', datoStr).limit(1)
+    sb.from('overlap_farver').select('*').eq('dato', datoStr),
+    sb.from('overlap_journal').select('*').eq('dato', datoStr),
+    sb.from('overlap_tjekliste_opgaver').select('*').order('sortering'),
+    sb.from('overlap_tjekliste').select('*').eq('dato', datoStr),
+    sb.from('overlap_dognvagt').select('*').eq('dato', datoStr).limit(1)
   ]);
 
   const farverPerBeboer = {};
@@ -1000,23 +1000,23 @@ setInterval(tegnUgeplaner, 60000);
 // uden gyldige nøgler skal skærmen falde tilbage til bare at vise fejlen,
 // ikke kaste yderligere exceptions her.
 
-if(supabase){
+if(sb){
 
-  supabase
+  sb
     .channel('beskeder-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'beskeder' }, () => {
       hentBeskeder();
     })
     .subscribe();
 
-  supabase
+  sb
     .channel('afkrydsning-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'afkrydsninger' }, () => {
       if(aktuelSide === 'afkrydsning') hentAfkrydsningsskema();
     })
     .subscribe();
 
-  supabase
+  sb
     .channel('overlap-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'overlap_farver' }, () => {
       if(aktuelSide === 'overlap') hentOverlap();

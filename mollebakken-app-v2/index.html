@@ -408,12 +408,12 @@
 <!-- KONFIGURATION -->
 <!-- ============================================================ -->
 <script>
-  const SUPABASE_URL = 'https://lumxvqhlmokspqnazhso.supabase.co';
+  const SUPABASE_URL = 'https://lumxvqhlmokspqnazhso.sb.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1bXh2cWhsbW9rc3BxbmF6aHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzc3NTMsImV4cCI6MjA5OTYxMzc1M30.WvVrbqZWaY1V-6sC4XwoYDOciBULeCxcnxvB7TlAMno';
   const ADMIN_KODE = '1234'; // Samme som den gamle Apps Script-version — kun et menu-synligheds-gate, ikke reel sikkerhed.
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sb/sb-js@2/dist/umd/sb.min.js"></script>
 
 <div id="app">
 
@@ -671,9 +671,9 @@
 // SUPABASE-KLIENT (defensiv init, se personaletavle-v2 for baggrund)
 // ==================================================================
 
-let supabase = null;
+let sb = null;
 try {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 } catch (e) {
   console.error('Kunne ikke oprette Supabase-klient:', e);
 }
@@ -700,8 +700,8 @@ const UGEDAGE = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Sønd
 let beboereListe = []; // [{navn, farve, sortering}]
 
 async function hentBeboere(){
-  if(!supabase) return;
-  const { data, error } = await supabase.from('beboere').select('*').order('sortering');
+  if(!sb) return;
+  const { data, error } = await sb.from('beboere').select('*').order('sortering');
   if(error){ console.error('Fejl beboere:', error); return; }
   beboereListe = data || [];
   fyldBeboerSelects();
@@ -811,8 +811,8 @@ const FEATURE_KORT = [
 let indstillingerCache = {};
 
 async function tegnForside(){
-  if(!supabase) return;
-  const { data, error } = await supabase.from('indstillinger').select('*');
+  if(!sb) return;
+  const { data, error } = await sb.from('indstillinger').select('*');
   if(error){ console.error('Fejl indstillinger:', error); return; }
 
   indstillingerCache = {};
@@ -843,7 +843,7 @@ function vælgPrioritet(p){
 }
 
 async function sendBesked(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const beboer = document.getElementById('beskedBeboer').value;
   const besked = document.getElementById('beskedTekst').value.trim();
@@ -851,7 +851,7 @@ async function sendBesked(){
 
   if(!besked){ visToast('Skriv en besked først'); return; }
 
-  const { error } = await supabase.from('beskeder').insert({
+  const { error } = await sb.from('beskeder').insert({
     beboer, prioritet: valgtPrioritet, besked,
     dato: new Date().toISOString().slice(0,10),
     afsender: afsender || null,
@@ -868,8 +868,8 @@ async function sendBesked(){
 }
 
 async function hentBeskeder(){
-  if(!supabase) return;
-  const { data, error } = await supabase
+  if(!sb) return;
+  const { data, error } = await sb
     .from('beskeder')
     .select('*')
     .eq('aktiv', true)
@@ -904,8 +904,8 @@ function prioritetFarve(p){
 }
 
 async function skjulBesked(id){
-  if(!supabase) return;
-  const { error } = await supabase.from('beskeder').update({ aktiv: false }).eq('id', id);
+  if(!sb) return;
+  const { error } = await sb.from('beskeder').update({ aktiv: false }).eq('id', id);
   if(error){ console.error(error); visToast('Fejl: kunne ikke skjule besked'); return; }
   visToast('Besked skjult');
   hentBeskeder();
@@ -945,13 +945,13 @@ function vælgDagsplanDag(dag){
 }
 
 async function hentDagsplan(){
-  if(!supabase) return;
+  if(!sb) return;
   const beboer = document.getElementById('dagsplanBeboer').value;
   if(!beboer) return;
 
   tegnDagsplanFaner();
 
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('ugeplaner')
     .select('*')
     .eq('beboer', beboer);
@@ -987,7 +987,7 @@ function tegnDagsplanListe(){
 }
 
 async function tilføjDagsplanAktivitet(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const beboer = document.getElementById('dagsplanBeboer').value;
   const tid = document.getElementById('dagsplanNyTid').value.trim();
@@ -995,7 +995,7 @@ async function tilføjDagsplanAktivitet(){
 
   if(!tid || !aktivitet){ visToast('Udfyld både tid og aktivitet'); return; }
 
-  const { error } = await supabase.from('ugeplaner').insert({
+  const { error } = await sb.from('ugeplaner').insert({
     beboer, ugedag: valgtDagsplanUgedag, tid, aktivitet
   });
 
@@ -1008,8 +1008,8 @@ async function tilføjDagsplanAktivitet(){
 }
 
 async function fjernDagsplanAktivitet(id){
-  if(!supabase) return;
-  const { error } = await supabase.from('ugeplaner').delete().eq('id', id);
+  if(!sb) return;
+  const { error } = await sb.from('ugeplaner').delete().eq('id', id);
   if(error){ console.error(error); visToast('Fejl: kunne ikke fjerne'); return; }
   visToast('Fjernet');
   hentDagsplan();
@@ -1051,7 +1051,7 @@ function visProgramMode(){
 }
 
 async function hentMadplan(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const ugeStart = datoISO(effektivMandag(programUgeValg));
   document.getElementById('madplanOverskrift').innerHTML =
@@ -1059,7 +1059,7 @@ async function hentMadplan(){
     '<div style="margin-top:8px;"><button class="knap knapLille ' + (programUgeValg===0?'knapGuld':'') + '" onclick="skiftProgramUge(0)">Denne uge</button> ' +
     '<button class="knap knapLille ' + (programUgeValg===1?'knapGuld':'') + '" onclick="skiftProgramUge(1)">Næste uge</button></div>';
 
-  const { data, error } = await supabase.from('madplan').select('*').eq('uge_start', ugeStart);
+  const { data, error } = await sb.from('madplan').select('*').eq('uge_start', ugeStart);
   if(error){ console.error(error); return; }
 
   const perDag = {};
@@ -1074,7 +1074,7 @@ async function hentMadplan(){
 }
 
 async function gemMadplan(){
-  if(!supabase) return;
+  if(!sb) return;
   const ugeStart = datoISO(effektivMandag(programUgeValg));
 
   const poster = [...document.querySelectorAll('.madplanInput')].map(input => ({
@@ -1083,13 +1083,13 @@ async function gemMadplan(){
     uge_start: ugeStart
   }));
 
-  const { error } = await supabase.from('madplan').upsert(poster, { onConflict: 'dag,uge_start' });
+  const { error } = await sb.from('madplan').upsert(poster, { onConflict: 'dag,uge_start' });
   if(error){ console.error(error); visToast('Fejl: kunne ikke gemme madplan'); return; }
   visToast('Madplan gemt');
 }
 
 async function hentAktiviteter(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const ugeStart = datoISO(effektivMandag(programUgeValg));
   document.getElementById('aktivitetOverskrift').innerHTML =
@@ -1097,7 +1097,7 @@ async function hentAktiviteter(){
     '<div style="margin-top:8px;"><button class="knap knapLille ' + (programUgeValg===0?'knapGuld':'') + '" onclick="skiftProgramUge(0)">Denne uge</button> ' +
     '<button class="knap knapLille ' + (programUgeValg===1?'knapGuld':'') + '" onclick="skiftProgramUge(1)">Næste uge</button></div>';
 
-  const { data, error } = await supabase.from('aktiviteter').select('*').eq('uge_start', ugeStart);
+  const { data, error } = await sb.from('aktiviteter').select('*').eq('uge_start', ugeStart);
   if(error){ console.error(error); return; }
 
   const perDag = {};
@@ -1114,7 +1114,7 @@ async function hentAktiviteter(){
 }
 
 async function gemAktiviteter(){
-  if(!supabase) return;
+  if(!sb) return;
   const ugeStart = datoISO(effektivMandag(programUgeValg));
 
   const poster = [...document.querySelectorAll('.aktivitetInput')].map(input => ({
@@ -1123,17 +1123,17 @@ async function gemAktiviteter(){
     uge_start: ugeStart
   }));
 
-  const { error } = await supabase.from('aktiviteter').upsert(poster, { onConflict: 'dag,uge_start' });
+  const { error } = await sb.from('aktiviteter').upsert(poster, { onConflict: 'dag,uge_start' });
   if(error){ console.error(error); visToast('Fejl: kunne ikke gemme aktiviteter'); return; }
   visToast('Aktiviteter gemt');
 }
 
 async function sætIngenFællesAktivitet(){
-  if(!supabase) return;
+  if(!sb) return;
   const dagensDag = UGEDAGE[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
   const ugeStart = datoISO(effektivMandag(programUgeValg));
 
-  const { error } = await supabase.from('aktiviteter').upsert(
+  const { error } = await sb.from('aktiviteter').upsert(
     { dag: dagensDag, aktivitet: 'Ingen fælles aktivitet', uge_start: ugeStart },
     { onConflict: 'dag,uge_start' }
   );
@@ -1152,14 +1152,14 @@ function skiftProgramUge(valg){
 // ==================================================================
 
 async function visSammenMed(){
-  if(!supabase) return;
+  if(!sb) return;
   const beboer = document.getElementById('sammenMedBeboer').value;
   if(!beboer) return;
 
   const dagensDag = UGEDAGE[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
   const nuMinutter = new Date().getHours() * 60 + new Date().getMinutes();
 
-  const { data, error } = await supabase.from('ugeplaner').select('*').eq('beboer', beboer).eq('ugedag', dagensDag);
+  const { data, error } = await sb.from('ugeplaner').select('*').eq('beboer', beboer).eq('ugedag', dagensDag);
   if(error){ console.error(error); return; }
 
   const sorteret = (data || [])
@@ -1197,7 +1197,7 @@ function visP104Mode(){
 }
 
 async function opretParagraf104Idé(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const beboer = document.getElementById('p104Beboer').value;
   const kategori = document.getElementById('p104Kategori').value;
@@ -1206,7 +1206,7 @@ async function opretParagraf104Idé(){
 
   if(!beskrivelse){ visToast('Skriv en beskrivelse'); return; }
 
-  const { error } = await supabase.from('paragraf104_ideer').insert({
+  const { error } = await sb.from('paragraf104_ideer').insert({
     beboer, kategori, beskrivelse,
     oprettet_af: oprettetAf || null,
     dato: new Date().toISOString().slice(0,10),
@@ -1221,8 +1221,8 @@ async function opretParagraf104Idé(){
 }
 
 async function hentParagraf104Idéer(){
-  if(!supabase) return;
-  const { data, error } = await supabase.from('paragraf104_ideer').select('*').order('created_at', { ascending: false });
+  if(!sb) return;
+  const { data, error } = await sb.from('paragraf104_ideer').select('*').order('created_at', { ascending: false });
   if(error){ console.error(error); return; }
 
   const container = document.getElementById('p104ListeIndhold');
@@ -1257,14 +1257,14 @@ function datoISOIdag(){
 }
 
 async function hentAfkrydsningsskema(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const dato = datoISOIdag();
   document.getElementById('afkrydsningOverskrift').textContent = 'Afkrydsningsskema (' + dato + ')';
 
   const [opgRes, afkRes] = await Promise.all([
-    supabase.from('opgavelister').select('*').order('sortering'),
-    supabase.from('afkrydsninger').select('*').eq('dato', dato)
+    sb.from('opgavelister').select('*').order('sortering'),
+    sb.from('afkrydsninger').select('*').eq('dato', dato)
   ]);
 
   if(opgRes.error){ console.error(opgRes.error); return; }
@@ -1317,7 +1317,7 @@ function sætAfkrydsningStatus(beboer, opgave, status){
 }
 
 async function gemAfkrydsninger(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const dato = datoISOIdag();
   const poster = Object.keys(afkrydsningBuffer).map(nøgle => {
@@ -1327,19 +1327,19 @@ async function gemAfkrydsninger(){
 
   if(poster.length === 0){ visToast('Ingen ændringer at gemme'); return; }
 
-  const { error } = await supabase.from('afkrydsninger').upsert(poster, { onConflict: 'dato,beboer,opgave' });
+  const { error } = await sb.from('afkrydsninger').upsert(poster, { onConflict: 'dato,beboer,opgave' });
   if(error){ console.error(error); visToast('Fejl: kunne ikke gemme'); return; }
   visToast('Afkrydsninger gemt');
 }
 
 async function tilføjOpgave(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const beboer = document.getElementById('afkrydsningNyBeboer').value;
   const opgave = document.getElementById('afkrydsningNyOpgave').value.trim();
   if(!opgave){ visToast('Skriv en opgave'); return; }
 
-  const { error } = await supabase.from('opgavelister').insert({ beboer, opgave, sortering: 999 });
+  const { error } = await sb.from('opgavelister').insert({ beboer, opgave, sortering: 999 });
   if(error){ console.error(error); visToast('Fejl'); return; }
 
   document.getElementById('afkrydsningNyOpgave').value = '';
@@ -1348,8 +1348,8 @@ async function tilføjOpgave(){
 }
 
 async function fjernOpgave(id){
-  if(!supabase) return;
-  const { error } = await supabase.from('opgavelister').delete().eq('id', id);
+  if(!sb) return;
+  const { error } = await sb.from('opgavelister').delete().eq('id', id);
   if(error){ console.error(error); visToast('Fejl'); return; }
   visToast('Opgave fjernet');
   hentAfkrydsningsskema();
@@ -1380,16 +1380,16 @@ function visOverlapMode(){
 }
 
 async function hentOverlap(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const dato = datoISOIdag();
 
   const [farveRes, journalRes, punktRes, tjekRes, dvRes] = await Promise.all([
-    supabase.from('overlap_farver').select('*').eq('dato', dato),
-    supabase.from('overlap_journal').select('*').eq('dato', dato),
-    supabase.from('overlap_tjekliste_opgaver').select('*').order('sortering'),
-    supabase.from('overlap_tjekliste').select('*').eq('dato', dato),
-    supabase.from('overlap_dognvagt').select('*').eq('dato', dato).limit(1)
+    sb.from('overlap_farver').select('*').eq('dato', dato),
+    sb.from('overlap_journal').select('*').eq('dato', dato),
+    sb.from('overlap_tjekliste_opgaver').select('*').order('sortering'),
+    sb.from('overlap_tjekliste').select('*').eq('dato', dato),
+    sb.from('overlap_dognvagt').select('*').eq('dato', dato).limit(1)
   ]);
 
   overlapFarveBuffer = {};
@@ -1435,18 +1435,18 @@ function toggleOverlapFarve(beboer, farve){
 }
 
 async function gemOverlapFarver(){
-  if(!supabase) return;
+  if(!sb) return;
   const dato = datoISOIdag();
 
   // Eksistens = valgt: slet alle dagens rækker og genindsæt kun de aktive.
-  await supabase.from('overlap_farver').delete().eq('dato', dato);
+  await sb.from('overlap_farver').delete().eq('dato', dato);
 
   const poster = Object.keys(overlapFarveBuffer)
     .filter(nøgle => overlapFarveBuffer[nøgle])
     .map(nøgle => { const [beboer, farve] = nøgle.split('|'); return { dato, beboer, farve }; });
 
   if(poster.length > 0){
-    const { error } = await supabase.from('overlap_farver').insert(poster);
+    const { error } = await sb.from('overlap_farver').insert(poster);
     if(error){ console.error(error); visToast('Fejl: kunne ikke gemme'); return; }
   }
   visToast('Farver gemt');
@@ -1476,7 +1476,7 @@ function toggleOverlapJournal(beboer, tidspunkt){
 }
 
 async function gemOverlapJournal(){
-  if(!supabase) return;
+  if(!sb) return;
   const dato = datoISOIdag();
 
   const poster = [];
@@ -1486,7 +1486,7 @@ async function gemOverlapJournal(){
     });
   });
 
-  const { error } = await supabase.from('overlap_journal').upsert(poster, { onConflict: 'dato,beboer,tidspunkt' });
+  const { error } = await sb.from('overlap_journal').upsert(poster, { onConflict: 'dato,beboer,tidspunkt' });
   if(error){ console.error(error); visToast('Fejl: kunne ikke gemme'); return; }
   visToast('Journal gemt');
 }
@@ -1513,11 +1513,11 @@ function toggleOverlapTjekliste(opgave){
 }
 
 async function tilføjOverlapPunkt(){
-  if(!supabase) return;
+  if(!sb) return;
   const opgave = document.getElementById('overlapNytPunkt').value.trim();
   if(!opgave){ visToast('Skriv et punkt'); return; }
 
-  const { error } = await supabase.from('overlap_tjekliste_opgaver').insert({ opgave, sortering: 999 });
+  const { error } = await sb.from('overlap_tjekliste_opgaver').insert({ opgave, sortering: 999 });
   if(error){ console.error(error); visToast('Fejl'); return; }
 
   document.getElementById('overlapNytPunkt').value = '';
@@ -1526,7 +1526,7 @@ async function tilføjOverlapPunkt(){
 }
 
 async function gemOverlapTjekliste(){
-  if(!supabase) return;
+  if(!sb) return;
   const dato = datoISOIdag();
 
   const poster = overlapTjeklisteOpgaver.map(o => ({
@@ -1535,7 +1535,7 @@ async function gemOverlapTjekliste(){
 
   if(poster.length === 0){ visToast('Ingen punkter'); return; }
 
-  const { error } = await supabase.from('overlap_tjekliste').upsert(poster, { onConflict: 'dato,opgave' });
+  const { error } = await sb.from('overlap_tjekliste').upsert(poster, { onConflict: 'dato,opgave' });
   if(error){ console.error(error); visToast('Fejl: kunne ikke gemme'); return; }
   visToast('Tjekliste gemt');
 }
@@ -1559,7 +1559,7 @@ function rengoringAktueltDato(){
 }
 
 async function hentRengoring(){
-  if(!supabase) return;
+  if(!sb) return;
 
   const aktuelDato = rengoringAktueltDato();
   const aktuelDatoISO = datoISO(aktuelDato);
@@ -1573,8 +1573,8 @@ async function hentRengoring(){
   });
 
   const [ugeRes, ansvarligRes] = await Promise.all([
-    supabase.from('rengoring_uge').select('*'),
-    supabase.from('rengoring_ansvarlig').select('*').in('dato', ugensDatoer.map(d => d.datoISO))
+    sb.from('rengoring_uge').select('*'),
+    sb.from('rengoring_ansvarlig').select('*').in('dato', ugensDatoer.map(d => d.datoISO))
   ]);
 
   if(ugeRes.error){ console.error(ugeRes.error); return; }
@@ -1612,12 +1612,12 @@ async function hentRengoring(){
 }
 
 async function toggleRengoringDag(dag){
-  if(!supabase) return;
+  if(!sb) return;
 
-  const { data } = await supabase.from('rengoring_uge').select('*').eq('dag', dag).maybeSingle();
+  const { data } = await sb.from('rengoring_uge').select('*').eq('dag', dag).maybeSingle();
   const nyStatus = !(data && data.afkrydset);
 
-  const { error } = await supabase.from('rengoring_uge').upsert(
+  const { error } = await sb.from('rengoring_uge').upsert(
     { dag, opgave: data ? data.opgave : '', afkrydset: nyStatus },
     { onConflict: 'dag' }
   );
@@ -1631,8 +1631,8 @@ async function toggleRengoringDag(dag){
 // ==================================================================
 
 async function hentIndstillingerAdmin(){
-  if(!supabase) return;
-  const { data, error } = await supabase.from('indstillinger').select('*').order('fane');
+  if(!sb) return;
+  const { data, error } = await sb.from('indstillinger').select('*').order('fane');
   if(error){ console.error(error); return; }
 
   document.getElementById('adminIndstillinger').innerHTML = (data || []).map(i => `
@@ -1646,8 +1646,8 @@ async function hentIndstillingerAdmin(){
 }
 
 async function toggleIndstilling(fane, nuværendeVærdi){
-  if(!supabase) return;
-  const { error } = await supabase.from('indstillinger').update({ aktiv: !nuværendeVærdi }).eq('fane', fane);
+  if(!sb) return;
+  const { error } = await sb.from('indstillinger').update({ aktiv: !nuværendeVærdi }).eq('fane', fane);
   if(error){ console.error(error); visToast('Fejl'); return; }
   hentIndstillingerAdmin();
 }
