@@ -38,60 +38,60 @@
     display:grid;
     grid-template-columns:73% 27%;
     height:100vh;
-    padding:18px;
-    gap:16px;
+    padding:10px;
+    gap:8px;
   }
 
   #venstre{
     display:flex;
     flex-direction:column;
-    gap:14px;
+    gap:8px;
     min-height:0;
   }
 
   #højre{
     display:flex;
     flex-direction:column;
-    gap:14px;
+    gap:8px;
     min-height:0;
   }
 
   #overskrift{
-    font-size:26px;
+    font-size:22px;
     font-weight:700;
     color:var(--mørk);
-    padding-bottom:4px;
-    border-bottom:3px solid var(--guld);
+    padding-bottom:3px;
+    border-bottom:2px solid var(--guld);
   }
 
   .kort{
     background:var(--kort);
-    border-radius:16px;
-    padding:16px 20px;
-    box-shadow:0 6px 20px rgba(30,57,55,.08);
+    border-radius:10px;
+    padding:8px 10px;
+    box-shadow:0 4px 12px rgba(30,57,55,.08);
   }
 
   #gulv{
     flex:1;
     display:grid;
     grid-template-columns:repeat(5, 1fr);
-    gap:14px;
+    gap:8px;
     min-height:0;
   }
 
   .personKort{
     background:var(--kort);
-    border-radius:16px;
+    border-radius:10px;
     overflow:hidden;
     text-align:center;
-    box-shadow:0 6px 20px rgba(30,57,55,.08);
+    box-shadow:0 4px 12px rgba(30,57,55,.08);
     display:flex;
     flex-direction:column;
   }
 
   .personKort .personKortTop{
     background:var(--mørk);
-    padding:8px;
+    padding:4px;
   }
 
   .personKort.erDøgnvagt .personKortTop{ background:var(--guld); }
@@ -102,8 +102,8 @@
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:6px;
-    padding:14px;
+    gap:2px;
+    padding:6px;
   }
 
   .personKort img, .personKortLille img{
@@ -112,77 +112,78 @@
     background:#d1d9d6;
   }
 
-  .personKort img{ width:64px; height:64px; border:3px solid white; margin-top:-32px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
-  .personKort .navn{ font-weight:700; font-size:14px; }
-  .personKort .rolle{ font-size:11px; font-weight:700; color:var(--guld); letter-spacing:.5px; }
-  .personKort .tid{ font-size:10px; color:var(--tekst-svag); }
+  .personKort img{ width:52px; height:52px; border:2px solid white; margin-top:-28px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  .personKort .navn{ font-weight:700; font-size:15px; }
+  .personKort .rolle{ font-size:11px; font-weight:700; color:var(--guld); letter-spacing:.3px; }
+  .personKort .tid{ font-size:11px; color:var(--tekst-svag); }
 
   #bundRække{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:14px;
-    height:150px;
+    gap:8px;
+    height:90px;
   }
 
   #vejrPmødeRække{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:14px;
-    height:110px;
+    gap:8px;
+    height:72px;
   }
 
   .lilleBoks{
     background:var(--kort);
-    border-radius:16px;
-    padding:12px 16px;
-    box-shadow:0 6px 20px rgba(30,57,55,.08);
+    border-radius:10px;
+    padding:6px 10px;
+    box-shadow:0 4px 12px rgba(30,57,55,.08);
     overflow-y:auto;
-    border-top:4px solid var(--grøn);
+    border-top:3px solid var(--grøn);
   }
 
-  .lilleBoks h3{ font-size:13px; color:var(--grøn); font-weight:700; margin-bottom:8px; }
+  .lilleBoks h3{ font-size:12px; color:var(--grøn); font-weight:700; margin-bottom:3px; }
 
   .personKortLille{
     display:flex;
     align-items:center;
-    gap:8px;
-    padding:4px 0;
+    gap:6px;
+    padding:2px 0;
   }
-  .personKortLille img{ width:36px; height:36px; }
+  .personKortLille img{ width:26px; height:26px; }
   .personKortLille .navn{ font-weight:600; font-size:12px; }
 
-  #vejrBoks{ text-align:center; border-top-color:var(--grøn-lys); }
-  #vejrBoks .temp{ font-size:28px; font-weight:700; color:var(--mørk); }
-  #vejrBoks .ikon{ font-size:28px; }
-  #vejrBoks .beskrivelse{ font-size:12px; color:var(--tekst-svag); }
+  #vejrBoks{ text-align:center; border-top-color:var(--grøn-lys); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #vejrBoks .temp{ font-size:22px; font-weight:700; color:var(--mørk); }
+  #vejrBoks .ikon{ font-size:22px; }
+  #vejrBoks .beskrivelse{ font-size:10px; color:var(--tekst-svag); }
 
-  #pmødeBoks{ border-top:4px solid var(--lilla); }
+  #pmødeBoks{ border-top:3px solid var(--lilla); }
   #pmødeBoks h3{ color:var(--lilla); }
   .pillPerson{
     display:inline-flex;
     align-items:center;
-    gap:6px;
+    gap:4px;
     background:#f3e8ff;
-    border-radius:20px;
-    padding:3px 10px 3px 3px;
-    margin:2px;
-    font-size:11px;
+    border-radius:16px;
+    padding:2px 8px 2px 2px;
+    margin:1px;
+    font-size:10px;
   }
-  .pillPerson img{ width:20px; height:20px; border-radius:50%; }
+  .pillPerson img{ width:18px; height:18px; border-radius:50%; }
 
   #dagensMad{
     text-align:center;
-    border-top:5px solid var(--guld);
+    border-top:4px solid var(--guld);
     background:linear-gradient(180deg, #fff8ec 0%, #ffffff 60%);
   }
-  #dagensMad h3{ font-size:13px; color:var(--guld); font-weight:700; margin-bottom:6px; }
-  #dagensMadRet{ font-size:22px; font-weight:700; color:var(--mørk); }
+  #dagensMad h3{ font-size:12px; color:var(--guld); font-weight:700; margin-bottom:3px; }
+  #dagensMadRet{ font-size:19px; font-weight:700; color:var(--mørk); }
 
   #slideContainer{
     flex:1;
     position:relative;
     min-height:0;
-    border-top:5px solid var(--grøn);
+    border-top:4px solid var(--grøn);
+    overflow:hidden;
   }
 
   .slide{
@@ -192,18 +193,18 @@
   }
   .slide.vis{ display:flex; }
 
-  #aktivitetSlide h3, #madplanSlide h3{ font-size:13px; color:var(--grøn); font-weight:700; margin-bottom:8px; }
-  #aktivitetNavn{ font-size:16px; font-weight:700; margin-bottom:8px; color:var(--mørk); }
-  #aktivitetBilledeBoks{ flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:12px; background:#f3f4f6; }
+  #aktivitetSlide h3, #madplanSlide h3{ font-size:12px; color:var(--grøn); font-weight:700; margin-bottom:4px; }
+  #aktivitetNavn{ font-size:17px; font-weight:700; margin-bottom:4px; color:var(--mørk); }
+  #aktivitetBilledeBoks{ flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:8px; background:#f3f4f6; min-height:0; }
   #aktivitetBilledeBoks img{ max-width:100%; max-height:100%; object-fit:contain; }
 
   .ugensMadGrid{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:0 16px;
-    font-size:11px;
+    gap:0 10px;
+    font-size:12px;
   }
-  .ugensMadRække{ padding:5px 0; border-bottom:1px solid #eef2ef; }
+  .ugensMadRække{ padding:3px 0; border-bottom:1px solid #eef2ef; }
   .ugensMadRække .dag{ font-weight:700; color:var(--mørk); }
 
   .loading{ text-align:center; color:var(--tekst-svag); padding:20px; font-size:12px; }
