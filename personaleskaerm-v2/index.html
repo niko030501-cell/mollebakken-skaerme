@@ -138,17 +138,28 @@
     border-radius:10px;
     padding:6px 10px;
     box-shadow:0 4px 12px rgba(30,57,55,.08);
-    overflow-y:auto;
+    overflow:hidden;
     border-top:3px solid var(--grøn);
+    display:flex;
+    flex-direction:column;
   }
 
-  .lilleBoks h3{ font-size:12px; color:var(--grøn); font-weight:700; margin-bottom:3px; }
+  .lilleBoks h3{ font-size:12px; color:var(--grøn); font-weight:700; margin-bottom:3px; flex-shrink:0; }
+
+  .lilleBoksListe{
+    display:flex;
+    flex-wrap:wrap;
+    align-content:flex-start;
+    gap:4px 14px;
+    overflow:hidden;
+  }
 
   .personKortLille{
     display:flex;
     align-items:center;
     gap:6px;
     padding:2px 0;
+    flex-shrink:0;
   }
   .personKortLille img{ width:26px; height:26px; }
   .personKortLille .navn{ font-weight:600; font-size:12px; }
@@ -235,11 +246,11 @@
     <div id="bundRække">
       <div class="lilleBoks">
         <h3>🌙 Nattevagt</h3>
-        <div id="nattevagtListe"></div>
+        <div id="nattevagtListe" class="lilleBoksListe"></div>
       </div>
       <div class="lilleBoks">
         <h3>🔧 Andre funktioner</h3>
-        <div id="funktionerListe"></div>
+        <div id="funktionerListe" class="lilleBoksListe"></div>
       </div>
     </div>
 
