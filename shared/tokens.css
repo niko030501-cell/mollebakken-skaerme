@@ -121,6 +121,8 @@
   font-weight:500;
   color:var(--blaek);
   line-height:1.15;
+  min-width:0;   /* lader teksten ombryde i stedet for at skubbe søskende-elementer ud af kolonnen */
+  flex:1 1 auto;
 }
 
 .listepunkt.overstået{ opacity:.4; }
@@ -133,8 +135,9 @@
 
 .listepunkt.nu,
 .listepunkt.akut{
+  position:relative;
   margin:calc(4px * var(--tekst-skala, 1)) calc(-8px * var(--tekst-skala, 1));
-  padding:calc(6px * var(--tekst-skala, 1)) calc(8px * var(--tekst-skala, 1));
+  padding:calc(6px * var(--tekst-skala, 1)) calc(38px * var(--tekst-skala, 1)) calc(6px * var(--tekst-skala, 1)) calc(8px * var(--tekst-skala, 1));
   border-radius:4px;
   border-bottom:none;
 }
@@ -156,7 +159,12 @@
 
 .listepunkt.nu .punkt-flag,
 .listepunkt.akut .punkt-flag{
-  margin-left:auto;
+  /* Absolut placeret i hjørnet — helt uafhængig af hvor bred/høj teksten
+     bliver, så den aldrig skubbes ud af kolonnen eller overlapper når
+     teksten ombrydes til flere linjer. */
+  position:absolute;
+  top:calc(6px * var(--tekst-skala, 1));
+  right:calc(8px * var(--tekst-skala, 1));
   flex-shrink:0;
   font-size:calc(9px * var(--tekst-skala, 1));
   font-weight:800;
