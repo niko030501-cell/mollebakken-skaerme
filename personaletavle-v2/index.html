@@ -243,11 +243,13 @@
 <script src="../shared/icons.js"></script>
 
 <header id="topbjælke">
+  <!-- Afkrydsning og Overlap midlertidigt skjult — funktionen bruges ikke
+       rigtigt endnu. Fanerne/koden er urørt (se .side#afkrydsning/#overlap
+       og visSide()), så det er nemt at slå til igen: tilføj knapperne her
+       og læg 'afkrydsning'/'overlap' tilbage i morgenFaser/aftenFaser. -->
   <nav class="fane-nav">
     <button id="btnBeskeder" class="aktiv" onclick="visSide('beskeder')">Beskeder</button>
     <button id="btnUgeplaner" onclick="visSide('ugeplaner')">Dagsplan</button>
-    <button id="btnAfkrydsning" onclick="visSide('afkrydsning')">Afkrydsning</button>
-    <button id="btnOverlap" onclick="visSide('overlap')">Overlap</button>
   </nav>
 
   <div id="topHøjreInfo">
@@ -872,17 +874,15 @@ let sidsteNormaltSkift = Date.now();
 let faseIndex = 0;
 let faseStart = 0;
 
+// Afkrydsning/Overlap fjernet fra rotationen (fanerne er skjult, se
+// nav'en ovenfor) — læg dem tilbage her hvis funktionen slås til igen.
 const morgenFaser = [
   { side: 'beskeder',    varighed: 30000 },
-  { side: 'afkrydsning', varighed: 15000 },
-  { side: 'ugeplaner',   varighed: 30000 },
-  { side: 'overlap',     varighed: 15000 }
+  { side: 'ugeplaner',   varighed: 30000 }
 ];
 
 const aftenFaser = [
-  { side: 'afkrydsning', varighed: 60000 },
   { side: 'beskeder',    varighed: 15000 },
-  { side: 'overlap',     varighed: 60000 },
   { side: 'ugeplaner',   varighed: 15000 }
 ];
 

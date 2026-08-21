@@ -475,8 +475,9 @@
     <select class="modeVælger" id="opgaverMode" onchange="visOpgaverMode()">
       <option value="besked">📝 Besked</option>
       <option value="dagsplan">📋 Dagsplan</option>
-      <option value="afkrydsning">✅ Afkrydsning</option>
-      <option value="overlap">🚦 Overlap</option>
+      <!-- Afkrydsning og Overlap midlertidigt skjult — funktionen bruges
+           ikke rigtigt endnu. Koden herunder er urørt, så det er nemt at
+           slå til igen: tilføj options her og se visOpgaverMode(). -->
     </select>
 
     <div id="opgaverBesked">
@@ -1314,6 +1315,7 @@ async function gemAktiviteter(){
   const { error } = await sb.from('aktiviteter').upsert(poster, { onConflict: 'dag,uge_start' });
   if(error){ console.error(error); visToast('Fejl: kunne ikke gemme aktiviteter'); return; }
   visToast('Aktiviteter gemt');
+  hentAktiviteter();
 }
 
 async function sætIngenFællesAktivitet(){
