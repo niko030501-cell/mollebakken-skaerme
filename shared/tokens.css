@@ -21,6 +21,7 @@
   --tom:        #8d9a95;  /* tomme tilstande ("Ingen") */
   --guld:       #d89b2b;  /* accent på mørk baggrund */
   --guld-moerk: #8a6212;  /* guld-tekst på lys baggrund */
+  --kritisk:    #7a2320;  /* KUN Akut-markering i Beskeder — ikke en beboerfarve */
 
   --louie:   #7c3aed;
   --kenneth: #2563eb;
@@ -124,17 +125,20 @@
 
 /* ---------- "Nu"-markering ----------
    Det aktive element vender kontrasten om. Den ene ting der må råbe.
-   .akut (Beskeder-prioritet) deler samme behandling — begge er "det der
-   kræver opmærksomhed lige nu", bare i to forskellige sammenhænge. */
+   .akut (Beskeder-prioritet) deler samme opbygning — begge er "det der
+   kræver opmærksomhed lige nu" — men har sin egen farve (--kritisk),
+   for ikke at drukne i sidens almindelige mørkegrønne UI-farve. */
 
 .listepunkt.nu,
 .listepunkt.akut{
-  background:var(--blaek);
   margin:calc(4px * var(--tekst-skala, 1)) calc(-8px * var(--tekst-skala, 1));
   padding:calc(6px * var(--tekst-skala, 1)) calc(8px * var(--tekst-skala, 1));
   border-radius:4px;
   border-bottom:none;
 }
+
+.listepunkt.nu{ background:var(--blaek); }
+.listepunkt.akut{ background:var(--kritisk); }
 
 .listepunkt.nu .klokkeslæt,
 .listepunkt.akut .klokkeslæt{

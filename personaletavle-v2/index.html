@@ -147,8 +147,13 @@
        Vær opmærksom = guld venstrekant. Information = ingen markering. */
 
     .listepunkt.opmærksom{
-      border-left: 3px solid var(--guld);
+      border-left: 5px solid var(--guld);
       padding-left: 8px;
+      background: rgba(216, 155, 43, .12);
+      margin-right: -8px;
+      padding-top: calc(4px * var(--tekst-skala, 1));
+      padding-bottom: calc(4px * var(--tekst-skala, 1));
+      border-radius: 0 3px 3px 0;
     }
 
     /* ---- Personalbjælke ---- */
@@ -172,11 +177,28 @@
     /* ---- Overskrifter ---- */
 
     .forklaring{
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
       font-size: 13px;
-      color: #6b7280;
+      color: var(--tekst-2);
       margin: 8px 0 4px 0;
     }
+
+    .forklaringPunkt{ display: flex; align-items: center; gap: 6px; }
+
+    .forklaringSwatch{ width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+    .swatchAkut{ background: var(--kritisk); }
+
+    .swatchOpmaerksom{
+      background: rgba(216, 155, 43, .12);
+      border-left: 3px solid var(--guld);
+      border-radius: 0 3px 3px 0;
+    }
+
+    .swatchInfo{ background: transparent; border: 1px solid var(--streg); }
 
     /* ---- Overlap: toprække med døgnvagt ---- */
 
@@ -275,7 +297,9 @@
     <div id="personaleBjælkeTekst"></div>
   </div>
   <div class="forklaring">
-    🔴 Akut / vigtigt &nbsp;&nbsp;&nbsp; 🟡 Vær opmærksom &nbsp;&nbsp;&nbsp; 🟢 Information
+    <span class="forklaringPunkt"><span class="forklaringSwatch swatchAkut"></span>Akut / vigtigt</span>
+    <span class="forklaringPunkt"><span class="forklaringSwatch swatchOpmaerksom"></span>Vær opmærksom</span>
+    <span class="forklaringPunkt"><span class="forklaringSwatch swatchInfo"></span>Information</span>
   </div>
   <div id="beskederContainer" class="beboerKolonner">
     <div class="loading">Henter beskeder...</div>
