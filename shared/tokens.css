@@ -135,9 +135,9 @@
 
 .listepunkt.nu,
 .listepunkt.akut{
-  position:relative;
+  flex-wrap:wrap;   /* lader .punkt-flag tvinges ned på sin egen linje herunder */
   margin:calc(4px * var(--tekst-skala, 1)) calc(-8px * var(--tekst-skala, 1));
-  padding:calc(6px * var(--tekst-skala, 1)) calc(38px * var(--tekst-skala, 1)) calc(6px * var(--tekst-skala, 1)) calc(8px * var(--tekst-skala, 1));
+  padding:calc(6px * var(--tekst-skala, 1)) calc(8px * var(--tekst-skala, 1));
   border-radius:4px;
   border-bottom:none;
 }
@@ -159,13 +159,14 @@
 
 .listepunkt.nu .punkt-flag,
 .listepunkt.akut .punkt-flag{
-  /* Absolut placeret i hjørnet — helt uafhængig af hvor bred/høj teksten
-     bliver, så den aldrig skubbes ud af kolonnen eller overlapper når
-     teksten ombrydes til flere linjer. */
-  position:absolute;
-  top:calc(6px * var(--tekst-skala, 1));
-  right:calc(8px * var(--tekst-skala, 1));
-  flex-shrink:0;
+  /* flex-basis:100% + order:-1 tvinger badget til at optage HELE
+     linjebredden for sig selv, øverst — så klokkeslæt+tekst altid
+     ombrydes ned på linjen(r) under, uanset hvor lang teksten er.
+     Ingen delt linje = kan aldrig overlappe eller blive skubbet ud. */
+  flex:0 0 100%;
+  order:-1;
+  text-align:right;
+  margin-bottom:calc(2px * var(--tekst-skala, 1));
   font-size:calc(9px * var(--tekst-skala, 1));
   font-weight:800;
   text-transform:uppercase;
