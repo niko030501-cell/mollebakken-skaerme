@@ -436,10 +436,21 @@ function tilpasTekstTilHøjde(kolonne){
   if(kolonne.clientHeight === 0) return;
 
   kolonne.style.removeProperty('--tekst-skala');
-  let skala = 1;
-  while(kolonne.scrollHeight > kolonne.clientHeight + 1 && skala > 0.5){
-    skala -= 0.05;
+  if(kolonne.scrollHeight <= kolonne.clientHeight + 1) return;
+
+  const GULV = 0.35;
+
+  // Start fra et beregnet skøn i stedet for at trimme ned fra 1.0 i faste
+  // trin — hurtigere frem til målet, og tillader en lavere bund (0.35) for
+  // dage med usædvanligt mange punkter.
+  let skala = Math.max(GULV, (kolonne.clientHeight / kolonne.scrollHeight) * 0.94);
+  kolonne.style.setProperty('--tekst-skala', skala.toFixed(2));
+
+  let forsøg = 0;
+  while(kolonne.scrollHeight > kolonne.clientHeight + 1 && skala > GULV && forsøg < 12){
+    skala = Math.max(GULV, skala - 0.03);
     kolonne.style.setProperty('--tekst-skala', skala.toFixed(2));
+    forsøg++;
   }
 }
 
