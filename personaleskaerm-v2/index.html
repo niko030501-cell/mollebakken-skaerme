@@ -283,7 +283,7 @@
 
   <div id="højre">
     <div id="aftensmad">
-      <div class="eyebrow" id="aftensmadDag">Aftensmad</div>
+      <div class="eyebrow" id="aftensmadDag">Dagens ret</div>
       <div id="aftensmadRet">–</div>
     </div>
 
@@ -560,7 +560,6 @@ async function hentMadplan(){
   const perDag = {};
   (data || []).forEach(r => { perDag[r.dag] = r.ret; });
 
-  document.getElementById('aftensmadDag').textContent = dagensDag;
   document.getElementById('aftensmadRet').textContent = perDag[dagensDag] || 'Ikke angivet';
 
   const ugedageOrden = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
