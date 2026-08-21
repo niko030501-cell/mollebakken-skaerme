@@ -4,7 +4,7 @@
 // fra cache. Data (Supabase-kald) caches ALDRIG — de skal altid være friske,
 // så beskeder/dagsplaner osv. aldrig viser forældet information.
 
-const CACHE_NAVN = 'mollebakken-app-v7';
+const CACHE_NAVN = 'mollebakken-app-v8';
 const APP_SKAL = [
   './',
   './index.html',
@@ -36,19 +36,20 @@ self.addEventListener('fetch', (event) => {
   // Data-kald til Supabase går ALTID direkte til nettet — aldrig cachet.
   if (url.hostname.endsWith('.supabase.co')) return;
 
-  // App-skal: cache-først, med netværk som fallback (og opdaterer cachen).
+  // App-skal: NETVÆRK FØRST, cache er kun en offline-fallback. Var før
+  // cache-først med baggrunds-opdatering, hvilket betød at rettelser aldrig
+  // slog igennem før anden genåbning — brugeren så altid én version bagud
+  // (dokumenteret ved en fejlrettelse der virkede i test, men ikke på den
+  // installerede app før flere forsøg).
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const netFetch = fetch(event.request)
-        .then((res) => {
-          if (res.ok) {
-            const kopi = res.clone();
-            caches.open(CACHE_NAVN).then((cache) => cache.put(event.request, kopi));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || netFetch;
-    })
+    fetch(event.request)
+      .then((res) => {
+        if (res.ok) {
+          const kopi = res.clone();
+          caches.open(CACHE_NAVN).then((cache) => cache.put(event.request, kopi));
+        }
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
