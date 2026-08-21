@@ -5,156 +5,132 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Personaletavle</title>
 
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *{ margin:0; padding:0; box-sizing:border-box; }
 
     body{
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #f0f2f5;
-      color: #1f2937;
+      font-family:'Archivo', sans-serif;
+      background:var(--papir);
+      color:var(--blaek);
       overflow: hidden;
       height: 100vh;
-    }
-
-    /* ---- Navigation ---- */
-
-    #topVenstre{
-      position: fixed;
-      top: 14px;
-      left: 20px;
-      z-index: 999;
-    }
-
-    #topVenstre nav{
       display: flex;
-      gap: 6px;
+      flex-direction: column;
     }
 
-    #topVenstre nav button{
-      padding: 6px 14px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 600;
-      background: #1e40af;
-      color: white;
-      transition: background 0.2s, box-shadow 0.2s;
-      white-space: nowrap;
-    }
+    /* ---- Topbjælke ---- */
 
-    #topVenstre nav button:hover{
-      background: #1d4ed8;
-    }
-
-    .activeTab{
-      background: #16a34a !important;
-      box-shadow: 0 0 12px rgba(22,163,74,.35);
-    }
-
-    /* ---- Ur + QR ---- */
-
-    #topHøjreInfo{
-      position: fixed;
-      top: 12px;
-      right: 20px;
-      z-index: 999;
+    #topbjælke{
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
+      flex-shrink: 0;
+      padding: 14px 20px;
+      border-bottom: 2px solid var(--blaek);
+    }
+
+    #topHøjreInfo{
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    #datoUr{
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    #dato{
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--tekst-2);
     }
 
     #ur{
-      text-align: right;
-      font-size: 17px;
-      font-weight: 600;
-      color: #374151;
-      line-height: 1.3;
-    }
-
-    #qrBoks{
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: white;
-      border-radius: 10px;
-      padding: 6px 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
-    }
-
-    #qrBoks img{
-      width: 36px;
-      height: 36px;
-      border-radius: 4px;
-    }
-
-    #qrBoks .qrTekst{
-      font-size: 8.5px;
-      font-weight: 700;
-      color: #374151;
-      line-height: 1.3;
-      max-width: 95px;
+      font-size: 34px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--blaek);
     }
 
     /* ---- Sider ---- */
 
+    #sideWrapper{
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
     .side{
       display: none;
-      padding: 58px 20px 20px 20px;
-      height: 100vh;
+      height: 100%;
       overflow-y: auto;
+      padding: 20px;
     }
 
     .active{ display: block; }
 
-    /* ---- Grids ---- */
+    /* ---- QR ---- */
 
-    .beskedGrid{
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 14px;
-      padding: 10px;
+    #qrBoks{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--flade);
+      border-radius: 6px;
+      padding: 4px 8px;
     }
 
-    .dagsplanGrid{
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 14px;
-      padding: 10px;
+    #qrBoks img{
+      width: 26px;
+      height: 26px;
+      border-radius: 3px;
     }
 
-    /* ---- Kort ---- */
-
-    .card{
-      background: white;
-      padding: 16px;
-      border-radius: 14px;
-      box-shadow: 0 4px 16px rgba(0,0,0,.06);
-      min-height: 140px;
-      overflow: hidden;
-    }
-
-    .dagsplanGrid .card{ min-height: 220px; }
-
-    .kortHeader{
-      color: white;
-      font-size: 14px;
+    #qrBoks .qrTekst{
+      font-size: 8px;
       font-weight: 700;
-      letter-spacing: 0.8px;
-      padding: 11px 14px;
-      margin: -16px -16px 14px -16px;
-      border-radius: 14px 14px 0 0;
+      color: var(--tekst-2);
+      line-height: 1.25;
+      max-width: 80px;
     }
 
-    /* ---- Beboer-farver ---- */
+    /* ---- Beboerkolonner (alle fire faner — ingen kort, ingen skygger) ---- */
 
-    .kortHeader.kenneth{ background: #2563eb; }
-    .kortHeader.louie{ background: #9333ea; }
-    .kortHeader.leyla{ background: #16a34a; }
-    .kortHeader.niels{ background: #ea580c; }
-    .kortHeader.lars{ background: #dc2626; }
-    .kortHeader.manfred{ background: #0891b2; }
-    .kortHeader.personale{ background: #374151; }
+    .beboerKolonner{
+      display: grid;
+      height: 100%;
+    }
+
+    #ugeplanerContainer{ grid-template-columns: repeat(6, 1fr); }
+    #beskederContainer{ grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+    #afkrydsningContainer{ grid-template-columns: repeat(6, 1fr); }
+    #overlapFarveContainer{ grid-template-columns: repeat(6, 1fr); }
+
+    .beboerKolonne{
+      padding: 0 16px;
+      border-left: 1px solid var(--streg);
+      overflow-y: auto;
+    }
+
+    .beboerKolonne:first-child{ border-left: none; }
+
+    .beboerKolonne ul{ list-style: none; margin-top: 12px; }
+
+    .beboerKolonne .afsender{
+      color: var(--tekst-2);
+      font-weight: 400;
+    }
+
+    .listepunkt.nu .afsender,
+    .listepunkt.akut .afsender{ color: rgba(255,255,255,.65); }
 
     /* ---- Lister ---- */
 
@@ -164,78 +140,34 @@
       padding: 0;
     }
 
-    .beskedGrid li{
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      padding-bottom: 7px;
-      margin-bottom: 7px;
-      border-bottom: 1px solid #f3f4f6;
+    /* ---- Prioritet (Beskeder) ----
+       Akut deler visuel behandling med .listepunkt.nu (tokens.css).
+       Vær opmærksom = guld venstrekant. Information = ingen markering. */
+
+    .listepunkt.opmærksom{
+      border-left: 3px solid var(--guld);
+      padding-left: 8px;
     }
-
-    .beskedGrid li:last-child{
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .beskedTekst{
-      flex: 1;
-      font-size: 10px;
-      line-height: 1.35;
-    }
-
-    .beskedMeta{
-      color: #9ca3af;
-      font-size: 8.5px;
-      font-style: italic;
-    }
-
-    .dagsplanGrid ul{
-      font-size: 9.5px;
-      line-height: 1.2;
-    }
-
-    /* ---- Prioritetsprikker ---- */
-
-    .rødPrik, .gulPrik, .grønPrik{
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      margin-top: 3px;
-    }
-
-    .rødPrik{ background: #ef4444; }
-    .gulPrik{ background: #f59e0b; }
-    .grønPrik{ background: #22c55e; }
 
     /* ---- Personalbjælke ---- */
 
     .personaleBjælke{
-      width: 55%;
-      max-width: 850px;
-      margin: 0 auto 14px auto;
-      background: #374151;
+      width: 100%;
+      background: var(--brand);
       color: white;
-      border-radius: 10px;
-      padding: 10px 20px;
+      border-radius: 6px;
+      padding: 12px 20px;
       text-align: center;
-      font-size: 15px;
+    }
+
+    .personaleBjælke .eyebrow{ color: var(--guld); margin-bottom: 3px; }
+
+    #personaleBjælkeTekst{
+      font-size: 16px;
       font-weight: 700;
-      box-shadow: 0 4px 10px rgba(0,0,0,.12);
     }
 
     /* ---- Overskrifter ---- */
-
-    .sideOverskrift{
-      text-align: center;
-      font-size: 17px;
-      font-weight: 600;
-      color: #6b7280;
-      margin-bottom: 12px;
-    }
 
     .forklaring{
       text-align: center;
@@ -244,81 +176,44 @@
       margin: 8px 0 4px 0;
     }
 
-    /* ---- Dagsplan: NU/overstået/kommende ---- */
+    /* ---- Overlap: toprække med døgnvagt ---- */
 
-    .aktivitetOverstået{ opacity: 0.35; }
-
-    .aktivitetNu{
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      border-radius: 4px;
-      padding: 3px 6px;
-      margin: -3px -6px;
-      display: block;
-      font-weight: 700;
-      animation: pulseNu 2s ease-in-out infinite;
-    }
-
-    .aktivitetKommende{
-      border-left: 4px solid #1e3a8a;
-      border-radius: 4px;
-      padding: 3px 6px;
-      margin: -3px -6px;
-      display: block;
-    }
-
-    @keyframes pulseNu{
-      0%, 100%{ box-shadow: 0 0 0 0 rgba(245,158,11,.5); }
-      50%{ box-shadow: 0 0 0 4px rgba(245,158,11,0); }
-    }
-
-    .nuLabel{
-      display: inline-block;
-      background: #f59e0b;
-      color: white;
-      font-size: 8px;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 6px;
-      margin-left: 6px;
-      letter-spacing: 0.5px;
-      vertical-align: middle;
-    }
-
-    /* ---- Afkrydsning / Overlap opgaverækker ---- */
-
-    .opgaveRække{
+    .topRække{
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      padding: 5px 0;
-      font-size: 11px;
-      border-bottom: 1px solid #f3f4f6;
+      align-items: flex-end;
+      margin-bottom: 4px;
     }
 
-    .opgaveRække:last-child{ border-bottom: none; }
+    .topRække .stor-overskrift{ margin-bottom: 0; }
 
-    .opgaveRække.ikkeRelevant{ opacity: 0.6; }
-    .opgaveRække.ikkeRelevant span:first-child{ font-style: italic; }
+    .dognvagtBoks{ text-align: right; }
 
-    /* ---- Overlap tjekliste ---- */
+    .dognvagtNavn{ font-size: 20px; font-weight: 800; }
 
-    .overlapTjeklisteKort{
-      background: white;
-      max-width: 750px;
-      margin: 12px auto 0 auto;
-      padding: 14px 22px;
-      border-radius: 14px;
-      box-shadow: 0 4px 16px rgba(0,0,0,.06);
+    /* ---- Overlap: dagens vurdering (prikker) ---- */
+
+    .sektionLabel{ margin-top: 18px; margin-bottom: 2px; }
+
+    .vurderingRække{
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin: 14px 0 16px 0;
     }
 
-    .overlapTjeklisteKort ul{
-      columns: 2;
-      column-gap: 30px;
-    }
+    .vurderingPrik{ width: 24px; height: 24px; border-radius: 50%; }
+    .vurderingPrik.tom{ background: #d1d5db; }
+    .vurderingPrik.rød{ background: #ef4444; }
+    .vurderingPrik.gul{ background: #f59e0b; }
+    .vurderingPrik.grøn{ background: #22c55e; }
 
-    .overlapTjeklisteKort li{ break-inside: avoid; }
+    /* ---- Overlap: fælles vagt-tjekliste ---- */
+
+    .tjeklisteBoks{ max-width: 900px; margin: 24px auto 0 auto; }
+    .tjeklisteBoks .eyebrow{ text-align: center; display: block; margin-bottom: 6px; }
+    .tjeklisteGrid{ columns: 2; column-gap: 40px; }
+    .tjeklisteGrid .listepunkt{ break-inside: avoid; }
 
     /* ---- Loading ---- */
 
@@ -343,33 +238,42 @@
 
 <!-- Supabase JS client (v2 UMD) -->
 <script src="supabase-js.min.js"></script>
+<script src="../shared/icons.js"></script>
 
-<div id="topVenstre">
-  <nav>
-    <button id="btnBeskeder" class="activeTab" onclick="visSide('beskeder')">Beskeder</button>
+<header id="topbjælke">
+  <nav class="fane-nav">
+    <button id="btnBeskeder" class="aktiv" onclick="visSide('beskeder')">Beskeder</button>
     <button id="btnUgeplaner" onclick="visSide('ugeplaner')">Dagsplan</button>
     <button id="btnAfkrydsning" onclick="visSide('afkrydsning')">Afkrydsning</button>
     <button id="btnOverlap" onclick="visSide('overlap')">Overlap</button>
   </nav>
-</div>
 
-<div id="topHøjreInfo">
-  <div id="qrBoks">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=https%3A%2F%2Fniko030501-cell.github.io%2Fmollebakken-skaerme%2Fmollebakken-app-v2%2F"
-         alt="QR-kode">
-    <span class="qrTekst">Scan for at åbne<br>Møllebakken app</span>
+  <div id="topHøjreInfo">
+    <div id="qrBoks">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=https%3A%2F%2Fniko030501-cell.github.io%2Fmollebakken-skaerme%2Fmollebakken-app-v2%2F"
+           alt="QR-kode">
+      <span class="qrTekst">Scan for at åbne<br>Møllebakken app</span>
+    </div>
+    <div id="datoUr">
+      <div id="dato"></div>
+      <div id="ur"></div>
+    </div>
   </div>
-  <div id="ur"></div>
-</div>
+</header>
+
+<main id="sideWrapper">
 
 <!-- ==================== BESKEDER ==================== -->
 
 <div id="beskeder" class="side active">
-  <div id="personaleBjælke" class="personaleBjælke" style="display:none;"></div>
+  <div id="personaleBjælke" class="personaleBjælke" style="display:none;">
+    <div class="eyebrow">Personale</div>
+    <div id="personaleBjælkeTekst"></div>
+  </div>
   <div class="forklaring">
     🔴 Akut / vigtigt &nbsp;&nbsp;&nbsp; 🟡 Vær opmærksom &nbsp;&nbsp;&nbsp; 🟢 Information
   </div>
-  <div id="beskederContainer" class="beskedGrid">
+  <div id="beskederContainer" class="beboerKolonner">
     <div class="loading">Henter beskeder...</div>
   </div>
 </div>
@@ -377,8 +281,8 @@
 <!-- ==================== DAGSPLAN ==================== -->
 
 <div id="ugeplaner" class="side">
-  <div id="dagOverskrift" class="sideOverskrift"></div>
-  <div id="ugeplanerContainer" class="dagsplanGrid">
+  <div id="dagOverskrift" class="stor-overskrift"></div>
+  <div id="ugeplanerContainer" class="beboerKolonner">
     <div class="loading">Henter dagsplan...</div>
   </div>
 </div>
@@ -386,8 +290,8 @@
 <!-- ==================== AFKRYDSNING ==================== -->
 
 <div id="afkrydsning" class="side">
-  <div id="afkrydsningOverskrift" class="sideOverskrift"></div>
-  <div id="afkrydsningContainer" class="dagsplanGrid">
+  <div id="afkrydsningOverskrift" class="stor-overskrift"></div>
+  <div id="afkrydsningContainer" class="beboerKolonner">
     <div class="loading">Henter afkrydsningsskema...</div>
   </div>
 </div>
@@ -395,10 +299,18 @@
 <!-- ==================== OVERLAP ==================== -->
 
 <div id="overlap" class="side">
-  <div id="overlapOverskrift" class="sideOverskrift"></div>
-  <div id="overlapFarveContainer" class="dagsplanGrid"></div>
+  <div class="topRække">
+    <div id="overlapOverskrift" class="stor-overskrift"></div>
+    <div class="dognvagtBoks">
+      <div class="eyebrow">Døgnvagt</div>
+      <div id="dognvagtNavn" class="dognvagtNavn"></div>
+    </div>
+  </div>
+  <div id="overlapFarveContainer" class="beboerKolonner"></div>
   <div id="overlapTjeklisteContainer"></div>
 </div>
+
+</main>
 
 <!-- ============================================================ -->
 <!-- SCRIPT                                                        -->
@@ -449,8 +361,8 @@ function visSide(side){
   document.querySelectorAll('.side').forEach(d => d.classList.remove('active'));
   document.getElementById(side).classList.add('active');
 
-  document.querySelectorAll('#topVenstre nav button').forEach(b => b.classList.remove('activeTab'));
-  document.getElementById(knapIdPerSide[side]).classList.add('activeTab');
+  document.querySelectorAll('.fane-nav button').forEach(b => b.classList.remove('aktiv'));
+  document.getElementById(knapIdPerSide[side]).classList.add('aktiv');
 
   aktuelSide = side;
 
@@ -543,37 +455,39 @@ function visBeskeder(data){
   for(const beboer in grupper){
     const items = grupper[beboer];
 
-    const kort = document.createElement('div');
-    kort.className = 'card';
+    const kolonne = document.createElement('div');
+    kolonne.className = 'beboerKolonne';
 
     let liHtml = items.map(item => {
-      let prikClass = 'grønPrik';
-      if(item.prioritet === 'Rød') prikClass = 'rødPrik';
-      else if(item.prioritet === 'Gul') prikClass = 'gulPrik';
+      let ekstraKlasse = '';
+      if(item.prioritet === 'Rød') ekstraKlasse = 'akut';
+      else if(item.prioritet === 'Gul') ekstraKlasse = 'opmærksom';
+
+      const flag = ekstraKlasse === 'akut' ? '<span class="punkt-flag">Akut</span>' : '';
 
       const label = datoLabel(item.dato);
-      const metaDele = [];
-      if(label) metaDele.push(label);
-      if(item.afsender) metaDele.push(escapeHtml(item.afsender));
-      const meta = metaDele.length
-        ? '<span class="beskedMeta"> &middot; ' + metaDele.join(' &middot; ') + '</span>'
+      const afsender = item.afsender
+        ? '<span class="afsender"> &middot; ' + escapeHtml(item.afsender) + '</span>'
         : '';
 
-      return '<li><span class="' + prikClass + '"></span><span class="beskedTekst">' +
-        escapeHtml(item.besked) + meta + '</span></li>';
+      return '<li class="listepunkt' + (ekstraKlasse ? ' ' + ekstraKlasse : '') + '">' +
+        '<span class="klokkeslæt">' + escapeHtml(label) + '</span>' +
+        '<span class="tekst">' + escapeHtml(item.besked) + afsender + '</span>' +
+        flag +
+        '</li>';
     }).join('');
 
-    kort.innerHTML =
-      '<div class="kortHeader ' + beboer.toLowerCase() + '">' + beboer.toUpperCase() + '</div>' +
+    kolonne.innerHTML =
+      '<span class="beboer-tag ' + beboer.toLowerCase() + '">' + beboer.toUpperCase() + '</span>' +
       '<ul>' + liHtml + '</ul>';
 
-    container.appendChild(kort);
+    container.appendChild(kolonne);
   }
 
   const bjælke = document.getElementById('personaleBjælke');
   if(personaleBeskeder.length > 0){
     bjælke.style.display = 'block';
-    bjælke.textContent = 'PERSONALE: ' + personaleBeskeder[0];
+    document.getElementById('personaleBjælkeTekst').textContent = personaleBeskeder[0];
     personaleIndex = 0;
   } else {
     bjælke.style.display = 'none';
@@ -611,7 +525,7 @@ function tegnUgeplaner(){
   const nuMinutter = nu.getHours() * 60 + nu.getMinutes();
 
   document.getElementById('dagOverskrift').innerHTML = visesForMorgendagen
-    ? 'Dagsplan &bull; ' + dagensDag + ' <span style="color:#9ca3af;font-weight:400">(i morgen)</span>'
+    ? 'Dagsplan &bull; ' + dagensDag + ' <span style="color:var(--tom);font-weight:400;text-transform:none">(i morgen)</span>'
     : 'Dagsplan &bull; ' + dagensDag;
 
   const grupper = {};
@@ -643,34 +557,32 @@ function tegnUgeplaner(){
       });
     }
 
-    const kort = document.createElement('div');
-    kort.className = 'card';
+    const kolonne = document.createElement('div');
+    kolonne.className = 'beboerKolonne';
 
     let liHtml = aMedMin.map((item, i) => {
-      let klasse = '';
-      let label = '';
+      let klasse = 'listepunkt';
+      let flag = '';
 
       if(i === nuIndeks){
-        klasse = 'aktivitetNu';
-        label = '<span class="nuLabel">NU</span>';
-      } else if(nuIndeks !== -1 && i === nuIndeks + 1){
-        klasse = 'aktivitetKommende';
-      } else if(nuIndeks === -1 && i === 0){
-        klasse = 'aktivitetKommende';
+        klasse += ' nu';
+        flag = '<span class="punkt-flag">Nu</span>';
       } else if(i < nuIndeks){
-        klasse = 'aktivitetOverstået';
+        klasse += ' overstået';
       }
 
-      return '<li><span class="' + klasse + '"><strong>' +
-        escapeHtml(item.tid) + '</strong> ' +
-        escapeHtml(item.aktivitet) + label + '</span></li>';
+      return '<li class="' + klasse + '">' +
+        '<span class="klokkeslæt">' + escapeHtml(item.tid) + '</span>' +
+        '<span class="tekst">' + escapeHtml(item.aktivitet) + '</span>' +
+        flag +
+        '</li>';
     }).join('');
 
-    kort.innerHTML =
-      '<div class="kortHeader ' + gruppe.beboer.toLowerCase() + '">' + gruppe.beboer.toUpperCase() + '</div>' +
+    kolonne.innerHTML =
+      '<span class="beboer-tag ' + gruppe.beboer.toLowerCase() + '">' + gruppe.beboer.toUpperCase() + '</span>' +
       '<ul>' + liHtml + '</ul>';
 
-    container.appendChild(kort);
+    container.appendChild(kolonne);
   }
 }
 
@@ -694,8 +606,8 @@ function opdaterAfkrydsningOverskrift(){
   const { dato, visesSomIgår } = afkrydsningVisningsdato();
   const ugedag = UGEDAGE[dato.getDay()];
   el.innerHTML = visesSomIgår
-    ? 'Afkrydsningsskema fra i går (' + ugedag + ')'
-    : 'Afkrydsningsskema (' + ugedag + ')';
+    ? 'Afkrydsningsskema &bull; ' + ugedag + ' <span style="color:var(--tom);font-weight:400;text-transform:none">(fra i går)</span>'
+    : 'Afkrydsningsskema &bull; ' + ugedag;
 }
 
 function afkrydsningStatusFraCelle(val){
@@ -705,10 +617,20 @@ function afkrydsningStatusFraCelle(val){
   return 'ikkeGjort';
 }
 
-function statusIkon(status){
-  if(status === 'udført') return '✅';
-  if(status === 'ikkeRelevant') return '➖';
-  return '❌';
+// Status-farvesprog genbruger nu/overstået fra tokens.css, men med en
+// anden betydning end på Dagsplan: her er "nu" IKKE et tidspunkt, men
+// "det der mangler handling" — dvs. ikke gjort endnu. Udført falmer til
+// opacity .4 (samme som overståede aktiviteter), ikke relevant er neutral.
+function afkrydsningStatusKlasse(status){
+  if(status === 'udført') return 'overstået';
+  if(status === 'ikkeRelevant') return 'ikkeRelevant';
+  return 'nu';
+}
+
+function afkrydsningStatusIkon(status){
+  if(status === 'udført') return moelleIkonTjek();
+  if(status === 'ikkeRelevant') return moelleIkonStreg();
+  return moelleIkonKryds();
 }
 
 async function hentAfkrydsningsskema(){
@@ -756,23 +678,22 @@ function visAfkrydsningsskema(beboere){
   container.innerHTML = '';
 
   beboere.forEach(beboerData => {
-    const kort = document.createElement('div');
-    kort.className = 'card';
+    const kolonne = document.createElement('div');
+    kolonne.className = 'beboerKolonne';
 
     let liHtml = beboerData.opgaver.map(o => {
-      const irKlasse = o.status === 'ikkeRelevant' ? ' ikkeRelevant' : '';
-      return '<li class="opgaveRække' + irKlasse + '">' +
-        '<span>' + escapeHtml(o.opgave) + '</span>' +
-        '<span>' + statusIkon(o.status) + '</span>' +
+      return '<li class="listepunkt ' + afkrydsningStatusKlasse(o.status) + '">' +
+        '<span class="tekst">' + escapeHtml(o.opgave) + '</span>' +
+        afkrydsningStatusIkon(o.status) +
         '</li>';
     }).join('');
 
-    kort.innerHTML =
-      '<div class="kortHeader ' + beboerData.beboer.toLowerCase() + '">' +
+    kolonne.innerHTML =
+      '<span class="beboer-tag ' + beboerData.beboer.toLowerCase() + '">' +
         beboerData.beboer.toUpperCase() +
-      '</div><ul>' + liHtml + '</ul>';
+      '</span><ul>' + liHtml + '</ul>';
 
-    container.appendChild(kort);
+    container.appendChild(kolonne);
   });
 }
 
@@ -831,42 +752,48 @@ async function hentOverlap(){
   });
 }
 
-function overlapFarvePrikHtml(farver){
+function overlapVurderingHtml(farver){
   if(!farver || farver.length === 0){
-    return '<span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#d1d5db"></span>';
+    return '<span class="vurderingPrik tom"></span>';
   }
-  const koder = { 'rød': '#ef4444', 'gul': '#f59e0b', 'grøn': '#22c55e' };
-  return farver.map(f =>
-    '<span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:' +
-    koder[f] + ';margin:0 3px"></span>'
-  ).join('');
+  return farver.map(f => '<span class="vurderingPrik ' + f + '"></span>').join('');
+}
+
+// Journal-tidspunkter får bevidst IKKE nu/overstået-farvning — at afgøre
+// om et tidspunkt reelt er overskredet ville kræve ny forretningslogik.
+// Kun et diskret guld-ikon markerer "ikke skrevet endnu".
+function overlapJournalIkon(skrevet){
+  return skrevet
+    ? moelleIkonTjek()
+    : '<svg class="moelle-ikon" style="color:var(--guld-moerk)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6L18 18M18 6L6 18"></path></svg>';
 }
 
 function visOverlap(data){
-  const formatDato = data.dato.split('-').reverse().join('-');
+  const ugedag = UGEDAGE[new Date(data.dato + 'T00:00:00').getDay()];
 
-  document.getElementById('overlapOverskrift').innerHTML =
-    'Overlap-skema (' + formatDato + ') &middot; Døgnvagt: <strong>' +
-    (data.døgnvagt ? escapeHtml(data.døgnvagt) : 'ikke fundet') + '</strong>';
+  document.getElementById('overlapOverskrift').innerHTML = 'Overlap-skema &bull; ' + ugedag;
+  document.getElementById('dognvagtNavn').textContent = data.døgnvagt || 'Ikke fundet';
 
   const farveContainer = document.getElementById('overlapFarveContainer');
   farveContainer.innerHTML = '';
 
   data.beboere.forEach(b => {
-    const kort = document.createElement('div');
-    kort.className = 'card';
+    const kolonne = document.createElement('div');
+    kolonne.className = 'beboerKolonne';
 
     let journalHtml = b.journal.map(j =>
-      '<li class="opgaveRække"><span>' + escapeHtml(j.tidspunkt) +
-      '</span><span>' + (j.skrevet ? '✅' : '❌') + '</span></li>'
+      '<li class="listepunkt"><span class="klokkeslæt">' + escapeHtml(j.tidspunkt) +
+      '</span><span class="tekst"></span>' + overlapJournalIkon(j.skrevet) + '</li>'
     ).join('');
 
-    kort.innerHTML =
-      '<div class="kortHeader ' + b.beboer.toLowerCase() + '">' + b.beboer.toUpperCase() + '</div>' +
-      '<div style="text-align:center;margin:8px 0 12px 0">' + overlapFarvePrikHtml(b.farver) + '</div>' +
+    kolonne.innerHTML =
+      '<span class="beboer-tag ' + b.beboer.toLowerCase() + '">' + b.beboer.toUpperCase() + '</span>' +
+      '<div class="eyebrow sektionLabel" style="text-align:center">Dagens vurdering</div>' +
+      '<div class="vurderingRække">' + overlapVurderingHtml(b.farver) + '</div>' +
+      '<div class="eyebrow sektionLabel">Journal</div>' +
       '<ul>' + journalHtml + '</ul>';
 
-    farveContainer.appendChild(kort);
+    farveContainer.appendChild(kolonne);
   });
 
   const tjekContainer = document.getElementById('overlapTjeklisteContainer');
@@ -875,12 +802,14 @@ function visOverlap(data){
     return;
   }
 
-  let tjekHtml = '<div class="overlapTjeklisteKort"><ul>';
+  let tjekHtml = '<div class="tjeklisteBoks"><span class="eyebrow">Fælles vagt-tjekliste</span><div class="tjeklisteGrid">';
   data.tjekliste.forEach(p => {
-    tjekHtml += '<li class="opgaveRække"><span>' + escapeHtml(p.opgave) +
-      '</span><span>' + (p.udført ? '✅' : '❌') + '</span></li>';
+    const klasse = p.udført ? 'overstået' : 'nu';
+    const ikon = p.udført ? moelleIkonTjek() : moelleIkonKryds();
+    tjekHtml += '<div class="listepunkt ' + klasse + '"><span class="tekst">' + escapeHtml(p.opgave) +
+      '</span>' + ikon + '</div>';
   });
-  tjekHtml += '</ul></div>';
+  tjekHtml += '</div></div>';
   tjekContainer.innerHTML = tjekHtml;
 }
 
@@ -963,7 +892,8 @@ function opdaterUr(){
   const timer = String(nu.getHours()).padStart(2,'0');
   const min = String(nu.getMinutes()).padStart(2,'0');
 
-  document.getElementById('ur').innerHTML = dag + '<br>' + dato + '/' + måned + ' ' + timer + ':' + min;
+  document.getElementById('dato').textContent = dag + ' ' + dato + '/' + måned;
+  document.getElementById('ur').textContent = timer + ':' + min;
 }
 
 // ---- PERSONALE-BJÆLKE ROTATION ----
@@ -971,8 +901,8 @@ function opdaterUr(){
 function rotérPersonaleBjælke(){
   if(personaleBeskeder.length < 2) return;
   personaleIndex = (personaleIndex + 1) % personaleBeskeder.length;
-  document.getElementById('personaleBjælke').textContent =
-    'PERSONALE: ' + personaleBeskeder[personaleIndex];
+  document.getElementById('personaleBjælkeTekst').textContent =
+    personaleBeskeder[personaleIndex];
 }
 
 // ---- INITIALISER ----

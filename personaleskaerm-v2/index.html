@@ -5,243 +5,234 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Personaleskærm</title>
 
+<link rel="stylesheet" href="../shared/tokens.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
 
 <style>
-  :root{
-    --mørk:#1e3937;
-    --grøn:#2f6b52;
-    --grøn-lys:#3f8064;
-    --guld:#d89b2b;
-    --guld-lys:#f0b94a;
-    --baggrund:#eef2ef;
-    --kort:#ffffff;
-    --tekst-svag:#5b6b68;
-    --lilla:#8824bc;
-  }
-
   *{ box-sizing:border-box; }
 
   body{
     margin:0;
-    font-family:'Inter', sans-serif;
-    background:var(--baggrund);
-    color:var(--mørk);
+    font-family:'Archivo', sans-serif;
+    background:var(--papir);
+    color:var(--blaek);
     height:100vh;
     overflow:hidden;
+    display:flex;
+    flex-direction:column;
   }
 
   h1,h2,h3{ font-family:'Fraunces', serif; margin:0; }
 
+  /* ---- Topbjælke ---- */
+
+  #topbjælke{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-shrink:0;
+    font-size:22px;
+    font-weight:700;
+    padding:14px 20px;
+    border-bottom:2px solid var(--blaek);
+  }
+
+  #topHøjreInfo{
+    display:flex;
+    align-items:baseline;
+    gap:20px;
+  }
+
+  #vejrMini{
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+    font-size:15px;
+    font-weight:700;
+    color:var(--tekst-2);
+  }
+
+  #vejrIkon{ font-size:20px; }
+  #vejrBeskrivelse{ font-weight:500; }
+
+  #ur{
+    font-size:34px;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+    color:var(--blaek);
+  }
+
+  /* ---- Layout ---- */
+
   #layout{
     display:grid;
     grid-template-columns:73% 27%;
-    height:100vh;
-    padding:10px;
-    gap:8px;
+    flex:1;
+    min-height:0;
+    padding:16px 20px;
+    gap:20px;
   }
 
   #venstre{
     display:flex;
     flex-direction:column;
-    gap:8px;
+    justify-content:space-between;
+    gap:20px;
     min-height:0;
   }
 
   #højre{
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:12px;
     min-height:0;
   }
 
-  #overskrift{
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
-    font-size:22px;
-    font-weight:700;
-    color:var(--mørk);
-    padding-bottom:3px;
-    border-bottom:2px solid var(--guld);
-  }
+  .niveau .eyebrow{ margin-bottom:10px; }
 
-  #ur{
-    font-variant-numeric:tabular-nums;
-    color:var(--grøn);
-  }
-
-  .kort{
-    background:var(--kort);
-    border-radius:10px;
-    padding:8px 10px;
-    box-shadow:0 4px 12px rgba(30,57,55,.08);
-  }
+  /* ---- Niveau 1: I huset nu ---- */
 
   #gulv{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
-    grid-auto-rows:min-content;
-    align-content:center;
-    justify-content:center;
-    gap:16px;
-    flex:1;
-    min-height:0;
-    overflow:hidden;
+    grid-template-columns:repeat(4, 1fr);
+    gap:18px;
   }
 
-  .personKort{
-    background:var(--kort);
-    border-radius:10px;
+  .personKort .portræt{
+    height:130px;
+    border-radius:5px;
     overflow:hidden;
+    background:var(--tekst-2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .personKort .portræt img{ width:100%; height:100%; object-fit:cover; }
+
+  .personKort .initialer{
+    color:#fff;
+    font-size:40px;
+    font-weight:700;
+  }
+
+  .personKort.erDøgnvagt .portræt{
+    outline:4px solid var(--guld);
+    outline-offset:-4px;
+  }
+
+  .personKort .navn{ font-size:21px; font-weight:800; margin-top:8px; }
+
+  .personKort .tid{ font-size:14px; font-weight:700; color:var(--tekst-2); }
+
+  .personKort.erDøgnvagt .tid{
+    color:var(--guld-moerk);
+    text-transform:uppercase;
+    font-size:12px;
+    font-weight:800;
+  }
+
+  /* ---- Niveau 2: Andre funktioner ---- */
+
+  #funktionerRække{ display:flex; flex-wrap:wrap; gap:10px; }
+
+  .funktionKort{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--flade);
+    border-radius:6px;
+    padding:8px 14px;
+  }
+
+  .funktionKort img, .funktionKort .initialerLille{
+    width:42px; height:42px; border-radius:50%; flex-shrink:0;
+  }
+
+  .funktionKort .navn{ font-size:19px; font-weight:800; }
+
+  .funktionKort .rolle{
+    font-size:11.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--tekst-2);
+  }
+
+  /* ---- Niveau 3: Senere i dag ---- */
+
+  #senereRække{ display:flex; flex-wrap:wrap; gap:20px; align-items:center; }
+
+  .senereItem{ display:flex; align-items:center; gap:8px; }
+
+  .senereItem img, .senereItem .initialerLille{
+    width:40px; height:40px; border-radius:50%; flex-shrink:0;
+  }
+
+  .senereItem .navn{ font-size:15px; font-weight:700; }
+
+  .senereItem .kontekst{ font-size:10px; color:var(--tekst-2); }
+
+  /* ---- Fælles: rundt fallback-portræt med initialer (niveau 2/3) ---- */
+
+  .initialerLille{
+    background:var(--tekst-2);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  /* ---- Højre kolonne ---- */
+
+  #aftensmad{
+    background:var(--brand);
+    color:#fff;
+    border-radius:6px;
+    padding:16px 18px;
     text-align:center;
-    box-shadow:0 4px 12px rgba(30,57,55,.08);
-    display:flex;
-    flex-direction:column;
-    aspect-ratio:1 / 1;
-    width:100%;
-    max-width:260px;
-    margin:0 auto;
-  }
-
-  .personKort .personKortTop{
-    background:var(--mørk);
-    padding:4px;
-  }
-
-  .personKort.erDøgnvagt .personKortTop{ background:var(--guld); }
-
-  .personKort .personKortBund{
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:2px;
-    padding:6px;
-  }
-
-  .personKort img, .personKortLille img{
-    border-radius:50%;
-    object-fit:cover;
-    background:#d1d9d6;
-  }
-
-  .personKort img{ width:52px; height:52px; border:2px solid white; margin-top:-28px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
-  .personKort .navn{ font-weight:700; font-size:15px; }
-  .personKort .rolle{ font-size:11px; font-weight:700; color:var(--guld); letter-spacing:.3px; }
-  .personKort .tid{ font-size:11px; color:var(--tekst-svag); }
-
-  #bundRække{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-    height:90px;
-  }
-
-  #vejrPmødeRække{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-    height:72px;
-  }
-
-  .lilleBoks{
-    background:var(--kort);
-    border-radius:10px;
-    padding:6px 10px;
-    box-shadow:0 4px 12px rgba(30,57,55,.08);
-    overflow:hidden;
-    border-top:3px solid var(--grøn);
-    display:flex;
-    flex-direction:column;
-  }
-
-  .lilleBoks h3{ font-size:12px; color:var(--grøn); font-weight:700; margin-bottom:3px; flex-shrink:0; }
-
-  .lilleBoksListe{
-    display:flex;
-    flex-wrap:nowrap;
-    flex-direction:row;
-    align-items:center;
-    gap:14px;
-    overflow:hidden;
-    width:100%;
-  }
-
-  .personKortLille{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:2px;
-    padding:2px 4px;
     flex-shrink:0;
-    text-align:center;
-    width:64px;
   }
-  .personKortLille img{ width:30px; height:30px; }
-  .personKortLille .navn{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:64px; }
-  .personKortLille .rolleLille{ font-size:9px; color:var(--tekst-svag); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:64px; }
-  .personKortLille .navn{ font-weight:600; font-size:12px; }
 
-  #vejrBoks{ text-align:center; border-top-color:var(--grøn-lys); display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  #vejrBoks .temp{ font-size:22px; font-weight:700; color:var(--mørk); }
-  #vejrBoks .ikon{ font-size:22px; }
-  #vejrBoks .beskrivelse{ font-size:10px; color:var(--tekst-svag); }
+  #aftensmad .eyebrow{ color:var(--guld); }
 
-  #pmødeBoks{ border-top:3px solid var(--lilla); }
-  #pmødeBoks h3{ color:var(--lilla); }
-  .pillPerson{
-    display:inline-flex;
-    align-items:center;
-    gap:4px;
-    background:#f3e8ff;
-    border-radius:16px;
-    padding:2px 8px 2px 2px;
-    margin:1px;
-    font-size:10px;
-  }
-  .pillPerson img{ width:18px; height:18px; border-radius:50%; }
+  #aftensmadRet{ font-size:29px; font-weight:800; color:#fff; margin-top:6px; }
 
-  #dagensMad{
-    text-align:center;
-    border-top:4px solid var(--guld);
-    background:linear-gradient(180deg, #fff8ec 0%, #ffffff 60%);
-  }
-  #dagensMad h3{ font-size:12px; color:var(--guld); font-weight:700; margin-bottom:3px; }
-  #dagensMadRet{ font-size:19px; font-weight:700; color:var(--mørk); }
-
-  #slideContainer{
+  #aktivitetBoks{
     flex:1;
-    position:relative;
     min-height:0;
-    border-top:4px solid var(--grøn);
+    display:flex;
+    flex-direction:column;
+    background:#fff;
+    border:1px solid var(--streg);
+    border-radius:6px;
+    padding:16px 18px;
     overflow:hidden;
   }
 
-  .slide{
-    display:none;
-    height:100%;
-    flex-direction:column;
-  }
+  .slide{ display:none; flex-direction:column; height:100%; min-height:0; }
   .slide.vis{ display:flex; }
 
-  #aktivitetSlide h3, #madplanSlide h3{ font-size:12px; color:var(--grøn); font-weight:700; margin-bottom:4px; }
-  #aktivitetNavn{ font-size:17px; font-weight:700; margin-bottom:4px; color:var(--mørk); }
-  #aktivitetBilledeBoks{ flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:8px; background:#f3f4f6; min-height:0; }
-  #aktivitetBilledeBoks img{ max-width:100%; max-height:100%; object-fit:contain; }
+  .slide .titel{ font-size:25px; font-weight:800; margin-bottom:10px; flex-shrink:0; }
 
-  .ugensMadGrid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:0 10px;
-    font-size:12px;
+  #aktivitetBilledeBoks{
+    flex:1;
+    min-height:0;
+    border-radius:6px;
+    overflow:hidden;
+    background:var(--flade);
   }
-  .ugensMadRække{ padding:3px 0; border-bottom:1px solid #eef2ef; }
-  .ugensMadRække .dag{ font-weight:700; color:var(--mørk); }
 
-  .loading{ text-align:center; color:var(--tekst-svag); padding:20px; font-size:12px; }
+  #aktivitetBilledeBoks img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .ugensMadGrid{ display:grid; grid-template-columns:1fr 1fr; gap:0 20px; overflow-y:auto; }
+  .ugensMadRække{ padding:6px 0; border-bottom:1px solid var(--streg-svag); font-size:14px; }
+  .ugensMadRække .dag{ font-weight:700; color:var(--blaek); }
+
+  .tom-tilstand{ margin:0; }
 </style>
 </head>
 
@@ -256,56 +247,53 @@
 </script>
 
 <script src="supabase-js.min.js"></script>
+<script src="../shared/icons.js"></script>
+
+<div id="topbjælke">
+  <div id="overskrift">Personale — <span id="overskriftDag"></span></div>
+  <div id="topHøjreInfo">
+    <div id="vejrMini">
+      <span id="vejrIkon">–</span>
+      <span id="vejrTemp">–</span>
+      <span id="vejrBeskrivelse"></span>
+    </div>
+    <div id="ur"></div>
+  </div>
+</div>
 
 <div id="layout">
 
   <div id="venstre">
-    <div id="overskrift">
-      <span>Personale — <span id="overskriftDag"></span></span>
-      <span id="ur"></span>
-    </div>
+    <section class="niveau" id="niveau1">
+      <div class="eyebrow">I huset nu</div>
+      <div id="gulv"><div class="tom-tilstand">Henter personale...</div></div>
+    </section>
 
-    <div id="gulv"><div class="loading">Henter personale...</div></div>
+    <section class="niveau" id="niveau2">
+      <div class="eyebrow">Andre funktioner</div>
+      <div id="funktionerRække"></div>
+    </section>
 
-    <div id="bundRække">
-      <div class="lilleBoks">
-        <h3>🌙 Nattevagt</h3>
-        <div id="nattevagtListe" class="lilleBoksListe"></div>
-      </div>
-      <div class="lilleBoks">
-        <h3>🔧 Andre funktioner</h3>
-        <div id="funktionerListe" class="lilleBoksListe"></div>
-      </div>
-    </div>
-
-    <div id="vejrPmødeRække">
-      <div class="lilleBoks" id="vejrBoks">
-        <div class="ikon" id="vejrIkon">–</div>
-        <div class="temp" id="vejrTemp">–</div>
-        <div class="beskrivelse" id="vejrBeskrivelse"></div>
-      </div>
-      <div class="lilleBoks" id="pmødeBoks">
-        <h3>🤝 Kommer efter P-møde</h3>
-        <div id="pmødeListe">Ingen lige nu</div>
-      </div>
-    </div>
+    <section class="niveau" id="niveau3">
+      <div class="eyebrow">Senere i dag</div>
+      <div id="senereRække"></div>
+    </section>
   </div>
 
   <div id="højre">
-    <div class="kort" id="dagensMad">
-      <h3>🍽 Dagens mad</h3>
-      <div id="dagensMadRet">–</div>
+    <div id="aftensmad">
+      <div class="eyebrow">Aftensmad</div>
+      <div id="aftensmadRet">–</div>
     </div>
 
-    <div class="kort" id="slideContainer">
+    <div id="aktivitetBoks">
       <div class="slide vis" id="aktivitetSlide">
-        <h3>🎯 Dagens aktivitet</h3>
-        <div id="aktivitetNavn">–</div>
+        <div class="titel" id="aktivitetNavn">Dagens aktivitet</div>
         <div id="aktivitetBilledeBoks"></div>
       </div>
 
       <div class="slide" id="madplanSlide">
-        <h3>📅 Ugens madplan</h3>
+        <div class="titel">Ugens madplan</div>
         <div class="ugensMadGrid" id="ugensMadGrid"></div>
       </div>
     </div>
@@ -442,9 +430,8 @@ async function hentPersonale(){
   const funktioner = alle.filter(p => p.rolle !== 'Medarbejder' && p.rolle !== 'Døgnvagt' && p.rolle !== 'Nattevagt');
 
   tegnGulv(gulv);
-  tegnLilleListe('nattevagtListe', nattevagt, true);
-  tegnLilleListe('funktionerListe', funktioner, false);
-  tegnPmøde(alle, nu);
+  tegnFunktioner(funktioner);
+  tegnSenere(nattevagt, beregnPmødePersoner(alle, nu));
 }
 
 // Nogle Planday-navne bærer et rolle-præfiks direkte i fornavnet (fx
@@ -459,72 +446,100 @@ function fornavn(navn){
   return renset.split(' ')[0] || renset;
 }
 
+function initialer(navn){
+  const dele = renspNavn(navn).split(/\s+/).filter(Boolean);
+  if(dele.length === 0) return '';
+  if(dele.length === 1) return dele[0].charAt(0).toUpperCase();
+  return (dele[0].charAt(0) + dele[dele.length - 1].charAt(0)).toUpperCase();
+}
+
+// Rundt lille portræt (42px/40px) til niveau 2/3 — samme fallback-mønster
+// som før (grå cirkel), da spec kun beder om initialer-fallback på niveau 1.
 function billedeHtml(url, størrelse){
-  if(url) return `<img src="${escapeHtml(url)}" style="width:${størrelse}px;height:${størrelse}px" alt="">`;
-  return `<div style="width:${størrelse}px;height:${størrelse}px;border-radius:50%;background:#d1d9d6;"></div>`;
+  if(url) return '<img src="' + escapeHtml(url) + '" style="width:' + størrelse + 'px;height:' + størrelse + 'px" alt="">';
+  return '<div class="initialerLille" style="width:' + størrelse + 'px;height:' + størrelse + 'px;border-radius:50%;"></div>';
+}
+
+// Stort rektangulært portræt (niveau 1) — hvid initialer på dæmpet
+// baggrund når der ikke er noget billede.
+function portrætHtmlStor(navn, url, erDøgnvagt){
+  const klasse = 'portræt' + (erDøgnvagt ? ' erDøgnvagt' : '');
+  if(url) return '<div class="' + klasse + '"><img src="' + escapeHtml(url) + '" alt=""></div>';
+  return '<div class="' + klasse + '"><span class="initialer">' + escapeHtml(initialer(navn)) + '</span></div>';
 }
 
 function tegnGulv(personer){
   const container = document.getElementById('gulv');
   if(personer.length === 0){
-    container.innerHTML = '<div class="loading">Ingen på arbejde lige nu</div>';
+    container.innerHTML = '<div class="tom-tilstand">Ingen på arbejde lige nu</div>';
     return;
   }
-  container.innerHTML = personer.map(p => {
+  container.innerHTML = personer.map(function(p){
     const erDøgnvagt = p.rolle === 'Døgnvagt';
-    const label = erDøgnvagt ? '🛏️ DØGNVAGT' : '';
-    const tid = erDøgnvagt ? '' :
-      `<div class="tid">${new Date(p.start).toTimeString().slice(0,5)}–${new Date(p.slut).toTimeString().slice(0,5)}</div>`;
-    return `
-      <div class="personKort ${erDøgnvagt ? 'erDøgnvagt' : ''}">
-        <div class="personKortTop"></div>
-        <div class="personKortBund">
-          ${billedeHtml(p.billede, 64)}
-          <div class="navn">${escapeHtml(fornavn(p.navn))}</div>
-          <div class="rolle">${label}</div>
-          ${tid}
-        </div>
-      </div>
-    `;
+    const tid = erDøgnvagt
+      ? '<div class="tid">Døgnvagt</div>'
+      : '<div class="tid">' + new Date(p.start).toTimeString().slice(0,5) + '–' + new Date(p.slut).toTimeString().slice(0,5) + '</div>';
+
+    return '<div class="personKort' + (erDøgnvagt ? ' erDøgnvagt' : '') + '">' +
+      portrætHtmlStor(p.navn, p.billede, erDøgnvagt) +
+      '<div class="navn">' + escapeHtml(fornavn(p.navn)) + '</div>' +
+      tid +
+      '</div>';
   }).join('');
 }
 
-function tegnLilleListe(elementId, personer, erNattevagt){
-  const container = document.getElementById(elementId);
+function tegnFunktioner(personer){
+  const sektion = document.getElementById('niveau2');
+  const container = document.getElementById('funktionerRække');
   if(personer.length === 0){
-    container.innerHTML = '<div style="font-size:11px;color:var(--tekst-svag);">Ingen</div>';
+    sektion.style.display = 'none';
     return;
   }
-  container.innerHTML = personer.map(p => `
-    <div class="personKortLille">
-      ${billedeHtml(p.billede, 30)}
-      <span class="navn">${escapeHtml(fornavn(p.navn))}</span>
-      ${erNattevagt ? '' : `<span class="rolleLille">${escapeHtml(p.rolle)}</span>`}
-    </div>
-  `).join('');
+  sektion.style.display = '';
+  container.innerHTML = personer.map(function(p){
+    return '<div class="funktionKort">' +
+      billedeHtml(p.billede, 42) +
+      '<div><div class="navn">' + escapeHtml(fornavn(p.navn)) + '</div>' +
+      '<div class="rolle">' + escapeHtml(p.rolle) + '</div></div>' +
+      '</div>';
+  }).join('');
 }
 
-// Personale tagget "P-møde m. vagt" vises her indtil mødet er slut
+// Personale tagget "P-møde m. vagt" regnes med indtil mødet er slut
 // (seneste sluttidspunkt for et P-møde den dag), IKKE med det samme.
-function tegnPmøde(alle, nu){
+// Ren beregning — ingen DOM-skrivning — så den kan genbruges af tegnSenere().
+function beregnPmødePersoner(alle, nu){
   const pMødePersoner = alle.filter(p => p.tag === 'P-møde m. vagt');
   const pMødeSlutTider = alle.filter(p => p.tag === 'P-møde').map(p => new Date(p.slut));
 
   const senesteSlut = pMødeSlutTider.length > 0 ? new Date(Math.max(...pMødeSlutTider)) : null;
   const mødeErSlut = !senesteSlut || nu >= senesteSlut;
 
-  const container = document.getElementById('pmødeListe');
-  if(mødeErSlut || pMødePersoner.length === 0){
-    container.innerHTML = '<div style="font-size:11px;color:var(--tekst-svag);">Ingen lige nu</div>';
+  return mødeErSlut ? [] : pMødePersoner;
+}
+
+// Niveau 3: nattevagt + folk der kommer efter p-møde, slået sammen til
+// én liste (jf. designbrief) — kontekst-teksten holder dem adskilte visuelt.
+function tegnSenere(nattevagt, pmødePersoner){
+  const sektion = document.getElementById('niveau3');
+  const container = document.getElementById('senereRække');
+
+  const alle = nattevagt.map(function(p){ return { p: p, kontekst: 'Nattevagt' }; })
+    .concat(pmødePersoner.map(function(p){ return { p: p, kontekst: 'Efter P-møde' }; }));
+
+  if(alle.length === 0){
+    sektion.style.display = 'none';
     return;
   }
+  sektion.style.display = '';
 
-  container.innerHTML = pMødePersoner.map(p => `
-    <span class="pillPerson">
-      ${billedeHtml(p.billede, 20)}
-      ${escapeHtml(fornavn(p.navn))}
-    </span>
-  `).join('');
+  container.innerHTML = alle.map(function(item){
+    return '<div class="senereItem">' +
+      billedeHtml(item.p.billede, 40) +
+      '<div><div class="navn">' + escapeHtml(fornavn(item.p.navn)) + '</div>' +
+      '<div class="kontekst">' + escapeHtml(item.kontekst) + '</div></div>' +
+      '</div>';
+  }).join('');
 }
 
 // ==================================================================
@@ -544,12 +559,12 @@ async function hentMadplan(){
   const perDag = {};
   (data || []).forEach(r => { perDag[r.dag] = r.ret; });
 
-  document.getElementById('dagensMadRet').textContent = perDag[dagensDag] || 'Ikke angivet';
+  document.getElementById('aftensmadRet').textContent = perDag[dagensDag] || 'Ikke angivet';
 
   const ugedageOrden = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
-  document.getElementById('ugensMadGrid').innerHTML = ugedageOrden.map(dag => `
-    <div class="ugensMadRække"><span class="dag">${dag}:</span> ${escapeHtml(perDag[dag] || '–')}</div>
-  `).join('');
+  document.getElementById('ugensMadGrid').innerHTML = ugedageOrden.map(function(dag){
+    return '<div class="ugensMadRække"><span class="dag">' + dag + ':</span> ' + escapeHtml(perDag[dag] || '–') + '</div>';
+  }).join('');
 }
 
 // Samme Sunday-20:00-effektiv-mandag-regel som Møllebakken-appen bruger
@@ -590,8 +605,7 @@ async function hentAktivitet(){
   if(billeder && billeder.length > 0){
     // Billeder ligger i Supabase Storage — storage_path er en offentlig sti.
     const { data: pub } = sb.storage.from('aktivitet-billeder').getPublicUrl(billeder[0].storage_path);
-    document.getElementById('aktivitetBilledeBoks').innerHTML =
-      `<img src="${escapeHtml(pub.publicUrl)}" alt="">`;
+    document.getElementById('aktivitetBilledeBoks').innerHTML = '<img src="' + escapeHtml(pub.publicUrl) + '" alt="">';
   } else {
     document.getElementById('aktivitetBilledeBoks').innerHTML = '';
   }
@@ -599,6 +613,9 @@ async function hentAktivitet(){
 
 // ==================================================================
 // VEJR (Open-Meteo, ingen nøgle nødvendig — koordinater for Møllebakkevej 6, Ringe)
+// Vejr-emoji er IKKE konverteret til SVG endnu — et fuldt ikonsæt for alle
+// vejrkoder er en større opgave end Afkrydsnings tre statusikoner; kan
+// tages som en selvstændig opfølgning hvis ønsket.
 // ==================================================================
 
 const VEJRKODER = {

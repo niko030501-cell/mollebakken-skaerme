@@ -1,0 +1,213 @@
+/* ==================================================================
+   Møllebakken — delt designsystem
+   Linkes fra personaletavle-v2/, personaleskaerm-v2/, mollebakken-app-v2/
+   og rod-index.html. Kun relative stier (../shared/tokens.css) — GitHub
+   Pages serverer dette repo fra en undermappe, ikke fra domænets rod.
+
+   Fontlink (Archivo, preconnect) ligger i hver enkelt HTML-fils <head>,
+   ikke som @import her — @import blokerer rendering og ville give det
+   blink ved indlæsning vi netop vil undgå.
+   ================================================================== */
+
+:root{
+  --papir:      #eef1ee;  /* skærmbaggrund */
+  --flade:      #e3e8e3;  /* sekundær flade, fx rollekort */
+  --streg:      #cdd5d0;  /* kolonneskel, sektionsskel */
+  --streg-svag: #dde3df;  /* linje mellem listepunkter */
+  --blaek:      #16211f;  /* primær tekst + "nu"-blok */
+  --brand:      #1e3937;  /* Møllebakken mørkegrøn */
+  --tekst-2:    #5a6b66;  /* klokkeslæt, sekundær tekst */
+  --label:      #66756f;  /* eyebrow-labels */
+  --tom:        #8d9a95;  /* tomme tilstande ("Ingen") */
+  --guld:       #d89b2b;  /* accent på mørk baggrund */
+  --guld-moerk: #8a6212;  /* guld-tekst på lys baggrund */
+
+  --louie:   #7c3aed;
+  --kenneth: #2563eb;
+  --lars:    #dc2626;
+  --niels:   #ea580c;
+  --leyla:   #16a34a;
+  --manfred: #0891b2;
+}
+
+/* ---------- Tal der ikke må hoppe ved opdatering ---------- */
+
+.tabular-nums{ font-variant-numeric: tabular-nums; }
+
+/* ---------- Eyebrow-label ---------- */
+
+.eyebrow{
+  font-family:'Archivo', sans-serif;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:var(--label);
+}
+
+/* ---------- Stor overskrift (Dato-overskrift) ----------
+   Brugt til hver fanes hovedoverskrift, fx "Dagsplan · Torsdag". */
+
+.stor-overskrift{
+  font-family:'Archivo', sans-serif;
+  font-size:30px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:var(--blaek);
+  margin-bottom:16px;
+}
+
+/* ---------- Ikoner ----------
+   Bruges sammen med shared/icons.js's moelleIkon*()-funktioner. */
+
+.moelle-ikon{
+  width:18px;
+  height:18px;
+  flex-shrink:0;
+}
+
+/* ---------- Beboer-tag ----------
+   Bruges KUN i navnetagget, ikke som kort-header eller baggrund. */
+
+.beboer-tag{
+  display:inline-block;
+  font-family:'Archivo', sans-serif;
+  font-size:20px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#fff;
+  padding:6px 11px;
+  border-radius:3px;
+}
+
+.beboer-tag.louie{   background:var(--louie); }
+.beboer-tag.kenneth{ background:var(--kenneth); }
+.beboer-tag.lars{    background:var(--lars); }
+.beboer-tag.niels{   background:var(--niels); }
+.beboer-tag.leyla{   background:var(--leyla); }
+.beboer-tag.manfred{ background:var(--manfred); }
+
+/* ---------- Listepunkt ----------
+   Basis-rækken i enhver liste (Dagsplan, Afkrydsning, Overlap ...).
+   .nu og .overstået er tilstande på samme element, ikke egne blokke. */
+
+.listepunkt{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid var(--streg-svag);
+  font-family:'Archivo', sans-serif;
+}
+
+.listepunkt:last-child{ border-bottom:none; }
+
+.listepunkt .klokkeslæt{
+  flex-shrink:0;
+  font-size:15px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  color:var(--tekst-2);
+}
+
+.listepunkt .tekst{
+  font-size:16px;
+  font-weight:500;
+  color:var(--blaek);
+}
+
+.listepunkt.overstået{ opacity:.4; }
+
+/* ---------- "Nu"-markering ----------
+   Det aktive element vender kontrasten om. Den ene ting der må råbe.
+   .akut (Beskeder-prioritet) deler samme behandling — begge er "det der
+   kræver opmærksomhed lige nu", bare i to forskellige sammenhænge. */
+
+.listepunkt.nu,
+.listepunkt.akut{
+  background:var(--blaek);
+  margin:6px -11px;
+  padding:9px 11px;
+  border-radius:4px;
+  border-bottom:none;
+}
+
+.listepunkt.nu .klokkeslæt,
+.listepunkt.akut .klokkeslæt{
+  color:var(--guld);
+  font-weight:700;
+}
+
+.listepunkt.nu .tekst,
+.listepunkt.akut .tekst{
+  color:#fff;
+  font-weight:700;
+}
+
+.listepunkt.nu .punkt-flag,
+.listepunkt.akut .punkt-flag{
+  margin-left:auto;
+  flex-shrink:0;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--guld);
+}
+
+/* ---------- Status-ikon i et listepunkt ----------
+   Bruges af Afkrydsning/Overlap (moelleIkon*() fra shared/icons.js). */
+
+.listepunkt .moelle-ikon{
+  margin-left:auto;
+  color:var(--tekst-2);
+}
+
+.listepunkt.nu .moelle-ikon,
+.listepunkt.akut .moelle-ikon{ color:var(--guld); }
+
+.listepunkt.ikkeRelevant .moelle-ikon{ color:var(--tom); }
+
+/* ---------- Fanenavigation ---------- */
+
+.fane-nav{
+  display:flex;
+  gap:6px;
+}
+
+.fane-nav button{
+  font-family:'Archivo', sans-serif;
+  font-size:14px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  padding:8px 14px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+  background:#e0e5e1;
+  color:#4a5b58;
+}
+
+.fane-nav button.aktiv{
+  background:var(--brand);
+  color:#fff;
+}
+
+/* ---------- Sektionsskel ---------- */
+
+.sektionsskel{
+  border-top:1px solid var(--streg);
+  margin-top:16px;
+  padding-top:13px;
+}
+
+/* ---------- Tom tilstand ---------- */
+
+.tom-tilstand{
+  font-family:'Archivo', sans-serif;
+  font-size:14px;
+  color:var(--tom);
+  padding:4px 0;
+}
