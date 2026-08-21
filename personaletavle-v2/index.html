@@ -368,6 +368,12 @@ function visSide(side){
 
   aktuelSide = side;
 
+  // Beskeder/Dagsplan har typisk allerede data fra det periodiske hent-kald —
+  // de skal bare måles igen nu de reelt er synlige (display:none giver 0 i
+  // højde, så målingen dur ikke før nu). Afkrydsning/Overlap måler sig selv
+  // i bunden af deres respektive vis-funktion, kaldt herunder.
+  if(side === 'beskeder') tilpasAlleKolonner('beskederContainer');
+  if(side === 'ugeplaner') tilpasAlleKolonner('ugeplanerContainer');
   if(side === 'afkrydsning') hentAfkrydsningsskema();
   if(side === 'overlap') hentOverlap();
 }
@@ -418,6 +424,27 @@ function escapeHtml(str){
   const d = document.createElement('div');
   d.textContent = str;
   return d.innerHTML;
+}
+
+// Vi kender ikke tavlens faktiske skærmopløsning/zoom-niveau, så i stedet
+// for at gætte på faste pixel-størrelser måler vi om en kolonnes indhold
+// rent faktisk passer i den plads den har, og skrumper tekst+afstand
+// trinvist (via --tekst-skala, se tokens.css) indtil den gør.
+function tilpasTekstTilHøjde(kolonne){
+  // Siden er ikke synlig lige nu (display:none giver 0 i højde) — visSide()
+  // måler igen næste gang denne fane rent faktisk vises.
+  if(kolonne.clientHeight === 0) return;
+
+  kolonne.style.removeProperty('--tekst-skala');
+  let skala = 1;
+  while(kolonne.scrollHeight > kolonne.clientHeight + 1 && skala > 0.5){
+    skala -= 0.05;
+    kolonne.style.setProperty('--tekst-skala', skala.toFixed(2));
+  }
+}
+
+function tilpasAlleKolonner(containerId){
+  document.querySelectorAll('#' + containerId + ' .beboerKolonne').forEach(tilpasTekstTilHøjde);
 }
 
 // ---- BESKEDER ----
@@ -494,6 +521,8 @@ function visBeskeder(data){
   } else {
     bjælke.style.display = 'none';
   }
+
+  tilpasAlleKolonner('beskederContainer');
 }
 
 // ---- UGEPLANER / DAGSPLAN ----
@@ -586,6 +615,8 @@ function tegnUgeplaner(){
 
     container.appendChild(kolonne);
   }
+
+  tilpasAlleKolonner('ugeplanerContainer');
 }
 
 // ---- AFKRYDSNINGSSKEMA ----
@@ -697,6 +728,8 @@ function visAfkrydsningsskema(beboere){
 
     container.appendChild(kolonne);
   });
+
+  tilpasAlleKolonner('afkrydsningContainer');
 }
 
 // ---- OVERLAP ----
@@ -797,6 +830,8 @@ function visOverlap(data){
 
     farveContainer.appendChild(kolonne);
   });
+
+  tilpasAlleKolonner('overlapFarveContainer');
 
   const tjekContainer = document.getElementById('overlapTjeklisteContainer');
   if(data.tjekliste.length === 0){
@@ -914,6 +949,19 @@ hentBeskeder();
 hentUgeplaner();
 opdaterAfkrydsningOverskrift();
 opdaterUr();
+
+// Archivo indlæses asynkront — hvis en kolonne bliver målt/tilpasset FØR
+// fonten er klar, sker det med fallback-fontens (smallere) mål, og
+// teksten kan blive for stor igen når den rigtige font slår igennem.
+// Genmål den aktive fane én gang når webfonten er helt indlæst.
+document.fonts.ready.then(function(){
+  if(document.getElementById(aktuelSide).classList.contains('active')){
+    if(aktuelSide === 'beskeder') tilpasAlleKolonner('beskederContainer');
+    if(aktuelSide === 'ugeplaner') tilpasAlleKolonner('ugeplanerContainer');
+    if(aktuelSide === 'afkrydsning') tilpasAlleKolonner('afkrydsningContainer');
+    if(aktuelSide === 'overlap') tilpasAlleKolonner('overlapFarveContainer');
+  }
+});
 
 setInterval(tjekRotation, 1000);
 setInterval(opdaterUr, 1000);

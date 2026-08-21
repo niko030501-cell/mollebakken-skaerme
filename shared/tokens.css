@@ -28,6 +28,8 @@
   --niels:   #ea580c;
   --leyla:   #16a34a;
   --manfred: #0891b2;
+
+  --tekst-skala: 1;  /* sættes evt. lavere pr. element af JS, se tilpasTekstTilHøjde() */
 }
 
 /* ---------- Tal der ikke må hoppe ved opdatering ---------- */
@@ -72,12 +74,12 @@
 .beboer-tag{
   display:inline-block;
   font-family:'Archivo', sans-serif;
-  font-size:15px;
+  font-size:calc(15px * var(--tekst-skala, 1));
   font-weight:800;
   text-transform:uppercase;
   letter-spacing:.06em;
   color:#fff;
-  padding:4px 8px;
+  padding:calc(4px * var(--tekst-skala, 1)) calc(8px * var(--tekst-skala, 1));
   border-radius:3px;
 }
 
@@ -95,8 +97,8 @@
 .listepunkt{
   display:flex;
   align-items:baseline;
-  gap:8px;
-  padding:5px 0;
+  gap:calc(8px * var(--tekst-skala, 1));
+  padding:calc(5px * var(--tekst-skala, 1)) 0;
   border-bottom:1px solid var(--streg-svag);
   font-family:'Archivo', sans-serif;
 }
@@ -105,14 +107,14 @@
 
 .listepunkt .klokkeslæt{
   flex-shrink:0;
-  font-size:11px;
+  font-size:calc(11px * var(--tekst-skala, 1));
   font-weight:700;
   font-variant-numeric:tabular-nums;
   color:var(--tekst-2);
 }
 
 .listepunkt .tekst{
-  font-size:12.5px;
+  font-size:calc(12.5px * var(--tekst-skala, 1));
   font-weight:500;
   color:var(--blaek);
   line-height:1.3;
@@ -128,8 +130,8 @@
 .listepunkt.nu,
 .listepunkt.akut{
   background:var(--blaek);
-  margin:4px -8px;
-  padding:6px 8px;
+  margin:calc(4px * var(--tekst-skala, 1)) calc(-8px * var(--tekst-skala, 1));
+  padding:calc(6px * var(--tekst-skala, 1)) calc(8px * var(--tekst-skala, 1));
   border-radius:4px;
   border-bottom:none;
 }
@@ -150,7 +152,7 @@
 .listepunkt.akut .punkt-flag{
   margin-left:auto;
   flex-shrink:0;
-  font-size:9px;
+  font-size:calc(9px * var(--tekst-skala, 1));
   font-weight:800;
   text-transform:uppercase;
   letter-spacing:.12em;
