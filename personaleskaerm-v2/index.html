@@ -585,6 +585,13 @@ function effektivMandag(){
   return mandag;
 }
 
+// "Ingen fælles aktivitet" er en sentinel-aktivitet appen bruger til at
+// samle "stemningsbilleder" af botilbudet op i, i stedet for at erstatte
+// ét fast billede (se AKTIVITET_SENTINEL i mollebakken-app-v2). Når der
+// ligger flere billeder til dagens aktivitet, skal de rotere som et
+// diasshow her — matcher den gamle Apps Script-udgaves opførsel.
+let aktivitetBilledeInterval = null;
+
 async function hentAktivitet(){
   if(!sb) return;
 
@@ -598,18 +605,35 @@ async function hentAktivitet(){
   const aktivitet = data && data.length > 0 ? data[0].aktivitet : null;
   document.getElementById('aktivitetNavn').textContent = aktivitet || 'Ingen aktivitet angivet';
 
+  if(aktivitetBilledeInterval){
+    clearInterval(aktivitetBilledeInterval);
+    aktivitetBilledeInterval = null;
+  }
+
   if(!aktivitet){
     document.getElementById('aktivitetBilledeBoks').innerHTML = '';
     return;
   }
 
   const { data: billeder } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet);
-  if(billeder && billeder.length > 0){
-    // Billeder ligger i Supabase Storage — storage_path er en offentlig sti.
-    const { data: pub } = sb.storage.from('aktivitet-billeder').getPublicUrl(billeder[0].storage_path);
-    document.getElementById('aktivitetBilledeBoks').innerHTML = '<img src="' + escapeHtml(pub.publicUrl) + '" alt="">';
-  } else {
+  if(!billeder || billeder.length === 0){
     document.getElementById('aktivitetBilledeBoks').innerHTML = '';
+    return;
+  }
+
+  // Billeder ligger i Supabase Storage — storage_path er en offentlig sti.
+  const urls = billeder.map(b => sb.storage.from('aktivitet-billeder').getPublicUrl(b.storage_path).data.publicUrl);
+
+  document.getElementById('aktivitetBilledeBoks').innerHTML =
+    '<img id="aktivitetBillede" src="' + escapeHtml(urls[0]) + '" alt="">';
+
+  if(urls.length > 1){
+    let index = 0;
+    aktivitetBilledeInterval = setInterval(function(){
+      index = (index + 1) % urls.length;
+      const img = document.getElementById('aktivitetBillede');
+      if(img) img.src = urls[index];
+    }, 10000);
   }
 }
 
