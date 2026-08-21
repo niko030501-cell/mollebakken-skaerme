@@ -1254,7 +1254,15 @@ async function uploadAktivitetsBillede(dag){
 
   try {
     const blob = await komprimerBillede(fil);
-    const sti = aktivitetNavn.replace(/[^a-zA-Z0-9æøåÆØÅ]/g, '_') + '-' + Date.now() + '.jpg';
+    // Supabase Storage-nøgler må ikke indeholde æ/ø/å (det var netop den
+    // fejl der ramte "Ingen fælles aktivitet" — "Invalid key"). Translittereret
+    // i stedet for bare at fjerne dem, så filnavnet stadig kan læses.
+    const stiNavn = aktivitetNavn
+      .replace(/æ/g, 'ae').replace(/Æ/g, 'AE')
+      .replace(/ø/g, 'oe').replace(/Ø/g, 'OE')
+      .replace(/å/g, 'aa').replace(/Å/g, 'AA')
+      .replace(/[^a-zA-Z0-9]/g, '_');
+    const sti = stiNavn + '-' + Date.now() + '.jpg';
 
     const { error: uploadFejl } = await sb.storage.from('aktivitet-billeder').upload(sti, blob, {
       contentType: 'image/jpeg'
