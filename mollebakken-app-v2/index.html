@@ -718,11 +718,11 @@ if(!sb){
     '</div>';
 }
 
-function visToast(tekst){
+function visToast(tekst, varighed){
   const toast = document.getElementById('toast');
   toast.textContent = tekst;
   toast.classList.add('vis');
-  setTimeout(() => toast.classList.remove('vis'), 2200);
+  setTimeout(() => toast.classList.remove('vis'), varighed || 2200);
 }
 
 function escapeHtml(str){
@@ -1205,15 +1205,23 @@ function komprimerBillede(fil){
         const maxBredde = 1000;
         const skala = Math.min(1, maxBredde / img.width);
         const canvas = document.createElement('canvas');
-        canvas.width = img.width * skala;
-        canvas.height = img.height * skala;
+        canvas.width = Math.round(img.width * skala);
+        canvas.height = Math.round(img.height * skala);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
+        canvas.toBlob((blob) => {
+          // canvas.toBlob() kan give null i stedet for at fejle højlydt, fx
+          // hvis kildebilledet er for stort til browserens canvas-grænse —
+          // set typisk med meget høj-opløsnings iPhone-fotos. Uden dette
+          // tjek ville uploadet bare fortsætte med en tom fil og fejle
+          // længere nede med en uigennemskuelig fejl.
+          if(!blob){ reject(new Error('Kunne ikke omdanne billedet (for stort/ukendt format?)')); return; }
+          resolve(blob);
+        }, 'image/jpeg', 0.8);
       };
-      img.onerror = reject;
+      img.onerror = () => reject(new Error('Kunne ikke læse billedet — formatet understøttes muligvis ikke'));
       img.src = reader.result;
     };
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('Kunne ikke læse filen fra enheden'));
     reader.readAsDataURL(fil);
   });
 }
@@ -1237,7 +1245,7 @@ async function uploadAktivitetsBillede(dag){
     const { error: uploadFejl } = await sb.storage.from('aktivitet-billeder').upload(sti, blob, {
       contentType: 'image/jpeg'
     });
-    if(uploadFejl){ console.error(uploadFejl); visToast('Fejl: kunne ikke uploade'); return; }
+    if(uploadFejl){ console.error(uploadFejl); visToast('Fejl: kunne ikke uploade — ' + (uploadFejl.message || uploadFejl), 5000); return; }
 
     // Ikke-sentinel aktiviteter: kun ét billede ad gangen — ryd op i gamle.
     if(aktivitetNavn !== AKTIVITET_SENTINEL){
@@ -1252,14 +1260,14 @@ async function uploadAktivitetsBillede(dag){
       aktivitet_navn: aktivitetNavn,
       storage_path: sti
     });
-    if(indsætFejl){ console.error(indsætFejl); visToast('Fejl: kunne ikke gemme'); return; }
+    if(indsætFejl){ console.error(indsætFejl); visToast('Fejl: kunne ikke gemme — ' + (indsætFejl.message || indsætFejl), 5000); return; }
 
     inputEl.value = '';
     visToast('Billede uploadet');
     visBilledeGalleri(dag);
   } catch(e){
     console.error(e);
-    visToast('Fejl under komprimering af billede');
+    visToast('Fejl: ' + (e && e.message ? e.message : 'ukendt fejl under upload'), 5000);
   }
 }
 
