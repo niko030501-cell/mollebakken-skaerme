@@ -1226,6 +1226,20 @@ function komprimerBillede(fil){
   });
 }
 
+// Midlertidig fejlsøgnings-hjælper: en toast kan forsvinde eller blive
+// læst forkert af/til brugeren. En alert() skal aktivt lukkes og viser
+// altid HELE teksten, så vi er sikre på at få den fulde fejl med.
+function visFejlDetalje(præfiks, fejlObjekt){
+  console.error(fejlObjekt);
+  let detalje;
+  try {
+    detalje = JSON.stringify(fejlObjekt, Object.getOwnPropertyNames(fejlObjekt || {}), 2);
+  } catch(e){
+    detalje = String(fejlObjekt);
+  }
+  alert(præfiks + '\n\n' + detalje);
+}
+
 async function uploadAktivitetsBillede(dag){
   if(!sb) return;
 
@@ -1245,7 +1259,7 @@ async function uploadAktivitetsBillede(dag){
     const { error: uploadFejl } = await sb.storage.from('aktivitet-billeder').upload(sti, blob, {
       contentType: 'image/jpeg'
     });
-    if(uploadFejl){ console.error(uploadFejl); visToast('Fejl: kunne ikke uploade — ' + (uploadFejl.message || uploadFejl), 5000); return; }
+    if(uploadFejl){ visFejlDetalje('Kunne ikke uploade billedet:', uploadFejl); return; }
 
     // Ikke-sentinel aktiviteter: kun ét billede ad gangen — ryd op i gamle.
     if(aktivitetNavn !== AKTIVITET_SENTINEL){
@@ -1260,14 +1274,13 @@ async function uploadAktivitetsBillede(dag){
       aktivitet_navn: aktivitetNavn,
       storage_path: sti
     });
-    if(indsætFejl){ console.error(indsætFejl); visToast('Fejl: kunne ikke gemme — ' + (indsætFejl.message || indsætFejl), 5000); return; }
+    if(indsætFejl){ visFejlDetalje('Billedet blev uploadet, men kunne ikke gemmes i databasen:', indsætFejl); return; }
 
     inputEl.value = '';
     visToast('Billede uploadet');
     visBilledeGalleri(dag);
   } catch(e){
-    console.error(e);
-    visToast('Fejl: ' + (e && e.message ? e.message : 'ukendt fejl under upload'), 5000);
+    visFejlDetalje('Fejl under komprimering/upload:', e);
   }
 }
 
