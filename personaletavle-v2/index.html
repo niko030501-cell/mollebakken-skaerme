@@ -70,12 +70,13 @@
 
     .side{
       display: none;
+      flex-direction: column;
       height: 100%;
       overflow-y: auto;
       padding: 20px;
     }
 
-    .active{ display: block; }
+    .active{ display: flex; }
 
     /* ---- QR ---- */
 
@@ -106,7 +107,8 @@
 
     .beboerKolonner{
       display: grid;
-      height: 100%;
+      flex: 1;
+      min-height: 0;
     }
 
     #ugeplanerContainer{ grid-template-columns: repeat(6, 1fr); }
@@ -189,7 +191,7 @@
 
     .dognvagtBoks{ text-align: right; }
 
-    .dognvagtNavn{ font-size: 20px; font-weight: 800; }
+    .dognvagtNavn{ font-size: 15px; font-weight: 800; }
 
     /* ---- Overlap: dagens vurdering (prikker) ---- */
 
