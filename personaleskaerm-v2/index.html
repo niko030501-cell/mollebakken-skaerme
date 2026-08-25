@@ -513,19 +513,23 @@ function tegnFunktioner(personer){
 }
 
 // Er dagens P-møde slut? Sluttidspunktet er det seneste 'slut' blandt de
-// rækker der er tagget 'P-møde' (mødeblokken selv). Ingen P-møde-rækker i
-// dag = ikke noget møde at vente på.
+// rækker der er tagget 'P-møde m. vagt' — det ER mødeblokken (samme
+// tidsrum for alle), mens almindelige 'P-møde'-rækker er hele resten af
+// personens vagt (varierer per person, ubrugelig til at time mødet).
+// Ingen P-møde-rækker i dag = ikke noget møde at vente på.
 function mødeErSlut(alle, nu){
-  const pMødeSlutTider = alle.filter(p => p.tag === 'P-møde').map(p => new Date(p.slut));
+  const pMødeSlutTider = alle.filter(p => p.tag === 'P-møde m. vagt').map(p => new Date(p.slut));
   const senesteSlut = pMødeSlutTider.length > 0 ? new Date(Math.max(...pMødeSlutTider)) : null;
   return !senesteSlut || nu >= senesteSlut;
 }
 
-// Personale tagget "P-møde m. vagt" regnes med indtil mødet er slut,
-// IKKE med det samme — de dækker gulvet mens resten sidder til møde.
+// Personale tagget "P-møde" (uden "m. vagt") kommer op på gulvet når
+// mødet er slut — deres vagt fortsætter resten af dagen efter mødet.
+// "P-møde m. vagt" derimod har KUN mødet som vagt og tager hjem bagefter
+// (forsvinder af sig selv via den almindelige vagt-slut-filtrering ovenfor).
 // Ren beregning — ingen DOM-skrivning — så den kan genbruges af tegnSenere().
 function beregnPmødePersoner(alle, nu){
-  const pMødePersoner = alle.filter(p => p.tag === 'P-møde m. vagt');
+  const pMødePersoner = alle.filter(p => p.tag === 'P-møde');
   return mødeErSlut(alle, nu) ? [] : pMødePersoner;
 }
 
