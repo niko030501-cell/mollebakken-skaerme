@@ -426,9 +426,15 @@ async function hentPersonale(){
 
   const alle = [...set.values()];
 
-  const gulv = alle.filter(p => p.rolle === 'Medarbejder' || p.rolle === 'Døgnvagt');
+  // Personale tagget 'P-møde' eller 'P-møde m. vagt' sidder til mødet, ikke
+  // på gulvet — de skal IKKE tælles med i niveau 1/2 mens mødet står på
+  // (kun vikaren der dækker gulvet imens skal stå der). Se beregnPmødePersoner
+  // for hvornår mødet regnes for slut.
+  const iMødeNu = p => (p.tag === 'P-møde' || p.tag === 'P-møde m. vagt') && !mødeErSlut(alle, nu);
+
+  const gulv = alle.filter(p => !iMødeNu(p) && (p.rolle === 'Medarbejder' || p.rolle === 'Døgnvagt'));
   const nattevagt = alle.filter(p => p.rolle === 'Nattevagt');
-  const funktioner = alle.filter(p => p.rolle !== 'Medarbejder' && p.rolle !== 'Døgnvagt' && p.rolle !== 'Nattevagt');
+  const funktioner = alle.filter(p => !iMødeNu(p) && p.rolle !== 'Medarbejder' && p.rolle !== 'Døgnvagt' && p.rolle !== 'Nattevagt');
 
   tegnGulv(gulv);
   tegnFunktioner(funktioner);
@@ -506,17 +512,21 @@ function tegnFunktioner(personer){
   }).join('');
 }
 
-// Personale tagget "P-møde m. vagt" regnes med indtil mødet er slut
-// (seneste sluttidspunkt for et P-møde den dag), IKKE med det samme.
+// Er dagens P-møde slut? Sluttidspunktet er det seneste 'slut' blandt de
+// rækker der er tagget 'P-møde' (mødeblokken selv). Ingen P-møde-rækker i
+// dag = ikke noget møde at vente på.
+function mødeErSlut(alle, nu){
+  const pMødeSlutTider = alle.filter(p => p.tag === 'P-møde').map(p => new Date(p.slut));
+  const senesteSlut = pMødeSlutTider.length > 0 ? new Date(Math.max(...pMødeSlutTider)) : null;
+  return !senesteSlut || nu >= senesteSlut;
+}
+
+// Personale tagget "P-møde m. vagt" regnes med indtil mødet er slut,
+// IKKE med det samme — de dækker gulvet mens resten sidder til møde.
 // Ren beregning — ingen DOM-skrivning — så den kan genbruges af tegnSenere().
 function beregnPmødePersoner(alle, nu){
   const pMødePersoner = alle.filter(p => p.tag === 'P-møde m. vagt');
-  const pMødeSlutTider = alle.filter(p => p.tag === 'P-møde').map(p => new Date(p.slut));
-
-  const senesteSlut = pMødeSlutTider.length > 0 ? new Date(Math.max(...pMødeSlutTider)) : null;
-  const mødeErSlut = !senesteSlut || nu >= senesteSlut;
-
-  return mødeErSlut ? [] : pMødePersoner;
+  return mødeErSlut(alle, nu) ? [] : pMødePersoner;
 }
 
 // Niveau 3: nattevagt + folk der kommer efter p-møde, slået sammen til
