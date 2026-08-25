@@ -163,7 +163,30 @@
 
   /* ---- Niveau 3: Senere i dag ---- */
 
-  #senereRække{ display:flex; flex-wrap:wrap; gap:20px; align-items:center; }
+  #senereRække{ display:flex; flex-wrap:wrap; gap:14px; align-items:stretch; }
+
+  .senereGruppe{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:var(--flade);
+    border-radius:6px;
+    padding:8px 16px 8px 14px;
+  }
+
+  .senereGruppeLabel{
+    font-family:'Archivo', sans-serif;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--tekst-2);
+    white-space:nowrap;
+    padding-right:12px;
+    border-right:1px solid var(--streg);
+  }
+
+  .senereGruppePersoner{ display:flex; flex-wrap:wrap; gap:14px; }
 
   .senereItem{ display:flex; align-items:center; gap:8px; }
 
@@ -172,8 +195,6 @@
   }
 
   .senereItem .navn{ font-size:15px; font-weight:700; }
-
-  .senereItem .kontekst{ font-size:10px; color:var(--tekst-2); }
 
   /* ---- Fælles: rundt fallback-portræt med initialer (niveau 2/3) ---- */
 
@@ -533,27 +554,35 @@ function beregnPmødePersoner(alle, nu){
   return mødeErSlut(alle, nu) ? [] : pMødePersoner;
 }
 
-// Niveau 3: nattevagt + folk der kommer efter p-møde, slået sammen til
-// én liste (jf. designbrief) — kontekst-teksten holder dem adskilte visuelt.
+// Niveau 3: nattevagt + folk der kommer efter p-møde. Grupperet i hver
+// sin mærkede "chip" i stedet for én blandet liste — nemmere at se med
+// et blik hvem der er hvad (personale har efterspurgt tydeligere adskillelse).
 function tegnSenere(nattevagt, pmødePersoner){
   const sektion = document.getElementById('niveau3');
   const container = document.getElementById('senereRække');
 
-  const alle = nattevagt.map(function(p){ return { p: p, kontekst: 'Nattevagt' }; })
-    .concat(pmødePersoner.map(function(p){ return { p: p, kontekst: 'Efter P-møde' }; }));
+  const grupper = [
+    { label: 'Nattevagt', personer: nattevagt },
+    { label: 'Efter P-møde', personer: pmødePersoner }
+  ].filter(function(g){ return g.personer.length > 0; });
 
-  if(alle.length === 0){
+  if(grupper.length === 0){
     sektion.style.display = 'none';
     return;
   }
   sektion.style.display = '';
 
-  container.innerHTML = alle.map(function(item){
-    return '<div class="senereItem">' +
-      billedeHtml(item.p.billede, 40) +
-      '<div><div class="navn">' + escapeHtml(fornavn(item.p.navn)) + '</div>' +
-      '<div class="kontekst">' + escapeHtml(item.kontekst) + '</div></div>' +
-      '</div>';
+  container.innerHTML = grupper.map(function(gruppe){
+    return '<div class="senereGruppe">' +
+      '<div class="senereGruppeLabel">' + escapeHtml(gruppe.label) + '</div>' +
+      '<div class="senereGruppePersoner">' +
+      gruppe.personer.map(function(p){
+        return '<div class="senereItem">' +
+          billedeHtml(p.billede, 40) +
+          '<div class="navn">' + escapeHtml(fornavn(p.navn)) + '</div>' +
+          '</div>';
+      }).join('') +
+      '</div></div>';
   }).join('');
 }
 
