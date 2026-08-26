@@ -95,10 +95,12 @@
   /* ---- Niveau 1: I huset nu ---- */
 
   #gulv{
-    display:grid;
-    grid-template-columns:repeat(4, 1fr);
+    display:flex;
+    flex-wrap:nowrap;
     gap:18px;
   }
+
+  .personKort{ flex:1 1 0; min-width:0; }
 
   .personKort .portræt{
     height:130px;
@@ -123,7 +125,10 @@
     outline-offset:-4px;
   }
 
-  .personKort .navn{ font-size:21px; font-weight:800; margin-top:8px; }
+  .personKort .navn{
+    font-size:21px; font-weight:800; margin-top:8px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
 
   .personKort .tid{ font-size:14px; font-weight:700; color:var(--tekst-2); }
 
