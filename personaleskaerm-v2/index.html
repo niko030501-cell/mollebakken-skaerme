@@ -92,6 +92,11 @@
 
   .niveau .eyebrow{ margin-bottom:10px; }
 
+  .niveau:not(:first-child){
+    border-top:1px solid var(--streg);
+    padding-top:20px;
+  }
+
   /* ---- Niveau 1: I huset nu ---- */
 
   #gulv{
@@ -467,11 +472,14 @@ async function hentPersonale(){
   tegnSenere(nattevagt, beregnPmødePersoner(alle, nu));
 }
 
-// Nogle Planday-navne bærer et rolle-præfiks direkte i fornavnet (fx
-// "Vikar: Dalal Abou Chouk", "Pedel: Jens", "Nat: ..."). Fjernes her, samme
-// oprensning som den oprindelige renspNavn() i Visning.js.
+// Nogle Planday-navne bærer et eller flere rolle-præfikser direkte i
+// fornavnet (fx "Vikar: Dalal Abou Chouk", "Pedel: Jens", "Nat Mie
+// Kirstine", "Vikar Nat: Ken Søbæk Rasmussen") — med eller uden kolon,
+// og nogle gange flere ord i træk. Kræver mindst ét kolon/mellemrum
+// efter hvert præfiks-ord, så et rigtigt navn som "Natasha" ikke bliver
+// fejlagtigt klippet i "Nat" + "asha".
 function renspNavn(navn){
-  return (navn || '').replace(/^(Pedel|Vikar|Nat):\s*/i, '').trim();
+  return (navn || '').replace(/^(?:(?:Pedel|Vikar|Nat)[:\s]+)+/i, '').trim();
 }
 
 function fornavn(navn){
