@@ -258,6 +258,25 @@
   .featureKort .ikon{ font-size:30px; }
   .featureKort .titel{ font-weight:600; font-size:13px; }
 
+  /* Alt herunder er dimensioneret til en telefonskærm (max ~480px). I
+     sidemenu-layoutet (≥900px, se ovenfor) er indholdskolonnen derimod op
+     til ~830px bred, så uden en øvre grænse strækker formularer, knapper
+     og dropdowns sig ud over hele bredden og ser forkert store/spinkle ud.
+     Kapper derfor kort/formularer til en læselig bredde, og lader
+     forsidens kortgrid folde til flere kolonner i stedet for at strække
+     de to faste kolonner. */
+  @media (min-width:900px){
+    .side > .kort,
+    .side > .modeVælger,
+    .side > .kommerSnart{
+      max-width:600px;
+    }
+    .kortGrid{
+      grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+      max-width:700px;
+    }
+  }
+
   /* ---- Generelle kort/formularer ---- */
 
   .kort{
