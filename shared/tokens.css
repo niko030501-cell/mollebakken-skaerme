@@ -33,6 +33,14 @@
   --manfred: #0891b2;
 
   --tekst-skala: 1;  /* sættes evt. lavere pr. element af JS, se tilpasTekstTilHøjde() */
+
+  /* ---- personalemoede-v2: godkendelsesstatus (afventer bruger --guld-moerk/--flade) ---- */
+  --status-ok:     #2f7d4f;  /* godkendt */
+  --status-afvist: #b3413c;  /* afvist — bevidst IKKE --kritisk, den er forbeholdt Akut i Beskeder */
+
+  /* ---- personalemoede-v2: highlight-typer (opgave=--guld, til_naeste=--brand, genbrugt) ---- */
+  --hl-beslutning: #be185d;
+  --hl-info:       #475569;
 }
 
 /* ---------- Tal der ikke må hoppe ved opdatering ---------- */
