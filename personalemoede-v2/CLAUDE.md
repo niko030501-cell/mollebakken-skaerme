@@ -192,24 +192,35 @@ i den samlede fil.
 - [ ] Deploy af konsolideringen — afventer eksplicit godkendelse (samme
       regel som al deploy: `git push` går direkte i produktion).
 
-## Planlagt opfølgning — NY fane i mollebakken-app-v2
+## Opfølgning — fane i mollebakken-app-v2 (2026-08-26, færdig)
 
-Aftalt med bruger 2026-08-24: der skal tilføjes en ny fane i
-**`mollebakken-app-v2/index.html`** (et andet, allerede live projekt — IKKE
-en del af personalemoede-v2-mappen), så medarbejdere ikke behøver besøge en
-separat URL. Fanen skal:
+Tilføjet en "Personalemøde"-fane i **`mollebakken-app-v2/index.html`** (et
+andet, allerede live projekt — IKKE en del af personalemoede-v2-mappen),
+efter samme FEATURE_KORT/`.side`/`visSide()`-mønster som appens øvrige
+faner. Genbruger `sb`-klienten og `escapeHtml` der allerede findes i den
+fil — ingen ny Supabase-klient. Deler `localStorage['pm_mit_navn']` med
+personalemoede-v2 (samme origin på GitHub Pages), så "Dit navn" allerede er
+udfyldt hvis man har brugt personalemøde-systemet før.
 
-1. Vise "vigtige punkter" (dvs. `highlights`) fra personalemøder, organiseret
-   under de datoer møderne er blevet holdt — i praksis en kompakt udgave af
-   Arkiv-fanens mødeliste + referat-detalje, genbrug samme forespørgsler
-   (`hentAfsluttedeMoeder()`, `visReferatDetalje()`-mønsteret).
-2. Lade medarbejdere indsende ("anmode om") punkter til det kommende møde —
-   samme funktion som Indsend-fanens flow (`indsendPunkt()`).
+To undersider (mode-vælger, samme mønster som "Besked/Dagsplan" på
+Opgaver-fanen):
+1. **Indsend punkt** — samme flow som personalemoede-v2's `indsendPunkt()`.
+2. **Referater** — de sidste 5 afsluttede møders highlights, grupperet under
+   mødedato. Kompakt udgave af Arkiv-fanens mødeliste, ingen søgning/klik-
+   igennem (det ligger i personalemoede-v2 selv, ikke duplikeret her).
 
-**Bevidst rækkefølge:** bygges IKKE i denne omgang. Personalemoede-v2 skal
-først deployes og bruges af rigtige medarbejdere, før denne fane tilføjes
-som en selvstændig, afgrænset opgave i det andet projekt — for at undgå at
-blande ændringer i to forskellige live-produkter i én omgang.
+Fanen er IKKE registreret i `indstillinger`-tabellen (ingen INSERT-adgang
+fra klienten til den tabel) — vises derfor som standard (koden filtrerer
+`indstillingerCache[fane] !== false`, og en manglende række giver `undefined
+!== false` = vist). Konsekvens: admin kan ikke slå den fra via Admin-fanens
+toggle-liste før der findes en `indstillinger`-række for `personalemoede`.
+Kør denne SQL i Supabase hvis den skal kunne skjules:
+`insert into indstillinger (fane, aktiv) values ('personalemoede', true);`
+
+Testet live: navn-prefill på tværs af de to apps, indsend punkt (dukkede
+korrekt op i "Mine punkter"), referat-visning mod ægte produktionsdata
+(to rigtige møder fra 2026-09-08), badge-farver korrekte, ingen
+konsolefejl, ingen horisontal overflow på mobilbredde (375px).
 
 Se rod-mappens hukommelse ([[project-overview]], [[project-status]]) for
 den bredere migrations-kontekst.

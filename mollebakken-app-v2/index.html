@@ -430,6 +430,33 @@
     color:var(--tekst-svag);
   }
   .kommerSnart .ikon{ font-size:40px; margin-bottom:12px; }
+
+  /* ---- Personalemøde ---- */
+
+  .moedeDatoHeader{
+    font-weight:700;
+    font-size:13px;
+    color:var(--mørk);
+    margin-bottom:8px;
+  }
+
+  .hlBadge{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:10px;
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:#fff;
+    margin-right:6px;
+    flex-shrink:0;
+  }
+
+  .hlBadge.beslutning{ background:var(--hl-beslutning); }
+  .hlBadge.opgave{ background:var(--guld); color:var(--mørk); }
+  .hlBadge.info{ background:var(--hl-info); }
+  .hlBadge.til_naeste{ background:var(--brand); }
 </style>
 </head>
 
@@ -675,6 +702,44 @@
     </div>
   </div>
 
+  <!-- ============ PERSONALEMØDE ============ -->
+  <div id="personalemoede" class="side">
+    <select class="modeVælger" id="moedeMode" onchange="visMoedeMode()">
+      <option value="indsend">📝 Indsend punkt</option>
+      <option value="referater">📋 Referater</option>
+    </select>
+
+    <div id="moedeIndsend">
+      <div id="moedeNaesteInfo" style="font-size:13px; color:var(--tekst-svag); margin-bottom:10px;"></div>
+      <div class="kort">
+        <h3 style="margin-top:0;">Nyt punkt til næste personalemøde</h3>
+        <div id="moedeIndsendLukket" style="display:none; font-size:13px; color:var(--tekst-svag);">
+          Der er ikke oprettet et kommende møde endnu.
+        </div>
+        <div id="moedeIndsendForm">
+          <div class="formRække">
+            <label>Titel</label>
+            <input type="text" id="moedePunktTitel">
+          </div>
+          <div class="formRække">
+            <label>Beskrivelse (valgfri)</label>
+            <textarea id="moedePunktBeskrivelse" rows="3"></textarea>
+          </div>
+          <div class="formRække">
+            <label>Dit navn</label>
+            <input type="text" id="moedePunktNavn" oninput="localStorage.setItem('pm_mit_navn', this.value.trim())">
+          </div>
+          <button class="knap" onclick="indsendMoedePunkt()">Indsend punkt</button>
+        </div>
+      </div>
+      <div id="moedeMinePunkterListe"></div>
+    </div>
+
+    <div id="moedeReferater" style="display:none;">
+      <div id="moedeReferaterListe"><div class="loading">Henter referater...</div></div>
+    </div>
+  </div>
+
   <!-- ============ ADMIN ============ -->
   <div id="admin" class="side">
     <div class="kort">
@@ -691,6 +756,7 @@
     <button class="skjultPaaForside skjultPaaValg" id="navSammenMed" onclick="visSide('sammenMed')"><span class="ikon">🤝</span>Med</button>
     <button class="skjultPaaForside skjultPaaValg" id="navRengoring" onclick="visSide('rengoring')"><span class="ikon">🧹</span>Rengøring</button>
     <button class="skjultPaaForside skjultPaaValg" id="navP104" onclick="visSide('paragraf104')"><span class="ikon">💡</span>§104</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navPersonalemoede" onclick="visSide('personalemoede')"><span class="ikon">🗣️</span>P-møde</button>
   </div>
 
 </div>
@@ -781,12 +847,14 @@ const sideTitler = {
   sammenMed: 'Hvem er du med',
   rengoring: 'Rengøring',
   paragraf104: '§104',
+  personalemoede: 'Personalemøde',
   admin: 'Admin'
 };
 
 const navKnapPerSide = {
   forside: 'navForside', opgaver: 'navOpgaver', program: 'navProgram',
-  la2: 'navLa2', sammenMed: 'navSammenMed', rengoring: 'navRengoring', paragraf104: 'navP104'
+  la2: 'navLa2', sammenMed: 'navSammenMed', rengoring: 'navRengoring', paragraf104: 'navP104',
+  personalemoede: 'navPersonalemoede'
 };
 
 let aktuelSide = 'valg';
@@ -814,6 +882,7 @@ function visSide(side){
   if(side === 'paragraf104') visP104Mode();
   if(side === 'admin') hentIndstillingerAdmin();
   if(side === 'rengoring') hentRengoring();
+  if(side === 'personalemoede') visMoedeMode();
 }
 
 function gåTilForside(){
@@ -845,7 +914,8 @@ const FEATURE_KORT = [
   { fane: 'la2',         ikon: '📘', titel: 'LA2-planer',       side: 'la2' },
   { fane: 'sammenMed',   ikon: '🤝', titel: 'Hvem er du med',   side: 'sammenMed' },
   { fane: 'rengøring',   ikon: '🧹', titel: 'Rengøring',        side: 'rengoring' },
-  { fane: 'paragraf104', ikon: '💡', titel: '§104',             side: 'paragraf104' }
+  { fane: 'paragraf104', ikon: '💡', titel: '§104',             side: 'paragraf104' },
+  { fane: 'personalemoede', ikon: '🗣️', titel: 'Personalemøde', side: 'personalemoede' }
 ];
 
 let indstillingerCache = {};
@@ -1161,18 +1231,17 @@ async function hentAktiviteter(){
       <label style="font-size:12px;font-weight:600;padding-top:8px;">${dag}</label>
       <div>
         <input type="text" data-dag="${dag}" class="aktivitetInput" value="${escapeHtml(perDag[dag] || '')}">
-        ${perDag[dag] ? `
-          <div style="margin-top:4px;">
+        <div style="margin-top:4px;">
+          <button type="button" class="knap knapLille" onclick="sætIngenFællesAktivitet('${escapeHtml(dag)}')">∅ Ingen fælles aktivitet</button>
+          ${perDag[dag] ? `
             <button type="button" class="knap knapGuld knapLille" onclick="triggerBilledeUpload('${escapeHtml(dag)}')">📷 Tilføj billede</button>
             <input type="file" accept="image/*" style="display:none" id="billedeInput_${escapeHtml(dag)}" onchange="uploadAktivitetsBillede('${escapeHtml(dag)}')">
-            <div id="billedeGalleri_${escapeHtml(dag)}" style="margin-top:4px;"></div>
-          </div>
-        ` : ''}
+          ` : ''}
+        </div>
+        ${perDag[dag] ? `<div id="billedeGalleri_${escapeHtml(dag)}" style="margin-top:4px;"></div>` : ''}
       </div>
     </div>
-  `).join('') + `
-    <button class="knap knapLille" style="margin-top:8px;" onclick="sætIngenFællesAktivitet()">∅ Sæt "Ingen fælles aktivitet" for i dag</button>
-  `;
+  `).join('');
 
   // Billeder knyttes til aktivitetsNAVNET (ikke dagen) — gem opslaget så
   // upload-funktionerne ved hvilken tekst det aktuelle dag-felt har.
@@ -1348,17 +1417,16 @@ async function gemAktiviteter(){
   hentAktiviteter();
 }
 
-async function sætIngenFællesAktivitet(){
+async function sætIngenFællesAktivitet(dag){
   if(!sb) return;
-  const dagensDag = UGEDAGE[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
   const ugeStart = datoISO(effektivMandag(programUgeValg));
 
   const { error } = await sb.from('aktiviteter').upsert(
-    { dag: dagensDag, aktivitet: 'Ingen fælles aktivitet', uge_start: ugeStart },
+    { dag, aktivitet: 'Ingen fælles aktivitet', uge_start: ugeStart },
     { onConflict: 'dag,uge_start' }
   );
   if(error){ console.error(error); visToast('Fejl'); return; }
-  visToast('Sat for ' + dagensDag);
+  visToast('Sat for ' + dag);
   hentAktiviteter();
 }
 
@@ -1844,6 +1912,186 @@ async function toggleRengoringDag(dag){
 
   if(error){ console.error(error); visToast('Fejl'); return; }
   hentRengoring();
+}
+
+// ==================================================================
+// PERSONALEMØDE
+// ==================================================================
+// Deler Supabase-tabellerne med personalemoede-v2/ (samme projekt, samme
+// anon-nøgle). "Dit navn" deler localStorage-nøglen 'pm_mit_navn' med
+// personalemoede-v2 — samme origin (GitHub Pages), så feltet er allerede
+// udfyldt hvis man har brugt personalemøde-systemet før.
+
+const MOEDE_HIGHLIGHT_LABELS = {
+  beslutning: 'Beslutning', opgave: 'Opgave', info: 'Info', til_naeste: 'Til næste møde'
+};
+
+const MOEDE_UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+
+function moedeDatoLabel(datoStr){
+  const d = new Date(datoStr + 'T00:00:00');
+  return MOEDE_UGEDAGE[d.getDay()] + ' ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+function visMoedeMode(){
+  const mode = document.getElementById('moedeMode').value;
+  document.getElementById('moedeIndsend').style.display = mode === 'indsend' ? 'block' : 'none';
+  document.getElementById('moedeReferater').style.display = mode === 'referater' ? 'block' : 'none';
+
+  if(mode === 'indsend'){
+    document.getElementById('moedePunktNavn').value = localStorage.getItem('pm_mit_navn') || '';
+    hentMoedeNaesteMoede();
+  }
+  if(mode === 'referater') hentMoedeReferater();
+}
+
+let moedeNaeste = null;
+
+async function hentMoedeNaesteMoede(){
+  if(!sb) return;
+
+  const { data, error } = await sb
+    .from('moeder')
+    .select('*')
+    .eq('status', 'planlagt')
+    .order('dato', { ascending: true })
+    .order('starttid', { ascending: true })
+    .limit(1);
+
+  if(error){ console.error(error); return; }
+  moedeNaeste = (data && data.length > 0) ? data[0] : null;
+
+  const laast = !moedeNaeste;
+  document.getElementById('moedeIndsendLukket').style.display = laast ? 'block' : 'none';
+  document.getElementById('moedeIndsendForm').style.display = laast ? 'none' : 'block';
+  document.getElementById('moedeNaesteInfo').textContent = moedeNaeste
+    ? 'Næste møde: ' + moedeDatoLabel(moedeNaeste.dato) + (moedeNaeste.starttid ? ' kl. ' + moedeNaeste.starttid.slice(0,5) : '')
+    : 'Intet kommende møde oprettet endnu';
+
+  hentMoedeMinePunkter();
+}
+
+async function indsendMoedePunkt(){
+  if(!sb || !moedeNaeste) return;
+
+  const titel = document.getElementById('moedePunktTitel').value.trim();
+  const beskrivelse = document.getElementById('moedePunktBeskrivelse').value.trim();
+  const navn = document.getElementById('moedePunktNavn').value.trim();
+
+  if(!titel){ visToast('Skriv en titel'); return; }
+  if(!navn){ visToast('Skriv dit navn'); return; }
+
+  const { error } = await sb.from('dagsordenspunkter').insert({
+    moede_id: moedeNaeste.id,
+    titel,
+    beskrivelse: beskrivelse || null,
+    kilde: 'indsendt',
+    foreslaaet_af: navn,
+    status: 'afventer'
+  });
+
+  if(error){ console.error(error); visToast('Fejl: kunne ikke indsende punktet'); return; }
+
+  document.getElementById('moedePunktTitel').value = '';
+  document.getElementById('moedePunktBeskrivelse').value = '';
+  visToast('Punkt indsendt');
+  hentMoedeMinePunkter();
+}
+
+function moedeStatusLabel(status){
+  if(status === 'afventer') return 'Afventer';
+  if(status === 'godkendt') return 'Godkendt';
+  if(status === 'afvist') return 'Afvist';
+  if(status === 'udsat') return 'Udsat';
+  return status;
+}
+
+async function hentMoedeMinePunkter(){
+  const container = document.getElementById('moedeMinePunkterListe');
+  if(!sb || !moedeNaeste){ container.innerHTML = ''; return; }
+
+  const navn = document.getElementById('moedePunktNavn').value.trim();
+  if(!navn){ container.innerHTML = ''; return; }
+
+  const { data, error } = await sb
+    .from('dagsordenspunkter')
+    .select('*')
+    .eq('moede_id', moedeNaeste.id)
+    .eq('kilde', 'indsendt')
+    .ilike('foreslaaet_af', navn)
+    .order('foreslaaet_at', { ascending: false });
+
+  if(error){ console.error(error); return; }
+  if(!data || data.length === 0){ container.innerHTML = ''; return; }
+
+  container.innerHTML = `
+    <div class="kort">
+      <h3 style="margin-top:0; font-size:14px;">Dine indsendte punkter</h3>
+      ${data.map(p => `
+        <div class="beskedRække">
+          <div><strong>${escapeHtml(p.titel)}</strong>${p.beskrivelse ? '<br>' + escapeHtml(p.beskrivelse) : ''}</div>
+          <span class="beskedMeta">${moedeStatusLabel(p.status)}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function moedeHighlightRadHtml(h){
+  let meta = '';
+  if(h.type === 'opgave'){
+    meta = ' — Ansvarlig: ' + escapeHtml(h.ansvarlig || '') + (h.deadline ? ' (deadline ' + h.deadline + ')' : '');
+  }
+  return `
+    <div class="beskedRække">
+      <div><span class="hlBadge ${h.type}">${MOEDE_HIGHLIGHT_LABELS[h.type] || h.type}</span>${escapeHtml(h.tekst)}${meta}</div>
+    </div>
+  `;
+}
+
+// Viser de sidste 5 afsluttede møders highlights — kompakt udgave af
+// personalemoede-v2/arkiv.html's mødeliste, uden søgning/detalje-klik.
+async function hentMoedeReferater(){
+  if(!sb) return;
+  const container = document.getElementById('moedeReferaterListe');
+  container.innerHTML = '<div class="loading">Henter referater...</div>';
+
+  const { data: moeder, error } = await sb
+    .from('moeder')
+    .select('*')
+    .eq('status', 'afsluttet')
+    .order('dato', { ascending: false })
+    .limit(5);
+
+  if(error){ console.error(error); container.innerHTML = '<div class="loading">Kunne ikke hente referater</div>'; return; }
+  if(!moeder || moeder.length === 0){ container.innerHTML = '<div class="loading">Ingen afsluttede møder endnu</div>'; return; }
+
+  const moedeIds = moeder.map(m => m.id);
+  const { data: highlights, error: hlError } = await sb
+    .from('highlights')
+    .select('*')
+    .in('moede_id', moedeIds)
+    .order('oprettet_at', { ascending: true });
+
+  if(hlError) console.error(hlError);
+
+  const hlPerMoede = {};
+  (highlights || []).forEach(h => {
+    if(!hlPerMoede[h.moede_id]) hlPerMoede[h.moede_id] = [];
+    hlPerMoede[h.moede_id].push(h);
+  });
+
+  container.innerHTML = moeder.map(m => {
+    const liste = hlPerMoede[m.id] || [];
+    return `
+      <div class="kort">
+        <div class="moedeDatoHeader">${moedeDatoLabel(m.dato)}${m.starttid ? ' kl. ' + m.starttid.slice(0,5) : ''}</div>
+        ${liste.length === 0
+          ? '<div style="font-size:12px;color:var(--tekst-svag);">Ingen highlights registreret</div>'
+          : liste.map(moedeHighlightRadHtml).join('')}
+      </div>
+    `;
+  }).join('');
 }
 
 // ==================================================================
