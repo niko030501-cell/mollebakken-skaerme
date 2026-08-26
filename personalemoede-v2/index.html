@@ -525,7 +525,7 @@
 <nav id="hovedNav">
   <button id="hovedBtnIndsend" class="aktiv" onclick="visHovedSide('indsend')">Indsend</button>
   <button id="hovedBtnReferat" onclick="visHovedSide('referat')">Referat</button>
-  <button id="hovedBtnStorskaerm" onclick="visHovedSide('storskaerm')">Storskærm</button>
+  <button id="hovedBtnStorskaerm" onclick="aabenStorskaermINytVindue()">Storskærm</button>
   <button id="hovedBtnArkiv" onclick="visHovedSide('arkiv')">Arkiv</button>
 </nav>
 
@@ -2490,6 +2490,17 @@ async function eksporterTilWord(){
    ================================================================== */
 
 document.getElementById('mitNavnInput').value = mitNavn();
+
+// Storskærm åbnes i sit eget vindue/faneblad (så en TV kan stå permanent på
+// den, mens man selv fortsætter i det oprindelige vindue) — ?fane=storskaerm
+// i URL'en gør at det nye vindue starter direkte på den fane i stedet for
+// på Indsend.
+function aabenStorskaermINytVindue(){
+  window.open(location.pathname + '?fane=storskaerm', '_blank');
+}
+
+const startFane = new URLSearchParams(location.search).get('fane');
+if(hovedSider.includes(startFane)) visHovedSide(startFane);
 
 hentNaesteMoede();
 setInterval(hentNaesteMoede, 60000);
