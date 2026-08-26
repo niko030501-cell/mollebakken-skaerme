@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light only">
+  <meta name="color-scheme" content="light">
   <title>Personalemøde</title>
 
   <link rel="stylesheet" href="../shared/tokens.css">
@@ -19,35 +19,20 @@
       min-height:100vh;
     }
 
-    .wrap{
-      max-width:640px;
-      margin:0 auto;
-      padding:20px 16px 60px 16px;
-    }
+    /* ==================================================================
+       DELT — bruges af flere eller alle faner
+       ================================================================== */
+
+    .wrap{ margin:0 auto; padding:20px 16px 60px 16px; }
+    .wrap.w-640{ max-width:640px; }
+    .wrap.w-800{ max-width:800px; }
+    .wrap.w-1000{ max-width:1000px; }
 
     header{ margin-bottom:16px; }
-
-    h1{
-      font-size:24px;
-      font-weight:800;
-      margin:2px 0 6px 0;
-    }
-
-    #naesteMoedeLinje{
-      font-size:13px;
-      font-weight:700;
-      color:var(--tekst-2);
-    }
-
-    /* ---- Fane-nav (fra tokens.css, tilpasset til at kunne bryde på mobil) ---- */
+    h1{ font-size:24px; font-weight:800; margin:2px 0 6px 0; }
 
     .fane-nav{ flex-wrap:wrap; margin-bottom:16px; }
     .fane-nav button{ flex:1 1 auto; }
-
-    .side{ display:none; }
-    .side.aktiv{ display:block; }
-
-    /* ---- Kort ---- */
 
     .kort{
       background:var(--flade);
@@ -63,8 +48,6 @@
       letter-spacing:.05em;
       margin-bottom:12px;
     }
-
-    /* ---- Formular ---- */
 
     label{
       display:block;
@@ -96,8 +79,6 @@
 
     textarea{ resize:vertical; min-height:64px; }
 
-    /* ---- Knapper ---- */
-
     button{ font-family:'Archivo', sans-serif; cursor:pointer; }
 
     .knap{
@@ -123,8 +104,6 @@
 
     .knap-raekke{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
 
-    /* ---- Status-piller ---- */
-
     .status-pil{
       display:inline-block;
       padding:3px 10px;
@@ -140,23 +119,12 @@
     .status-pil.godkendt{ background:var(--status-ok); color:#fff; }
     .status-pil.afvist{ background:var(--status-afvist); color:#fff; }
     .status-pil.udsat{ background:var(--tom); color:#fff; }
+    .status-pil.aaben{ background:#fff; color:var(--guld-moerk); border:1px solid var(--guld); }
+    .status-pil.loest{ background:var(--status-ok); color:#fff; }
 
-    /* ---- Rækker (punkter, opgaver) ---- */
-
-    .pm-raekke{
-      padding:10px 0;
-      border-bottom:1px solid var(--streg-svag);
-    }
-
+    .pm-raekke{ padding:10px 0; border-bottom:1px solid var(--streg-svag); }
     .pm-raekke:last-child{ border-bottom:none; }
-
-    .pm-raekke-top{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-    }
-
+    .pm-raekke-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
     .pm-titel{ font-size:14px; font-weight:700; }
     .pm-beskrivelse{ font-size:13px; color:var(--tekst-2); margin-top:3px; }
     .pm-meta{ font-size:11px; color:var(--tom); margin-top:4px; }
@@ -164,19 +132,362 @@
 
     .tom-tilstand{ font-size:13px; color:var(--tom); padding:6px 0; }
 
-    /* ---- Leder-låsboks ---- */
+    .rediger-boks{ margin-top:10px; padding-top:10px; border-top:1px dashed var(--streg); }
+
+    .highlight-badge{
+      display:inline-block;
+      padding:3px 10px;
+      border-radius:12px;
+      font-size:10px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#fff;
+    }
+
+    .highlight-badge.beslutning{ background:var(--hl-beslutning); }
+    .highlight-badge.opgave{ background:var(--guld); color:var(--blaek); }
+    .highlight-badge.info{ background:var(--hl-info); }
+    .highlight-badge.til_naeste{ background:var(--brand); }
+
+    /* ==================================================================
+       TOP-NIVEAU — de fire hovedfaner (Indsend/Referat/Storskærm/Arkiv)
+       ================================================================== */
+
+    #hoved-indsend, #hoved-referat, #hoved-storskaerm, #hoved-arkiv{ display:none; }
+    #hoved-indsend.aktiv, #hoved-referat.aktiv, #hoved-arkiv.aktiv{ display:block; }
+
+    #topHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      max-width:1000px;
+      margin:0 auto;
+      padding:20px 16px 0 16px;
+    }
+
+    #hovedNav{
+      max-width:1000px;
+      margin:0 auto;
+      padding:0 16px;
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+
+    #hovedNav button{
+      font-family:'Archivo', sans-serif;
+      font-size:14px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.07em;
+      padding:8px 14px;
+      border:none;
+      border-radius:4px;
+      cursor:pointer;
+      background:#e0e5e1;
+      color:#4a5b58;
+    }
+
+    #hovedNav button.aktiv{ background:var(--brand); color:#fff; }
+
+    /* ==================================================================
+       INDSEND-fane (index.html)
+       ================================================================== */
+
+    #naesteMoedeLinje{ font-size:13px; font-weight:700; color:var(--tekst-2); }
 
     #lederLaas{ max-width:280px; margin:0 auto; text-align:center; }
     #lederLaas input{ text-align:center; letter-spacing:.2em; }
     #lederFejl{ color:var(--status-afvist); font-size:12px; margin-top:8px; min-height:16px; }
 
-    /* ---- Rediger-formular inline ---- */
-
-    .rediger-boks{ margin-top:10px; padding-top:10px; border-top:1px dashed var(--streg); }
-
-    /* ---- Op/ned sortering ---- */
-
     .sorter-knapper{ display:flex; flex-direction:column; gap:4px; }
+
+    /* ==================================================================
+       REFERAT-fane (moede.html)
+       ================================================================== */
+
+    #moedeLinje{ font-size:13px; font-weight:700; color:var(--tekst-2); }
+
+    .moede-layout{ display:flex; gap:16px; align-items:flex-start; }
+
+    #sidepanel{
+      width:260px;
+      flex-shrink:0;
+      background:var(--flade);
+      border-radius:8px;
+      padding:10px;
+      max-height:calc(100vh - 220px);
+      overflow-y:auto;
+      position:sticky;
+      top:16px;
+    }
+
+    .sidepunkt{
+      display:flex;
+      align-items:flex-start;
+      gap:8px;
+      width:100%;
+      text-align:left;
+      background:none;
+      border:none;
+      border-radius:6px;
+      padding:9px 10px;
+      font-size:12.5px;
+      font-weight:600;
+      color:var(--blaek);
+      line-height:1.3;
+    }
+
+    .sidepunkt:hover{ background:rgba(255,255,255,.6); }
+    .sidepunkt.nuvaerende{ background:var(--blaek); color:#fff; }
+    .sidepunkt.behandlet:not(.nuvaerende){ color:var(--tekst-2); opacity:.7; }
+
+    .sidepunkt-ikon{ flex-shrink:0; width:14px; text-align:center; }
+
+    #hovedpanel{ flex:1; min-width:0; }
+
+    .punkt-kilde-tag{
+      display:inline-block;
+      font-size:10px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:var(--label);
+      margin-bottom:6px;
+    }
+
+    #punktTitel{ font-size:19px; font-weight:800; margin-bottom:4px; }
+    #punktBeskrivelse{ font-size:13px; color:var(--tekst-2); margin-bottom:16px; }
+
+    #noteTextarea{ min-height:220px; font-size:15px; line-height:1.5; }
+
+    .note-status{ font-size:11px; color:var(--tom); margin-top:6px; min-height:14px; }
+
+    .behandlet-linje{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-top:14px;
+      font-size:13px;
+      font-weight:700;
+    }
+
+    .behandlet-linje input{ width:18px; height:18px; }
+
+    .highlight-sektion{ margin-top:18px; }
+    .highlight-sektion .hint{ font-size:11px; color:var(--tom); margin-bottom:8px; }
+
+    .highlight-knap{ border-top:3px solid transparent; }
+    .highlight-knap.beslutning{ border-top-color:var(--hl-beslutning); }
+    .highlight-knap.opgave{ border-top-color:var(--guld); }
+    .highlight-knap.info{ border-top-color:var(--hl-info); }
+    .highlight-knap.til_naeste{ border-top-color:var(--brand); }
+
+    .highlight-item{ padding:10px 0; border-bottom:1px solid var(--streg-svag); }
+    .highlight-item:last-child{ border-bottom:none; }
+
+    .navigations-raekke{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:20px;
+      gap:10px;
+    }
+
+    .adhoc-boks{ margin-top:20px; padding-top:16px; border-top:1px dashed var(--streg); }
+
+    @media (max-width: 760px){
+      .moede-layout{ flex-direction:column; }
+      #sidepanel{ width:100%; max-height:180px; position:static; }
+    }
+
+    /* ==================================================================
+       STORSKÆRM-fane (skaerm.html) — fast overlay der dækker hele
+       viewporten (inkl. topnav) når den er aktiv, kiosk-stil.
+       ================================================================== */
+
+    #hoved-storskaerm{ display:none; }
+    #hoved-storskaerm.aktiv{
+      display:flex;
+      flex-direction:column;
+      position:fixed;
+      inset:0;
+      z-index:1000;
+      background:var(--papir);
+      overflow:hidden;
+    }
+
+    #storskaermExit{
+      position:absolute;
+      top:14px;
+      right:18px;
+      z-index:1001;
+      background:none;
+      border:none;
+      color:var(--tom);
+      font-size:22px;
+      font-family:'Archivo', sans-serif;
+      cursor:pointer;
+      opacity:.5;
+      padding:6px 10px;
+    }
+
+    #storskaermExit:hover{ opacity:1; }
+
+    #topbjaelke{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-shrink:0;
+      padding:20px 40px;
+      border-bottom:2px solid var(--blaek);
+    }
+
+    #topbjaelke .eyebrow{ font-size:14px; }
+
+    #moedeDato{
+      font-size:16px;
+      font-weight:700;
+      color:var(--tekst-2);
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+
+    #skaermIndhold{
+      flex:1;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:40px;
+    }
+
+    #roligTilstand{ text-align:center; }
+
+    #roligTitel{
+      font-size:clamp(32px, 4vw, 56px);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+
+    #roligDato{ margin-top:14px; font-size:clamp(18px, 2vw, 26px); font-weight:600; color:var(--tekst-2); }
+
+    #roligUndertekst{
+      margin-top:28px;
+      font-size:clamp(14px, 1.4vw, 18px);
+      color:var(--tom);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-weight:700;
+    }
+
+    #aktivTilstand{
+      width:100%;
+      max-width:1400px;
+      display:flex;
+      flex-direction:column;
+      gap:24px;
+      min-height:0;
+    }
+
+    #hoved-storskaerm .highlight-badge{
+      padding:6px 16px;
+      border-radius:20px;
+      font-size:clamp(13px, 1.3vw, 18px);
+    }
+
+    .nu-block{ background:var(--blaek); color:#fff; border-radius:16px; padding:clamp(28px, 4vw, 56px); }
+
+    .nu-tekst{ margin-top:20px; font-size:clamp(34px, 5.2vw, 76px); font-weight:800; line-height:1.15; }
+
+    .nu-meta{
+      margin-top:22px;
+      display:flex;
+      gap:32px;
+      flex-wrap:wrap;
+      font-size:clamp(18px, 2.4vw, 34px);
+      font-weight:700;
+      color:var(--guld);
+    }
+
+    #tidligereListe{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+      gap:16px;
+    }
+
+    .tidligere-kort{ background:var(--flade); border-radius:10px; padding:18px 20px; }
+
+    .tidligere-tekst{ margin-top:10px; font-size:clamp(16px, 1.6vw, 22px); font-weight:700; color:var(--blaek); line-height:1.25; }
+
+    .tidligere-meta{ margin-top:8px; font-size:clamp(12px, 1.1vw, 15px); font-weight:600; color:var(--tekst-2); }
+
+    /* ==================================================================
+       ARKIV-fane (arkiv.html)
+       ================================================================== */
+
+    .filter-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+      gap:12px;
+    }
+
+    .moede-raekke{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      width:100%;
+      text-align:left;
+      background:none;
+      border:none;
+      padding:12px 4px;
+      border-bottom:1px solid var(--streg-svag);
+      font-family:'Archivo', sans-serif;
+    }
+
+    .moede-raekke:last-child{ border-bottom:none; }
+    .moede-raekke:hover{ background:rgba(255,255,255,.5); }
+    .moede-raekke-dato{ font-size:14px; font-weight:700; }
+    .moede-raekke-meta{ font-size:12px; color:var(--tekst-2); margin-top:2px; }
+
+    .soegeresultat{ padding:12px 0; border-bottom:1px solid var(--streg-svag); }
+    .soegeresultat:last-child{ border-bottom:none; }
+    .soegeresultat-tekst{ font-size:14px; font-weight:700; margin-top:6px; }
+    .soegeresultat-meta{ font-size:11px; color:var(--tom); margin-top:4px; }
+    .soegeresultat-link{ font-size:12px; font-weight:700; color:var(--brand); text-decoration:underline; cursor:pointer; margin-top:6px; display:inline-block; }
+
+    #detaljeMoedeMeta{ font-size:13px; color:var(--tekst-2); margin-bottom:16px; }
+
+    .referat-punkt{ margin-bottom:22px; padding-bottom:18px; border-bottom:1px solid var(--streg); }
+    .referat-punkt:last-child{ border-bottom:none; }
+
+    .referat-punkt-titel{ font-size:17px; font-weight:800; }
+    .referat-punkt-beskrivelse{ font-size:13px; color:var(--tekst-2); margin-top:2px; }
+    .referat-punkt-note{ font-size:14px; margin-top:10px; white-space:pre-wrap; line-height:1.5; }
+
+    .referat-highlight{ margin-top:10px; padding:10px 12px; background:#fff; border-radius:6px; }
+    .referat-highlight-tekst{ font-size:13.5px; font-weight:700; margin-top:6px; }
+    .referat-highlight-meta{ font-size:11px; color:var(--tom); margin-top:4px; }
+
+    .opsummering-gruppe{ margin-bottom:14px; }
+    .opsummering-gruppe h3{ font-size:12px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+    .opsummering-linje{ font-size:13px; margin-top:4px; }
+
+    @media print{
+      .ikke-print{ display:none !important; }
+      body{ background:#fff; }
+      #hovedNav{ display:none !important; }
+      #hoved-arkiv{ display:block !important; padding:0; }
+      #hoved-arkiv .wrap{ max-width:none; padding:0; }
+      #hoved-arkiv .kort{ background:#fff; padding:0; margin-bottom:20px; }
+      #hoved-arkiv .side{ display:block !important; }
+      #side-liste{ display:none !important; }
+      #hoved-indsend, #hoved-referat, #hoved-storskaerm{ display:none !important; }
+    }
   </style>
 </head>
 <body>
@@ -192,17 +503,39 @@
   // menu-synligheds-gate, ikke reel sikkerhed (RLS kan ikke skelne "leder"
   // fra "medarbejder" når appen kun bruger den offentlige anon-nøgle).
   const LEDER_KODE = '1234';
+
+  // Client-side polling hvert 5. sekund på Storskærm-fanen — kortere end de
+  // 60 sek. i søskende-projekterne, fordi highlights skal føles live under
+  // mødet. Ingen server-side triggers, ingen Supabase Realtime.
+  const POLL_INTERVAL_MS = 5000;
 </script>
 
 <script src="supabase-js.min.js"></script>
+<script src="docx.umd.js"></script>
 
-<div class="wrap">
+<!-- ============================================================ -->
+<!-- TOP-NIVEAU NAVIGATION                                         -->
+<!-- ============================================================ -->
 
-<header>
+<header style="max-width:1000px; margin:0 auto; padding:20px 16px 0 16px;">
   <div class="eyebrow">Møllebakken</div>
   <h1>Personalemøde</h1>
-  <div id="naesteMoedeLinje">Henter næste møde …</div>
 </header>
+
+<nav id="hovedNav">
+  <button id="hovedBtnIndsend" class="aktiv" onclick="visHovedSide('indsend')">Indsend</button>
+  <button id="hovedBtnReferat" onclick="visHovedSide('referat')">Referat</button>
+  <button id="hovedBtnStorskaerm" onclick="visHovedSide('storskaerm')">Storskærm</button>
+  <button id="hovedBtnArkiv" onclick="visHovedSide('arkiv')">Arkiv</button>
+</nav>
+
+<!-- ==================================================================
+     INDSEND (tidligere index.html)
+     ================================================================== -->
+<div id="hoved-indsend" class="aktiv">
+<div class="wrap w-640">
+
+<div id="naesteMoedeLinje" style="margin-bottom:16px;">Henter næste møde …</div>
 
 <nav class="fane-nav">
   <button id="btnIndsend" class="aktiv" onclick="visSide('indsend')">Indsend</button>
@@ -211,14 +544,12 @@
   <button id="btnLeder" onclick="visSide('leder')">Leder</button>
 </nav>
 
-<!-- ==================== INDSEND ==================== -->
-
 <div id="side-indsend" class="side aktiv">
 
   <div class="kort">
     <h2>Dit navn</h2>
     <div class="felt">
-      <input type="text" id="mitNavnInput" placeholder="Skriv dit fulde navn" oninput="gemMitNavn()">
+      <input type="text" id="mitNavnInput" placeholder="Skriv dit fulde navn" oninput="gemMitNavn(this.value)">
     </div>
   </div>
 
@@ -247,8 +578,6 @@
 
 </div>
 
-<!-- ==================== DAGSORDEN ==================== -->
-
 <div id="side-dagsorden" class="side">
   <div class="kort">
     <h2>Godkendt dagsorden — næste møde</h2>
@@ -256,16 +585,12 @@
   </div>
 </div>
 
-<!-- ==================== MINE OPGAVER ==================== -->
-
 <div id="side-opgaver" class="side">
   <div class="kort">
     <h2>Mine åbne opgaver</h2>
     <div id="mineOpgaverListe"><div class="tom-tilstand">Henter …</div></div>
   </div>
 </div>
-
-<!-- ==================== LEDER ==================== -->
 
 <div id="side-leder" class="side">
 
@@ -295,6 +620,20 @@
       <button class="knap" onclick="opretNaesteMoede()">Opret møde</button>
     </div>
 
+    <div id="lederTilfoejKort" class="kort" style="display:none;">
+      <h2>Tilføj punkt direkte</h2>
+      <div class="tom-tilstand" style="margin-bottom:10px;">Går direkte på dagsordenen — kræver ikke godkendelse.</div>
+      <div class="felt">
+        <label for="lederPunktTitelInput">Titel</label>
+        <input type="text" id="lederPunktTitelInput" placeholder="Kort titel">
+      </div>
+      <div class="felt">
+        <label for="lederPunktBeskrivelseInput">Beskrivelse (valgfri)</label>
+        <textarea id="lederPunktBeskrivelseInput" placeholder="Uddyb hvis nødvendigt"></textarea>
+      </div>
+      <button class="knap" onclick="tilfoejLederPunktDirekte()">Tilføj til dagsorden</button>
+    </div>
+
     <div id="godkendelseKort" class="kort" style="display:none;">
       <h2>Afventer godkendelse</h2>
       <div id="afventerListe"><div class="tom-tilstand">Henter …</div></div>
@@ -310,13 +649,249 @@
 </div>
 
 </div>
+</div>
+
+<!-- ==================================================================
+     REFERAT (tidligere moede.html)
+     ================================================================== -->
+<div id="hoved-referat">
+<div class="wrap w-1000">
+
+<div id="moedeLinje" style="margin-bottom:16px;">Henter møde …</div>
+
+<div id="side-ingen" class="kort" style="display:none;">
+  <div class="tom-tilstand">
+    Der er intet møde at skrive referat for. Opret et møde under "Leder"-fanen på Indsend-siden.
+  </div>
+</div>
+
+<div id="side-start" class="kort" style="display:none;">
+  <h2>Start møde</h2>
+  <div class="felt">
+    <label for="referentInput">Referent (dit navn)</label>
+    <input type="text" id="referentInput" placeholder="Skriv dit fulde navn">
+  </div>
+  <div class="felt">
+    <label for="deltagereInput">Deltagere (valgfri, adskil med komma)</label>
+    <input type="text" id="deltagereInput" placeholder="Navn, Navn, Navn">
+  </div>
+  <button class="knap" onclick="startMoede()">Start møde</button>
+</div>
+
+<div id="side-skriv" style="display:none;">
+  <div class="moede-layout">
+
+    <aside id="sidepanel"></aside>
+
+    <div id="hovedpanel">
+      <div class="kort">
+        <div id="punktKildeTag" class="punkt-kilde-tag"></div>
+        <div id="punktTitel"></div>
+        <div id="punktBeskrivelse"></div>
+
+        <label for="noteTextarea">Noter</label>
+        <textarea id="noteTextarea" rows="10" placeholder="Skriv løbende noter til punktet …" oninput="markerNoteDirty()" onblur="gemAktuelNote()"></textarea>
+        <div id="noteStatus" class="note-status"></div>
+
+        <label class="behandlet-linje">
+          <input type="checkbox" id="behandletCheckbox" onchange="skiftBehandlet()">
+          Punktet er behandlet
+        </label>
+
+        <div class="highlight-sektion">
+          <label>Highlights</label>
+          <div class="hint">Vises live på Storskærm-fanen, med det samme.</div>
+          <div class="knap-raekke">
+            <button class="knap lille highlight-knap beslutning" onclick="visHighlightForm('beslutning')">Beslutning</button>
+            <button class="knap lille highlight-knap opgave" onclick="visHighlightForm('opgave')">Opgave</button>
+            <button class="knap lille highlight-knap info" onclick="visHighlightForm('info')">Info</button>
+            <button class="knap lille highlight-knap til_naeste" onclick="visHighlightForm('til_naeste')">Til næste møde</button>
+          </div>
+          <div id="highlightForm" style="display:none;"></div>
+          <div id="highlightListe"></div>
+        </div>
+
+        <div class="navigations-raekke">
+          <button class="knap sekundaer" id="btnForrige" onclick="skiftPunkt(-1)">&larr; Forrige punkt</button>
+          <button class="knap" id="btnNaeste" onclick="skiftPunkt(1)">Næste punkt &rarr;</button>
+        </div>
+      </div>
+
+      <div class="kort adhoc-boks">
+        <h2>Punkt der dukkede op</h2>
+        <div id="adhocForm" style="display:none;">
+          <div class="felt">
+            <label for="adhocTitelInput">Titel</label>
+            <input type="text" id="adhocTitelInput" placeholder="Kort titel">
+          </div>
+          <div class="felt">
+            <label for="adhocBeskrivelseInput">Beskrivelse (valgfri)</label>
+            <textarea id="adhocBeskrivelseInput" rows="2"></textarea>
+          </div>
+          <div class="knap-raekke">
+            <button class="knap lille" onclick="tilfoejAdHocPunkt()">Tilføj til dagsorden</button>
+            <button class="knap lille sekundaer" onclick="skjulAdHocForm()">Annuller</button>
+          </div>
+        </div>
+        <button id="btnVisAdhocForm" class="knap sekundaer lille" onclick="visAdHocForm()">+ Tilføj punkt</button>
+      </div>
+
+      <div class="kort">
+        <button class="knap farlig" onclick="afslutMoede()">Afslut møde</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="side-opsummering" class="kort" style="display:none;">
+  <h2>Mødet er afsluttet</h2>
+  <div id="opsummeringTekst" class="tom-tilstand"></div>
+
+  <div id="naesteMoedeBoks" style="margin-top:16px;">
+    <label for="naesteMoedeDato">Opret næste møde? Vælg dato</label>
+    <div class="felt">
+      <input type="date" id="naesteMoedeDato">
+    </div>
+    <div class="felt">
+      <label for="naesteMoedeTid">Starttid (valgfri)</label>
+      <input type="time" id="naesteMoedeTid">
+    </div>
+    <div class="knap-raekke">
+      <button class="knap" onclick="opretNaesteMoedeEfterAfslutning()">Opret næste møde</button>
+      <button class="knap sekundaer" onclick="springNaesteMoedeOver()">Spring over</button>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ==================================================================
+     STORSKÆRM (tidligere skaerm.html) — fast overlay, se CSS
+     ================================================================== -->
+<div id="hoved-storskaerm">
+
+  <button id="storskaermExit" onclick="visHovedSide('indsend')" title="Tilbage">&times;</button>
+
+  <header id="topbjaelke">
+    <div class="eyebrow">Personalemøde</div>
+    <div id="moedeDato"></div>
+  </header>
+
+  <main id="skaermIndhold">
+
+    <div id="roligTilstand" style="display:none;">
+      <div id="roligTitel">Personalemøde</div>
+      <div id="roligDato"></div>
+      <div id="roligUndertekst"></div>
+    </div>
+
+    <div id="aktivTilstand" style="display:none;">
+      <div id="nuBlock" class="nu-block">
+        <span id="nuBadge" class="highlight-badge"></span>
+        <div id="nuTekst" class="nu-tekst"></div>
+        <div id="nuMeta" class="nu-meta"></div>
+      </div>
+      <div id="tidligereListe"></div>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- ==================================================================
+     ARKIV (tidligere arkiv.html)
+     ================================================================== -->
+<div id="hoved-arkiv">
+<div class="wrap w-800">
+
+<nav class="fane-nav ikke-print">
+  <button id="btnMoeder" class="aktiv" onclick="visFane('moeder')">Møder</button>
+  <button id="btnSoeg" onclick="visFane('soeg')">Søg i highlights</button>
+</nav>
+
+<div id="side-moeder" class="side aktiv">
+
+  <div id="side-liste" class="kort">
+    <h2>Afsluttede møder</h2>
+    <div id="moedeListe"><div class="tom-tilstand">Henter …</div></div>
+  </div>
+
+  <div id="side-detalje" style="display:none;">
+    <div class="knap-raekke ikke-print">
+      <button class="knap sekundaer lille" onclick="visMoedeliste()">&larr; Tilbage til liste</button>
+      <button class="knap lille" onclick="window.print()">Udskriv / Gem som PDF</button>
+      <button class="knap lille" id="btnEksporterWord" onclick="eksporterTilWord()">Eksporter til Word (.docx)</button>
+    </div>
+
+    <div class="kort">
+      <h2 id="detaljeMoedeDato"></h2>
+      <div id="detaljeMoedeMeta"></div>
+      <div id="detaljePunkter"></div>
+    </div>
+
+    <div class="kort">
+      <h2>Opsummering</h2>
+      <div id="detaljeOpsummering"></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="side-soeg" class="side">
+
+  <div class="kort ikke-print">
+    <h2>Søg i highlights på tværs af alle møder</h2>
+    <div class="filter-grid">
+      <div class="felt">
+        <label for="soegFritekst">Fritekst</label>
+        <input type="text" id="soegFritekst" placeholder="Søg i teksten …">
+      </div>
+      <div class="felt">
+        <label for="soegType">Type</label>
+        <select id="soegType">
+          <option value="">Alle typer</option>
+          <option value="beslutning">Beslutning</option>
+          <option value="opgave">Opgave</option>
+          <option value="info">Info</option>
+          <option value="til_naeste">Til næste møde</option>
+        </select>
+      </div>
+      <div class="felt">
+        <label for="soegAnsvarlig">Ansvarlig</label>
+        <input type="text" id="soegAnsvarlig" placeholder="Navn">
+      </div>
+      <div class="felt">
+        <label for="soegStatus">Status</label>
+        <select id="soegStatus">
+          <option value="">Alle</option>
+          <option value="aaben">Åben</option>
+          <option value="loest">Løst</option>
+        </select>
+      </div>
+    </div>
+    <button class="knap" onclick="soegHighlights()">Søg</button>
+  </div>
+
+  <div class="kort">
+    <h2>Resultater</h2>
+    <div id="soegeResultater"><div class="tom-tilstand">Søg for at se resultater.</div></div>
+  </div>
+
+</div>
+
+</div>
+</div>
 
 <!-- ============================================================ -->
 <!-- SCRIPT                                                        -->
 <!-- ============================================================ -->
 <script>
 
-// ---- Supabase-klient ----
+// ==================================================================
+// DELT — Supabase-klient, hjælpefunktioner, rækkefølge-bånd
+// ==================================================================
 
 let sb = null;
 try {
@@ -324,8 +899,6 @@ try {
 } catch (e) {
   console.error('Kunne ikke oprette Supabase-klient:', e);
 }
-
-// ---- Hjælpefunktioner ----
 
 function escapeHtml(str){
   const d = document.createElement('div');
@@ -356,55 +929,154 @@ function datoLangLabel(datoStr){
   return ugedag + ' ' + dag + '/' + maaned;
 }
 
+function datoLangLabelMedAar(datoStr){
+  if(!datoStr) return '';
+  const d = new Date(datoStr + 'T00:00:00');
+  if(isNaN(d.getTime())) return '';
+  return datoLangLabel(datoStr) + '-' + d.getFullYear();
+}
+
+function datoKortLabel(datoStr){
+  if(!datoStr) return '';
+  const d = new Date(datoStr + 'T00:00:00');
+  if(isNaN(d.getTime())) return '';
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+}
+
 function tidKortLabel(tidStr){
   if(!tidStr) return '';
   return tidStr.toString().slice(0,5);
 }
 
+// "Mit navn" er ét fælles felt på tværs af Indsend- og Referat-fanen,
+// gemt i localStorage så begge faner altid er enige om hvem du er.
 function mitNavn(){
-  return (document.getElementById('mitNavnInput').value || '').trim();
+  return localStorage.getItem('pm_mit_navn') || '';
 }
 
-function gemMitNavn(){
-  localStorage.setItem('pm_mit_navn', mitNavn());
+function gemMitNavn(navn){
+  localStorage.setItem('pm_mit_navn', (navn || '').trim());
 }
 
 function kraevMitNavn(){
   const navn = mitNavn();
   if(!navn){
-    alert('Skriv dit navn øverst på siden først.');
+    alert('Skriv dit navn øverst på Indsend-siden først.');
+    visHovedSide('indsend');
     document.getElementById('mitNavnInput').focus();
     return null;
   }
   return navn;
 }
 
-// ---- Fanevisning ----
-
-const knapIdPerSide = {
-  indsend:   'btnIndsend',
-  dagsorden: 'btnDagsorden',
-  opgaver:   'btnOpgaver',
-  leder:     'btnLeder'
+const HIGHLIGHT_TYPE_LABELS = {
+  beslutning: 'Beslutning',
+  opgave: 'Opgave',
+  info: 'Info',
+  til_naeste: 'Til næste møde'
 };
 
+const HIGHLIGHT_TYPE_RAEKKEFOELGE = ['beslutning', 'opgave', 'info', 'til_naeste'];
+
+function kildeLabel(kilde){
+  if(kilde === 'fast') return 'Fast punkt';
+  if(kilde === 'indsendt') return 'Indsendt';
+  if(kilde === 'overfoert') return 'Overført fra sidste møde';
+  if(kilde === 'ad_hoc') return 'Dukkede op under mødet';
+  return kilde;
+}
+
+// Rækkefølge-bånd så fast/indsendt/overført altid sorterer rigtigt i forhold
+// til hinanden med et enkelt "order by raekkefoelge" alle steder — ingen
+// særskilt kilde-sortering nødvendig ved læsning.
+// fast: 0-999 · indsendt: 1000-1999 · overført: 2000+ · ad hoc: altid sidst.
+const RAEKKEFOELGE_INDSENDT_BASE = 1000;
+const RAEKKEFOELGE_OVERFOERT_BASE = 2000;
+
+// Overfører automatisk til_naeste-highlights og udsatte punkter fra det
+// senest afsluttede møde til det nyoprettede møde. Kaldes både når leder
+// bootstrapper et møde (Indsend-fanen) og når næste møde oprettes efter
+// "Afslut møde" (Referat-fanen).
+async function overfoerFraSidsteMoede(nytMoedeId){
+  const sidsteRes = await sb.from('moeder').select('id').eq('status', 'afsluttet').order('dato', { ascending: false }).limit(1);
+  if(sidsteRes.error || !sidsteRes.data || sidsteRes.data.length === 0) return;
+  const sidsteMoedeId = sidsteRes.data[0].id;
+
+  const [hlRes, udsatRes] = await Promise.all([
+    sb.from('highlights').select('*').eq('moede_id', sidsteMoedeId).eq('type', 'til_naeste'),
+    sb.from('dagsordenspunkter').select('*').eq('moede_id', sidsteMoedeId).eq('status', 'udsat')
+  ]);
+
+  const nyeRaekker = [];
+  let raekkefoelge = RAEKKEFOELGE_OVERFOERT_BASE;
+
+  (hlRes.data || []).forEach(h => {
+    nyeRaekker.push({
+      moede_id: nytMoedeId,
+      titel: h.tekst,
+      beskrivelse: null,
+      kilde: 'overfoert',
+      status: 'godkendt',
+      raekkefoelge: raekkefoelge++,
+      behandlet: false
+    });
+  });
+
+  (udsatRes.data || []).forEach(p => {
+    nyeRaekker.push({
+      moede_id: nytMoedeId,
+      titel: p.titel,
+      beskrivelse: p.beskrivelse,
+      kilde: 'overfoert',
+      status: 'godkendt',
+      foreslaaet_af: p.foreslaaet_af,
+      raekkefoelge: raekkefoelge++,
+      behandlet: false
+    });
+  });
+
+  if(nyeRaekker.length > 0){
+    const { error } = await sb.from('dagsordenspunkter').insert(nyeRaekker);
+    if(error) console.error('Fejl ved overførsel til næste møde:', error);
+  }
+}
+
+// ==================================================================
+// TOP-NIVEAU NAVIGATION
+// ==================================================================
+
+const hovedSider = ['indsend', 'referat', 'storskaerm', 'arkiv'];
+let hovedSideInitialiseret = { indsend: false, referat: false, storskaerm: false, arkiv: false };
+
+function visHovedSide(side){
+  hovedSider.forEach(s => {
+    document.getElementById('hoved-' + s).classList.toggle('aktiv', s === side);
+  });
+  document.querySelectorAll('#hovedNav button').forEach(b => b.classList.remove('aktiv'));
+  document.getElementById('hovedBtn' + side.charAt(0).toUpperCase() + side.slice(1)).classList.add('aktiv');
+
+  if(side === 'indsend') hentNaesteMoede();
+  if(side === 'referat') hentAktueltMoede();
+  if(side === 'arkiv' && !hovedSideInitialiseret.arkiv){ hentAfsluttedeMoeder(); hovedSideInitialiseret.arkiv = true; }
+}
+
+/* ==================================================================
+   INDSEND — tidligere index.html
+   ================================================================== */
+
+let naesteMoede = null;   // { id, dato, starttid, status }
+let lederLaastOp = false;
+
 function visSide(side){
-  document.querySelectorAll('.side').forEach(d => d.classList.remove('aktiv'));
+  document.querySelectorAll('#hoved-indsend .side').forEach(d => d.classList.remove('aktiv'));
   document.getElementById('side-' + side).classList.add('aktiv');
-  document.querySelectorAll('.fane-nav button').forEach(b => b.classList.remove('aktiv'));
-  document.getElementById(knapIdPerSide[side]).classList.add('aktiv');
+  document.querySelectorAll('#hoved-indsend > .wrap > .fane-nav button').forEach(b => b.classList.remove('aktiv'));
+  document.getElementById({ indsend: 'btnIndsend', dagsorden: 'btnDagsorden', opgaver: 'btnOpgaver', leder: 'btnLeder' }[side]).classList.add('aktiv');
 
   if(side === 'dagsorden') hentGodkendtDagsorden();
   if(side === 'opgaver') hentMineOpgaver();
   if(side === 'leder' && lederLaastOp) hentLederData();
 }
-
-// ---- Tilstand ----
-
-let naesteMoede = null;   // { id, dato, starttid, status }
-let lederLaastOp = false;
-
-// ---- NÆSTE MØDE ----
 
 async function hentNaesteMoede(){
   if(!sb) return;
@@ -443,8 +1115,6 @@ function opdaterIndsendLaas(){
   document.getElementById('indsendLukket').style.display = laast ? 'block' : 'none';
   document.getElementById('indsendForm').style.display = laast ? 'none' : 'block';
 }
-
-// ---- INDSEND PUNKT ----
 
 async function indsendPunkt(){
   if(!sb || !naesteMoede) return;
@@ -523,8 +1193,6 @@ function statusLabel(status){
   return status;
 }
 
-// ---- DAGSORDEN (forhåndsvisning) ----
-
 async function hentGodkendtDagsorden(){
   const container = document.getElementById('dagsordenListe');
   if(!sb || !naesteMoede){ container.innerHTML = '<div class="tom-tilstand">Intet kommende møde endnu.</div>'; return; }
@@ -557,8 +1225,6 @@ function visGodkendtDagsorden(data){
   });
   container.innerHTML = html;
 }
-
-// ---- MINE OPGAVER ----
 
 async function hentMineOpgaver(){
   const container = document.getElementById('mineOpgaverListe');
@@ -608,8 +1274,6 @@ async function markerOpgaveLoest(id){
   hentMineOpgaver();
 }
 
-// ---- LEDER: lås op ----
-
 function tjekLederKode(){
   const kode = document.getElementById('lederKodeInput').value.trim();
   if(kode === LEDER_KODE){
@@ -626,6 +1290,7 @@ async function hentLederData(){
   if(!sb) return;
 
   document.getElementById('opretMoedeKort').style.display = naesteMoede ? 'none' : 'block';
+  document.getElementById('lederTilfoejKort').style.display = naesteMoede ? 'block' : 'none';
   document.getElementById('godkendelseKort').style.display = naesteMoede ? 'block' : 'none';
   document.getElementById('godkendtSorterKort').style.display = naesteMoede ? 'block' : 'none';
 
@@ -656,66 +1321,49 @@ async function opretNaesteMoede(){
   hentNaesteMoede();
 }
 
-// Rækkefølge-bånd 2000+, se RAEKKEFOELGE_INDSENDT_BASE ovenfor.
-const RAEKKEFOELGE_OVERFOERT_BASE = 2000;
+// Punkt oprettet direkte af leder — samme rækkefølge-bånd som indsendte
+// punkter, men springer godkendelses-trinnet over (status er allerede
+// 'godkendt' ved oprettelse).
+async function tilfoejLederPunktDirekte(){
+  if(!sb || !naesteMoede) return;
+  const titel = document.getElementById('lederPunktTitelInput').value.trim();
+  if(!titel){ alert('Skriv en titel til punktet.'); return; }
+  const beskrivelse = document.getElementById('lederPunktBeskrivelseInput').value.trim();
 
-// Overfører automatisk til_naeste-highlights og udsatte punkter fra det
-// senest afsluttede møde til det nyoprettede møde. Både en til_naeste-
-// highlight og "Udsæt til næste møde" betyder bogstaveligt "næste møde",
-// så de flyttes hertil — uanset om det nye møde lige blev oprettet her
-// (bootstrap i leder-panelet) eller fra "Afslut møde"-prompten i
-// moede.html (samme funktion findes duplikeret der, ingen delt modul-
-// struktur i dette ingen-byggeproces-projekt).
-async function overfoerFraSidsteMoede(nytMoedeId){
-  const sidsteRes = await sb.from('moeder').select('id').eq('status', 'afsluttet').order('dato', { ascending: false }).limit(1);
-  if(sidsteRes.error || !sidsteRes.data || sidsteRes.data.length === 0) return;
-  const sidsteMoedeId = sidsteRes.data[0].id;
+  const { data: maxData, error: maxError } = await sb
+    .from('dagsordenspunkter')
+    .select('raekkefoelge')
+    .eq('moede_id', naesteMoede.id)
+    .eq('status', 'godkendt')
+    .eq('kilde', 'indsendt')
+    .order('raekkefoelge', { ascending: false })
+    .limit(1);
 
-  const [hlRes, udsatRes] = await Promise.all([
-    sb.from('highlights').select('*').eq('moede_id', sidsteMoedeId).eq('type', 'til_naeste'),
-    sb.from('dagsordenspunkter').select('*').eq('moede_id', sidsteMoedeId).eq('status', 'udsat')
-  ]);
+  if(maxError){ visFejlDetalje('Kunne ikke tilføje punktet:', maxError); return; }
+  const naesteRaekkefoelge = (maxData && maxData.length > 0)
+    ? maxData[0].raekkefoelge + 1
+    : RAEKKEFOELGE_INDSENDT_BASE;
 
-  const nyeRaekker = [];
-  let raekkefoelge = RAEKKEFOELGE_OVERFOERT_BASE;
-
-  (hlRes.data || []).forEach(h => {
-    nyeRaekker.push({
-      moede_id: nytMoedeId,
-      titel: h.tekst,
-      beskrivelse: null,
-      kilde: 'overfoert',
-      status: 'godkendt',
-      raekkefoelge: raekkefoelge++,
-      behandlet: false
-    });
+  const { error } = await sb.from('dagsordenspunkter').insert({
+    moede_id: naesteMoede.id,
+    titel: titel,
+    beskrivelse: beskrivelse || null,
+    kilde: 'indsendt',
+    foreslaaet_af: 'Leder',
+    status: 'godkendt',
+    raekkefoelge: naesteRaekkefoelge
   });
 
-  (udsatRes.data || []).forEach(p => {
-    nyeRaekker.push({
-      moede_id: nytMoedeId,
-      titel: p.titel,
-      beskrivelse: p.beskrivelse,
-      kilde: 'overfoert',
-      status: 'godkendt',
-      foreslaaet_af: p.foreslaaet_af,
-      raekkefoelge: raekkefoelge++,
-      behandlet: false
-    });
-  });
+  if(error){ visFejlDetalje('Kunne ikke tilføje punktet:', error); return; }
 
-  if(nyeRaekker.length > 0){
-    const { error } = await sb.from('dagsordenspunkter').insert(nyeRaekker);
-    if(error) console.error('Fejl ved overførsel til næste møde:', error);
-  }
+  document.getElementById('lederPunktTitelInput').value = '';
+  document.getElementById('lederPunktBeskrivelseInput').value = '';
+  hentGodkendtSorterListe();
 }
-
-// ---- LEDER: godkendelsesliste ----
 
 let afventerCache = [];
 
 async function hentAfventerListe(){
-  const container = document.getElementById('afventerListe');
   const { data, error } = await sb
     .from('dagsordenspunkter')
     .select('*')
@@ -776,12 +1424,6 @@ async function afvisPunkt(id){
   if(error){ visFejlDetalje('Kunne ikke afvise punktet:', error); return; }
   hentAfventerListe();
 }
-
-// Rækkefølge-bånd så fast/indsendt/overført altid sorterer rigtigt i forhold
-// til hinanden med et enkelt "order by raekkefoelge" alle steder (moede.html,
-// arkiv.html) — ingen særskilt kilde-sortering nødvendig ved læsning.
-// fast: 0-999 · indsendt: 1000-1999 · overført: 2000+ · ad hoc: altid sidst.
-const RAEKKEFOELGE_INDSENDT_BASE = 1000;
 
 async function godkendPunkt(id){
   const { data: maxData, error: maxError } = await sb
@@ -849,8 +1491,6 @@ async function gemRedigering(id){
   hentAfventerListe();
 }
 
-// ---- LEDER: godkendt rækkefølge (op/ned) ----
-
 let godkendtSorterCache = [];
 
 async function hentGodkendtSorterListe(){
@@ -893,13 +1533,6 @@ function visGodkendtSorterListe(){
   container.innerHTML = html;
 }
 
-function kildeLabel(kilde){
-  if(kilde === 'fast') return 'Fast punkt';
-  if(kilde === 'indsendt') return 'Indsendt';
-  if(kilde === 'overfoert') return 'Overført fra sidste møde';
-  return kilde;
-}
-
 async function flytPunkt(id, retning){
   const i = godkendtSorterCache.findIndex(p => p.id === id);
   const j = i + retning;
@@ -919,13 +1552,950 @@ async function flytPunkt(id, retning){
   hentGodkendtSorterListe();
 }
 
-// ---- INITIALISER ----
+/* ==================================================================
+   REFERAT — tidligere moede.html
+   ================================================================== */
 
-document.getElementById('mitNavnInput').value = localStorage.getItem('pm_mit_navn') || '';
+let aktueltMoede = null;
+let dagsorden = [];
+let noteState = {};
+let highlightsState = {};
+let aktivIndex = 0;
+let aktivHighlightType = null;
+let aktivHighlightRedigerId = null;
+let referatKlargjort = false;
+let noteAutosaveTimer = null;
+
+function klokkeslaetNu(){
+  const nu = new Date();
+  return String(nu.getHours()).padStart(2,'0') + ':' + String(nu.getMinutes()).padStart(2,'0');
+}
+
+async function hentAktueltMoede(){
+  if(!sb) return;
+
+  const { data, error } = await sb
+    .from('moeder')
+    .select('*')
+    .in('status', ['planlagt','igang'])
+    .order('dato', { ascending: true })
+    .order('starttid', { ascending: true })
+    .limit(1);
+
+  if(error){ console.error('Fejl moeder:', error); return; }
+
+  if(!data || data.length === 0){
+    document.getElementById('moedeLinje').textContent = 'Intet møde fundet';
+    visMoedeTilstand('side-ingen');
+    return;
+  }
+
+  aktueltMoede = data[0];
+  let tekst = datoLangLabel(aktueltMoede.dato);
+  if(aktueltMoede.starttid) tekst += ' kl. ' + tidKortLabel(aktueltMoede.starttid);
+  document.getElementById('moedeLinje').textContent = tekst;
+
+  if(aktueltMoede.status === 'planlagt'){
+    document.getElementById('referentInput').value = mitNavn();
+    visMoedeTilstand('side-start');
+    return;
+  }
+
+  await klargoerSkriveflade();
+}
+
+function visMoedeTilstand(id){
+  ['side-ingen','side-start','side-skriv','side-opsummering'].forEach(s => {
+    document.getElementById(s).style.display = (s === id) ? 'block' : 'none';
+  });
+}
+
+async function startMoede(){
+  if(!sb || !aktueltMoede) return;
+  const referent = document.getElementById('referentInput').value.trim();
+  if(!referent){ alert('Skriv referentens navn.'); return; }
+  gemMitNavn(referent);
+
+  const deltagereRaa = document.getElementById('deltagereInput').value.trim();
+  const deltagere = deltagereRaa
+    ? deltagereRaa.split(',').map(s => s.trim()).filter(s => s.length > 0)
+    : null;
+
+  const { error } = await sb.from('moeder').update({
+    status: 'igang',
+    referent: referent,
+    deltagere: deltagere
+  }).eq('id', aktueltMoede.id);
+
+  if(error){ visFejlDetalje('Kunne ikke starte mødet:', error); return; }
+
+  aktueltMoede.status = 'igang';
+  aktueltMoede.referent = referent;
+  await klargoerSkriveflade();
+}
+
+async function klargoerSkriveflade(){
+  await materialiserFastePunkter();
+  await hentDagsordenOgNoter();
+  visMoedeTilstand('side-skriv');
+  aktivIndex = 0;
+  visPunkt(0);
+
+  if(!referatKlargjort){
+    referatKlargjort = true;
+    noteAutosaveTimer = setInterval(() => gemAktuelNote(), 10000);
+  }
+}
+
+async function materialiserFastePunkter(){
+  const eksisterende = await sb
+    .from('dagsordenspunkter')
+    .select('id')
+    .eq('moede_id', aktueltMoede.id)
+    .eq('kilde', 'fast')
+    .limit(1);
+
+  if(eksisterende.error){ console.error('Fejl tjek faste punkter:', eksisterende.error); return; }
+  if(eksisterende.data && eksisterende.data.length > 0) return;
+
+  const fasteRes = await sb.from('faste_punkter').select('*').eq('aktiv', true).order('raekkefoelge');
+  if(fasteRes.error){ console.error('Fejl faste_punkter:', fasteRes.error); return; }
+  if(!fasteRes.data || fasteRes.data.length === 0) return;
+
+  const rows = fasteRes.data.map(fp => ({
+    moede_id: aktueltMoede.id,
+    titel: fp.titel,
+    beskrivelse: fp.beskrivelse,
+    kilde: 'fast',
+    fast_punkt_id: fp.id,
+    status: 'godkendt',
+    raekkefoelge: fp.raekkefoelge,
+    behandlet: false
+  }));
+
+  const { error } = await sb.from('dagsordenspunkter').insert(rows);
+  if(error) console.error('Fejl ved materialisering af faste punkter:', error);
+}
+
+async function hentDagsordenOgNoter(){
+  const punktRes = await sb
+    .from('dagsordenspunkter')
+    .select('*')
+    .eq('moede_id', aktueltMoede.id)
+    .eq('status', 'godkendt')
+    .order('raekkefoelge', { ascending: true });
+
+  if(punktRes.error){ console.error('Fejl dagsorden:', punktRes.error); return; }
+  dagsorden = punktRes.data || [];
+
+  if(dagsorden.length === 0){ noteState = {}; highlightsState = {}; renderSidepanel(); return; }
+
+  const ids = dagsorden.map(p => p.id);
+
+  const [noteRes, highlightRes] = await Promise.all([
+    sb.from('referat_noter').select('*').in('punkt_id', ids),
+    sb.from('highlights').select('*').in('punkt_id', ids).order('oprettet_at', { ascending: true })
+  ]);
+
+  if(noteRes.error){ console.error('Fejl noter:', noteRes.error); return; }
+  if(highlightRes.error){ console.error('Fejl highlights:', highlightRes.error); return; }
+
+  noteState = {};
+  (noteRes.data || []).forEach(n => {
+    noteState[n.punkt_id] = { tekst: n.tekst || '', dirty: false };
+  });
+
+  highlightsState = {};
+  (highlightRes.data || []).forEach(h => {
+    if(!highlightsState[h.punkt_id]) highlightsState[h.punkt_id] = [];
+    highlightsState[h.punkt_id].push(h);
+  });
+
+  renderSidepanel();
+}
+
+function renderSidepanel(){
+  const container = document.getElementById('sidepanel');
+  if(dagsorden.length === 0){
+    container.innerHTML = '<div class="tom-tilstand">Ingen punkter på dagsordenen.</div>';
+    return;
+  }
+
+  let html = '';
+  dagsorden.forEach((p, i) => {
+    let klasse = 'sidepunkt';
+    if(i === aktivIndex) klasse += ' nuvaerende';
+    else if(p.behandlet) klasse += ' behandlet';
+
+    const ikon = p.behandlet ? '&#10003;' : (i + 1) + '.';
+
+    html += '<button class="' + klasse + '" onclick="hopTilPunkt(' + i + ')">' +
+      '<span class="sidepunkt-ikon">' + ikon + '</span>' +
+      '<span>' + escapeHtml(p.titel) + '</span>' +
+      '</button>';
+  });
+  container.innerHTML = html;
+}
+
+function visPunkt(index){
+  const punkt = dagsorden[index];
+  if(!punkt) return;
+
+  document.getElementById('punktKildeTag').textContent = kildeLabel(punkt.kilde);
+  document.getElementById('punktTitel').textContent = punkt.titel;
+  document.getElementById('punktBeskrivelse').textContent = punkt.beskrivelse || '';
+
+  const note = noteState[punkt.id] || { tekst: '', dirty: false };
+  noteState[punkt.id] = note;
+  document.getElementById('noteTextarea').value = note.tekst;
+  document.getElementById('noteStatus').textContent = note.dirty ? 'Ikke gemt endnu' : '';
+
+  document.getElementById('behandletCheckbox').checked = !!punkt.behandlet;
+
+  const erSidste = (index === dagsorden.length - 1);
+  document.getElementById('btnForrige').disabled = (index === 0);
+  document.getElementById('btnNaeste').disabled = erSidste;
+  document.getElementById('btnNaeste').textContent = erSidste ? 'Sidste punkt' : 'Næste punkt →';
+
+  skjulHighlightForm();
+  renderHighlightsForCurrentPunkt();
+  renderSidepanel();
+}
+
+function hopTilPunkt(index){
+  gemAktuelNote();
+  aktivIndex = index;
+  visPunkt(aktivIndex);
+}
+
+async function skiftPunkt(retning){
+  const punkt = dagsorden[aktivIndex];
+
+  if(retning === 1 && punkt && !punkt.behandlet){
+    await saetBehandlet(punkt, true);
+  }
+
+  await gemAktuelNote();
+
+  const nyIndex = aktivIndex + retning;
+  if(nyIndex < 0 || nyIndex >= dagsorden.length) return;
+
+  aktivIndex = nyIndex;
+  visPunkt(aktivIndex);
+}
+
+function markerNoteDirty(){
+  const punkt = dagsorden[aktivIndex];
+  if(!punkt) return;
+  const tekst = document.getElementById('noteTextarea').value;
+  noteState[punkt.id] = { tekst: tekst, dirty: true };
+  document.getElementById('noteStatus').textContent = 'Ikke gemt endnu';
+}
+
+async function gemAktuelNote(){
+  const punkt = dagsorden[aktivIndex];
+  if(!punkt) return;
+  const note = noteState[punkt.id];
+  if(!note || !note.dirty) return;
+
+  const { error } = await sb.from('referat_noter').upsert({
+    punkt_id: punkt.id,
+    tekst: note.tekst,
+    skrevet_af: mitNavn(),
+    opdateret_at: new Date().toISOString()
+  }, { onConflict: 'punkt_id' });
+
+  if(error){ console.error('Fejl ved gem af note:', error); return; }
+
+  note.dirty = false;
+  const statusEl = document.getElementById('noteStatus');
+  if(statusEl) statusEl.textContent = 'Gemt kl. ' + klokkeslaetNu();
+}
+
+async function skiftBehandlet(){
+  const punkt = dagsorden[aktivIndex];
+  if(!punkt) return;
+  const nyVaerdi = document.getElementById('behandletCheckbox').checked;
+  await saetBehandlet(punkt, nyVaerdi);
+}
+
+async function saetBehandlet(punkt, vaerdi){
+  const { error } = await sb.from('dagsordenspunkter').update({ behandlet: vaerdi }).eq('id', punkt.id);
+  if(error){ visFejlDetalje('Kunne ikke opdatere behandlet-status:', error); return; }
+  punkt.behandlet = vaerdi;
+  renderSidepanel();
+}
+
+function ansvarligFeltHtml(valgtVaerdi){
+  const deltagere = (aktueltMoede.deltagere || []);
+  if(deltagere.length === 0){
+    return '<input type="text" id="highlightAnsvarlig" placeholder="Navn på ansvarlig" value="' +
+      escapeHtml(valgtVaerdi || '') + '">';
+  }
+
+  let opts = '<option value="">Vælg …</option>';
+  deltagere.forEach(d => {
+    const valgt = (d === valgtVaerdi) ? ' selected' : '';
+    opts += '<option value="' + escapeHtml(d) + '"' + valgt + '>' + escapeHtml(d) + '</option>';
+  });
+  return '<select id="highlightAnsvarlig">' + opts + '</select>';
+}
+
+function visHighlightForm(type){
+  aktivHighlightType = type;
+  aktivHighlightRedigerId = null;
+  tegnHighlightForm('Ny ' + HIGHLIGHT_TYPE_LABELS[type].toLowerCase(), '', null, null);
+}
+
+function redigerHighlight(id){
+  const punkt = dagsorden[aktivIndex];
+  const h = (highlightsState[punkt.id] || []).find(x => x.id === id);
+  if(!h) return;
+
+  aktivHighlightType = h.type;
+  aktivHighlightRedigerId = id;
+  tegnHighlightForm(HIGHLIGHT_TYPE_LABELS[h.type] + ' (redigeres)', h.tekst, h.ansvarlig, h.deadline);
+}
+
+function tegnHighlightForm(overskrift, tekst, ansvarlig, deadline){
+  const form = document.getElementById('highlightForm');
+
+  let html = '<div class="rediger-boks">' +
+    '<label>' + escapeHtml(overskrift) + '</label>' +
+    '<textarea id="highlightTekst" rows="2" placeholder="Skriv highlighten …">' + escapeHtml(tekst) + '</textarea>';
+
+  if(aktivHighlightType === 'opgave'){
+    html += '<div class="felt"><label>Ansvarlig</label>' + ansvarligFeltHtml(ansvarlig) + '</div>' +
+      '<div class="felt"><label>Deadline (valgfri)</label>' +
+      '<input type="date" id="highlightDeadline" value="' + (deadline || '') + '"></div>';
+  }
+
+  html += '<div class="knap-raekke">' +
+    '<button class="knap lille" onclick="gemHighlight()">Gem</button>' +
+    '<button class="knap lille sekundaer" onclick="skjulHighlightForm()">Annuller</button>' +
+    '</div></div>';
+
+  form.innerHTML = html;
+  form.style.display = 'block';
+}
+
+function skjulHighlightForm(){
+  const form = document.getElementById('highlightForm');
+  form.style.display = 'none';
+  form.innerHTML = '';
+  aktivHighlightType = null;
+  aktivHighlightRedigerId = null;
+}
+
+async function gemHighlight(){
+  const punkt = dagsorden[aktivIndex];
+  if(!punkt || !aktivHighlightType) return;
+
+  const tekst = document.getElementById('highlightTekst').value.trim();
+  if(!tekst){ alert('Skriv en tekst.'); return; }
+
+  let ansvarlig = null;
+  let deadline = null;
+  if(aktivHighlightType === 'opgave'){
+    ansvarlig = document.getElementById('highlightAnsvarlig').value.trim();
+    if(!ansvarlig){ alert('Vælg eller skriv en ansvarlig.'); return; }
+    deadline = document.getElementById('highlightDeadline').value || null;
+  }
+
+  if(aktivHighlightRedigerId){
+    const { data, error } = await sb.from('highlights').update({
+      tekst: tekst, ansvarlig: ansvarlig, deadline: deadline
+    }).eq('id', aktivHighlightRedigerId).select().single();
+
+    if(error){ visFejlDetalje('Kunne ikke gemme ændringen:', error); return; }
+
+    const liste = highlightsState[punkt.id] || [];
+    const idx = liste.findIndex(x => x.id === aktivHighlightRedigerId);
+    if(idx >= 0) liste[idx] = data;
+  } else {
+    const { data, error } = await sb.from('highlights').insert({
+      moede_id: aktueltMoede.id,
+      punkt_id: punkt.id,
+      type: aktivHighlightType,
+      tekst: tekst,
+      ansvarlig: ansvarlig,
+      deadline: deadline,
+      status: 'aaben',
+      vist_paa_skaerm: true
+    }).select().single();
+
+    if(error){ visFejlDetalje('Kunne ikke gemme highlighten:', error); return; }
+
+    if(!highlightsState[punkt.id]) highlightsState[punkt.id] = [];
+    highlightsState[punkt.id].push(data);
+  }
+
+  skjulHighlightForm();
+  renderHighlightsForCurrentPunkt();
+}
+
+async function sletHighlight(id){
+  if(!confirm('Slet denne highlight?')) return;
+  const punkt = dagsorden[aktivIndex];
+
+  const { error } = await sb.from('highlights').delete().eq('id', id);
+  if(error){ visFejlDetalje('Kunne ikke slette highlighten:', error); return; }
+
+  highlightsState[punkt.id] = (highlightsState[punkt.id] || []).filter(h => h.id !== id);
+  renderHighlightsForCurrentPunkt();
+}
+
+function highlightMetaHtml(h){
+  if(h.type !== 'opgave') return '';
+  let tekst = 'Ansvarlig: ' + escapeHtml(h.ansvarlig || '');
+  if(h.deadline) tekst += ' · Deadline: ' + escapeHtml(h.deadline);
+  return '<div class="pm-meta">' + tekst + '</div>';
+}
+
+function renderHighlightsForCurrentPunkt(){
+  const punkt = dagsorden[aktivIndex];
+  const container = document.getElementById('highlightListe');
+  if(!punkt){ container.innerHTML = ''; return; }
+
+  const liste = highlightsState[punkt.id] || [];
+  if(liste.length === 0){ container.innerHTML = ''; return; }
+
+  let html = '';
+  liste.forEach(h => {
+    html += '<div class="highlight-item">' +
+      '<div class="pm-raekke-top">' +
+        '<div>' +
+          '<span class="highlight-badge ' + h.type + '">' + HIGHLIGHT_TYPE_LABELS[h.type] + '</span>' +
+          '<div class="pm-titel" style="margin-top:6px;">' + escapeHtml(h.tekst) + '</div>' +
+          highlightMetaHtml(h) +
+        '</div>' +
+      '</div>' +
+      '<div class="knap-raekke">' +
+        '<button class="knap lille sekundaer" onclick="redigerHighlight(\'' + h.id + '\')">Rediger</button>' +
+        '<button class="knap lille farlig" onclick="sletHighlight(\'' + h.id + '\')">Slet</button>' +
+      '</div>' +
+      '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function visAdHocForm(){
+  document.getElementById('adhocForm').style.display = 'block';
+  document.getElementById('btnVisAdhocForm').style.display = 'none';
+}
+
+function skjulAdHocForm(){
+  document.getElementById('adhocForm').style.display = 'none';
+  document.getElementById('btnVisAdhocForm').style.display = 'inline-flex';
+  document.getElementById('adhocTitelInput').value = '';
+  document.getElementById('adhocBeskrivelseInput').value = '';
+}
+
+async function tilfoejAdHocPunkt(){
+  const titel = document.getElementById('adhocTitelInput').value.trim();
+  if(!titel){ alert('Skriv en titel til punktet.'); return; }
+  const beskrivelse = document.getElementById('adhocBeskrivelseInput').value.trim();
+
+  const maksRaekkefoelge = dagsorden.reduce((m, p) => Math.max(m, p.raekkefoelge), 0);
+
+  const { data, error } = await sb.from('dagsordenspunkter').insert({
+    moede_id: aktueltMoede.id,
+    titel: titel,
+    beskrivelse: beskrivelse || null,
+    kilde: 'ad_hoc',
+    status: 'godkendt',
+    raekkefoelge: maksRaekkefoelge + 1,
+    behandlet: false
+  }).select().single();
+
+  if(error){ visFejlDetalje('Kunne ikke tilføje punktet:', error); return; }
+
+  dagsorden.push(data);
+  noteState[data.id] = { tekst: '', dirty: false };
+  skjulAdHocForm();
+  visPunkt(aktivIndex);
+}
+
+async function afslutMoede(){
+  if(!confirm('Afslut mødet? Du kan ikke skrive flere noter bagefter.')) return;
+
+  await gemAktuelNote();
+
+  const { error } = await sb.from('moeder').update({ status: 'afsluttet' }).eq('id', aktueltMoede.id);
+  if(error){ visFejlDetalje('Kunne ikke afslutte mødet:', error); return; }
+
+  const behandletAntal = dagsorden.filter(p => p.behandlet).length;
+  document.getElementById('opsummeringTekst').textContent =
+    behandletAntal + ' af ' + dagsorden.length + ' punkter blev behandlet.';
+
+  visMoedeTilstand('side-opsummering');
+}
+
+async function opretNaesteMoedeEfterAfslutning(){
+  const dato = document.getElementById('naesteMoedeDato').value;
+  if(!dato){ alert('Vælg en dato.'); return; }
+  const starttid = document.getElementById('naesteMoedeTid').value || null;
+
+  const { data, error } = await sb.from('moeder').insert({ dato: dato, starttid: starttid, status: 'planlagt' }).select().single();
+  if(error){ visFejlDetalje('Kunne ikke oprette næste møde:', error); return; }
+
+  await overfoerFraSidsteMoede(data.id);
+
+  document.getElementById('naesteMoedeBoks').innerHTML = '<div class="tom-tilstand">Næste møde er oprettet.</div>';
+}
+
+function springNaesteMoedeOver(){
+  document.getElementById('naesteMoedeBoks').style.display = 'none';
+}
+
+/* ==================================================================
+   STORSKÆRM — tidligere skaerm.html
+   ================================================================== */
+
+function visSkaermTilstand(id){
+  ['roligTilstand','aktivTilstand'].forEach(s => {
+    document.getElementById(s).style.display = (s === id) ? (s === 'aktivTilstand' ? 'flex' : 'block') : 'none';
+  });
+}
+
+function skaermHighlightMetaHtml(h){
+  if(h.type !== 'opgave') return '';
+  let html = '<span>Ansvarlig: ' + escapeHtml(h.ansvarlig || '') + '</span>';
+  if(h.deadline) html += '<span>Deadline: ' + escapeHtml(datoKortLabel(h.deadline)) + '</span>';
+  return html;
+}
+
+function visRoligTilstand(moede){
+  document.getElementById('roligDato').textContent = moede
+    ? (datoLangLabel(moede.dato) + (moede.starttid ? ' kl. ' + tidKortLabel(moede.starttid) : ''))
+    : '';
+  document.getElementById('roligUndertekst').textContent = moede
+    ? 'Ingen highlights endnu'
+    : 'Intet møde planlagt';
+  visSkaermTilstand('roligTilstand');
+}
+
+function visAktivTilstand(highlights){
+  const nyeste = highlights[0];
+  const tidligere = highlights.slice(1, 5);
+
+  const badge = document.getElementById('nuBadge');
+  badge.className = 'highlight-badge ' + nyeste.type;
+  badge.textContent = HIGHLIGHT_TYPE_LABELS[nyeste.type] || nyeste.type;
+
+  document.getElementById('nuTekst').textContent = nyeste.tekst;
+  document.getElementById('nuMeta').innerHTML = skaermHighlightMetaHtml(nyeste);
+
+  const container = document.getElementById('tidligereListe');
+  if(tidligere.length === 0){
+    container.innerHTML = '';
+  } else {
+    let html = '';
+    tidligere.forEach(h => {
+      html += '<div class="tidligere-kort">' +
+        '<span class="highlight-badge ' + h.type + '">' + escapeHtml(HIGHLIGHT_TYPE_LABELS[h.type] || h.type) + '</span>' +
+        '<div class="tidligere-tekst">' + escapeHtml(h.tekst) + '</div>' +
+        (h.type === 'opgave' ? '<div class="tidligere-meta">' + skaermHighlightMetaHtml(h).replace(/<\/?span>/g, ' ').trim() + '</div>' : '') +
+        '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  visSkaermTilstand('aktivTilstand');
+}
+
+async function pollSkaerm(){
+  if(!sb) return;
+
+  const moedeRes = await sb
+    .from('moeder')
+    .select('*')
+    .in('status', ['planlagt','igang'])
+    .order('dato', { ascending: true })
+    .order('starttid', { ascending: true })
+    .limit(1);
+
+  if(moedeRes.error){ console.error('Fejl moeder:', moedeRes.error); return; }
+
+  const moede = (moedeRes.data && moedeRes.data.length > 0) ? moedeRes.data[0] : null;
+
+  if(!moede){
+    document.getElementById('moedeDato').textContent = '';
+    visRoligTilstand(null);
+    return;
+  }
+
+  document.getElementById('moedeDato').textContent =
+    datoLangLabel(moede.dato) + (moede.starttid ? ' kl. ' + tidKortLabel(moede.starttid) : '');
+
+  if(moede.status !== 'igang'){
+    visRoligTilstand(moede);
+    return;
+  }
+
+  const hlRes = await sb
+    .from('highlights')
+    .select('*')
+    .eq('moede_id', moede.id)
+    .eq('vist_paa_skaerm', true)
+    .order('oprettet_at', { ascending: false })
+    .limit(5);
+
+  if(hlRes.error){ console.error('Fejl highlights:', hlRes.error); return; }
+
+  const highlights = hlRes.data || [];
+  if(highlights.length === 0){
+    visRoligTilstand(moede);
+    return;
+  }
+
+  visAktivTilstand(highlights);
+}
+
+/* ==================================================================
+   ARKIV — tidligere arkiv.html
+   ================================================================== */
+
+function visFane(fane){
+  document.querySelectorAll('#hoved-arkiv .side').forEach(d => d.classList.remove('aktiv'));
+  document.getElementById('side-' + fane).classList.add('aktiv');
+  document.querySelectorAll('#hoved-arkiv .fane-nav button').forEach(b => b.classList.remove('aktiv'));
+  document.getElementById(fane === 'moeder' ? 'btnMoeder' : 'btnSoeg').classList.add('aktiv');
+}
+
+async function hentAfsluttedeMoeder(){
+  if(!sb) return;
+
+  const { data, error } = await sb
+    .from('moeder')
+    .select('*')
+    .eq('status', 'afsluttet')
+    .order('dato', { ascending: false });
+
+  if(error){ console.error('Fejl afsluttede møder:', error); return; }
+  visMoedeListe(data || []);
+}
+
+function visMoedeListe(moeder){
+  const container = document.getElementById('moedeListe');
+  if(moeder.length === 0){
+    container.innerHTML = '<div class="tom-tilstand">Ingen afsluttede møder endnu.</div>';
+    return;
+  }
+
+  let html = '';
+  moeder.forEach(m => {
+    let meta = m.referent ? 'Referent: ' + escapeHtml(m.referent) : '';
+    if(m.deltagere && m.deltagere.length > 0){
+      meta += (meta ? ' · ' : '') + 'Deltagere: ' + escapeHtml(m.deltagere.join(', '));
+    }
+    html += '<button class="moede-raekke" onclick="visReferatDetalje(\'' + m.id + '\')">' +
+      '<span>' +
+        '<span class="moede-raekke-dato">' + escapeHtml(datoLangLabelMedAar(m.dato)) +
+        (m.starttid ? ' kl. ' + escapeHtml(tidKortLabel(m.starttid)) : '') + '</span>' +
+        (meta ? '<div class="moede-raekke-meta">' + meta + '</div>' : '') +
+      '</span>' +
+      '</button>';
+  });
+  container.innerHTML = html;
+}
+
+function visMoedeliste(){
+  document.getElementById('side-liste').style.display = 'block';
+  document.getElementById('side-detalje').style.display = 'none';
+}
+
+let detaljeCache = null;
+
+async function visReferatDetalje(moedeId){
+  const [moedeRes, punktRes] = await Promise.all([
+    sb.from('moeder').select('*').eq('id', moedeId).single(),
+    sb.from('dagsordenspunkter').select('*').eq('moede_id', moedeId).eq('status', 'godkendt').order('raekkefoelge', { ascending: true })
+  ]);
+
+  if(moedeRes.error){ console.error('Fejl møde:', moedeRes.error); return; }
+  if(punktRes.error){ console.error('Fejl punkter:', punktRes.error); return; }
+
+  const moede = moedeRes.data;
+  const punkter = punktRes.data || [];
+  const punktIds = punkter.map(p => p.id);
+
+  let noter = [];
+  let highlights = [];
+  if(punktIds.length > 0){
+    const [noteRes, hlRes] = await Promise.all([
+      sb.from('referat_noter').select('*').in('punkt_id', punktIds),
+      sb.from('highlights').select('*').in('punkt_id', punktIds).order('oprettet_at', { ascending: true })
+    ]);
+    if(noteRes.error){ console.error('Fejl noter:', noteRes.error); return; }
+    if(hlRes.error){ console.error('Fejl highlights:', hlRes.error); return; }
+    noter = noteRes.data || [];
+    highlights = hlRes.data || [];
+  }
+
+  const noteMap = {};
+  noter.forEach(n => { noteMap[n.punkt_id] = n; });
+
+  const highlightMap = {};
+  highlights.forEach(h => {
+    if(!highlightMap[h.punkt_id]) highlightMap[h.punkt_id] = [];
+    highlightMap[h.punkt_id].push(h);
+  });
+
+  const punkterMedIndhold = punkter.map(p => ({
+    punkt: p,
+    note: noteMap[p.id] || null,
+    highlights: highlightMap[p.id] || []
+  }));
+
+  detaljeCache = { moede: moede, punkter: punkterMedIndhold, alleHighlights: highlights };
+
+  tegnReferatDetalje();
+
+  visHovedSide('arkiv');
+  document.getElementById('side-liste').style.display = 'none';
+  document.getElementById('side-detalje').style.display = 'block';
+}
+
+function arkivHighlightHtml(h){
+  let meta = '';
+  if(h.type === 'opgave'){
+    meta = 'Ansvarlig: ' + escapeHtml(h.ansvarlig || '');
+    if(h.deadline) meta += ' · Deadline: ' + escapeHtml(h.deadline);
+    meta += ' · ' + (h.status === 'loest' ? 'Løst' : 'Åben');
+  }
+  return '<div class="referat-highlight">' +
+    '<span class="highlight-badge ' + h.type + '">' + HIGHLIGHT_TYPE_LABELS[h.type] + '</span>' +
+    '<div class="referat-highlight-tekst">' + escapeHtml(h.tekst) + '</div>' +
+    (meta ? '<div class="referat-highlight-meta">' + meta + '</div>' : '') +
+    '</div>';
+}
+
+function tegnReferatDetalje(){
+  const moede = detaljeCache.moede;
+
+  document.getElementById('detaljeMoedeDato').textContent =
+    datoLangLabelMedAar(moede.dato) + (moede.starttid ? ' kl. ' + tidKortLabel(moede.starttid) : '');
+
+  let meta = moede.referent ? 'Referent: ' + escapeHtml(moede.referent) : '';
+  if(moede.deltagere && moede.deltagere.length > 0){
+    meta += (meta ? ' · ' : '') + 'Deltagere: ' + escapeHtml(moede.deltagere.join(', '));
+  }
+  document.getElementById('detaljeMoedeMeta').innerHTML = meta;
+
+  const punkterContainer = document.getElementById('detaljePunkter');
+  if(detaljeCache.punkter.length === 0){
+    punkterContainer.innerHTML = '<div class="tom-tilstand">Ingen dagsordenspunkter registreret for dette møde.</div>';
+  } else {
+    let html = '';
+    detaljeCache.punkter.forEach(item => {
+      html += '<div class="referat-punkt">' +
+        '<div class="eyebrow">' + escapeHtml(kildeLabel(item.punkt.kilde)) + '</div>' +
+        '<div class="referat-punkt-titel">' + escapeHtml(item.punkt.titel) + '</div>' +
+        (item.punkt.beskrivelse ? '<div class="referat-punkt-beskrivelse">' + escapeHtml(item.punkt.beskrivelse) + '</div>' : '') +
+        (item.note && item.note.tekst ? '<div class="referat-punkt-note">' + escapeHtml(item.note.tekst) + '</div>' : '') +
+        item.highlights.map(arkivHighlightHtml).join('') +
+        '</div>';
+    });
+    punkterContainer.innerHTML = html;
+  }
+
+  const opsContainer = document.getElementById('detaljeOpsummering');
+  let opsHtml = '';
+  let harNoget = false;
+  HIGHLIGHT_TYPE_RAEKKEFOELGE.forEach(type => {
+    const liste = detaljeCache.alleHighlights.filter(h => h.type === type);
+    if(liste.length === 0) return;
+    harNoget = true;
+    opsHtml += '<div class="opsummering-gruppe"><h3>' + HIGHLIGHT_TYPE_LABELS[type] + '</h3>';
+    liste.forEach(h => {
+      let linje = escapeHtml(h.tekst);
+      if(type === 'opgave'){
+        linje += ' — ' + escapeHtml(h.ansvarlig || '');
+        if(h.deadline) linje += ' (deadline ' + escapeHtml(h.deadline) + ')';
+      }
+      opsHtml += '<div class="opsummering-linje">' + linje + '</div>';
+    });
+    opsHtml += '</div>';
+  });
+  opsContainer.innerHTML = harNoget ? opsHtml : '<div class="tom-tilstand">Ingen highlights registreret for dette møde.</div>';
+}
+
+async function soegHighlights(){
+  const container = document.getElementById('soegeResultater');
+  container.innerHTML = '<div class="tom-tilstand">Søger …</div>';
+
+  const moederRes = await sb.from('moeder').select('id, dato, starttid').eq('status', 'afsluttet');
+  if(moederRes.error){ console.error('Fejl møder:', moederRes.error); return; }
+
+  const moedeMap = {};
+  (moederRes.data || []).forEach(m => { moedeMap[m.id] = m; });
+  const moedeIds = Object.keys(moedeMap);
+
+  if(moedeIds.length === 0){
+    container.innerHTML = '<div class="tom-tilstand">Ingen afsluttede møder at søge i endnu.</div>';
+    return;
+  }
+
+  let query = sb.from('highlights').select('*').in('moede_id', moedeIds);
+
+  const type = document.getElementById('soegType').value;
+  if(type) query = query.eq('type', type);
+
+  const ansvarlig = document.getElementById('soegAnsvarlig').value.trim();
+  if(ansvarlig) query = query.ilike('ansvarlig', '%' + ansvarlig + '%');
+
+  const status = document.getElementById('soegStatus').value;
+  if(status) query = query.eq('status', status);
+
+  const fritekst = document.getElementById('soegFritekst').value.trim();
+  if(fritekst) query = query.ilike('tekst', '%' + fritekst + '%');
+
+  query = query.order('oprettet_at', { ascending: false });
+
+  const { data, error } = await query;
+  if(error){ console.error('Fejl søgning:', error); return; }
+
+  visSoegeResultater(data || [], moedeMap);
+}
+
+function visSoegeResultater(resultater, moedeMap){
+  const container = document.getElementById('soegeResultater');
+  if(resultater.length === 0){
+    container.innerHTML = '<div class="tom-tilstand">Ingen highlights matcher søgningen.</div>';
+    return;
+  }
+
+  let html = '';
+  resultater.forEach(h => {
+    const moede = moedeMap[h.moede_id];
+    const moedeDatoTekst = moede ? datoLangLabelMedAar(moede.dato) : '';
+
+    let meta = '';
+    if(h.type === 'opgave'){
+      meta = 'Ansvarlig: ' + escapeHtml(h.ansvarlig || '');
+      if(h.deadline) meta += ' · Deadline: ' + escapeHtml(h.deadline);
+    }
+
+    html += '<div class="soegeresultat">' +
+      '<span class="highlight-badge ' + h.type + '">' + HIGHLIGHT_TYPE_LABELS[h.type] + '</span> ' +
+      '<span class="status-pil ' + h.status + '">' + (h.status === 'loest' ? 'Løst' : 'Åben') + '</span>' +
+      '<div class="soegeresultat-tekst">' + escapeHtml(h.tekst) + '</div>' +
+      (meta ? '<div class="soegeresultat-meta">' + meta + '</div>' : '') +
+      '<span class="soegeresultat-link" onclick="soegSpringTilMoede(\'' + h.moede_id + '\')">Fra mødet ' + escapeHtml(moedeDatoTekst) + '</span>' +
+      '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function soegSpringTilMoede(moedeId){
+  visFane('moeder');
+  visReferatDetalje(moedeId);
+}
+
+async function eksporterTilWord(){
+  if(!window.docx){ alert('Word-eksport er ikke tilgængelig lige nu (docx.umd.js kunne ikke indlæses).'); return; }
+  if(!detaljeCache){ return; }
+
+  const knap = document.getElementById('btnEksporterWord');
+  knap.disabled = true;
+  knap.textContent = 'Bygger fil …';
+
+  try {
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+    const moede = detaljeCache.moede;
+    const children = [];
+
+    children.push(new Paragraph({
+      heading: HeadingLevel.TITLE,
+      children: [new TextRun('Referat — ' + datoLangLabelMedAar(moede.dato))]
+    }));
+
+    let metaTekst = '';
+    if(moede.referent) metaTekst += 'Referent: ' + moede.referent;
+    if(moede.deltagere && moede.deltagere.length > 0){
+      metaTekst += (metaTekst ? '  ·  ' : '') + 'Deltagere: ' + moede.deltagere.join(', ');
+    }
+    if(metaTekst) children.push(new Paragraph({ children: [new TextRun({ text: metaTekst, italics: true })] }));
+
+    detaljeCache.punkter.forEach(item => {
+      children.push(new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        children: [new TextRun(item.punkt.titel)]
+      }));
+
+      if(item.punkt.beskrivelse){
+        children.push(new Paragraph({ children: [new TextRun({ text: item.punkt.beskrivelse, italics: true })] }));
+      }
+
+      if(item.note && item.note.tekst){
+        children.push(new Paragraph({ children: [new TextRun(item.note.tekst)] }));
+      }
+
+      item.highlights.forEach(h => {
+        let linje = '• [' + HIGHLIGHT_TYPE_LABELS[h.type] + '] ' + h.tekst;
+        if(h.type === 'opgave'){
+          linje += ' (Ansvarlig: ' + (h.ansvarlig || '') + (h.deadline ? ', deadline ' + h.deadline : '') + ')';
+        }
+        children.push(new Paragraph({ children: [new TextRun(linje)] }));
+      });
+    });
+
+    children.push(new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      children: [new TextRun('Opsummering')]
+    }));
+
+    HIGHLIGHT_TYPE_RAEKKEFOELGE.forEach(type => {
+      const liste = detaljeCache.alleHighlights.filter(h => h.type === type);
+      if(liste.length === 0) return;
+
+      children.push(new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        children: [new TextRun(HIGHLIGHT_TYPE_LABELS[type])]
+      }));
+
+      liste.forEach(h => {
+        let linje = '• ' + h.tekst;
+        if(type === 'opgave'){
+          linje += ' — ' + (h.ansvarlig || '');
+          if(h.deadline) linje += ' (deadline ' + h.deadline + ')';
+        }
+        children.push(new Paragraph({ children: [new TextRun(linje)] }));
+      });
+    });
+
+    const doc = new Document({ sections: [{ children: children }] });
+    const blob = await Packer.toBlob(doc);
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'referat-' + moede.dato + '.docx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('Fejl ved Word-eksport:', e);
+    alert('Kunne ikke bygge Word-filen: ' + e.message);
+  } finally {
+    knap.disabled = false;
+    knap.textContent = 'Eksporter til Word (.docx)';
+  }
+}
+
+/* ==================================================================
+   INITIALISER
+   ================================================================== */
+
+document.getElementById('mitNavnInput').value = mitNavn();
 
 hentNaesteMoede();
-
 setInterval(hentNaesteMoede, 60000);
+
+pollSkaerm();
+setInterval(pollSkaerm, POLL_INTERVAL_MS);
 
 </script>
 
