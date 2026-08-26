@@ -362,6 +362,10 @@ const UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørd
 // ==================================================================
 
 function visningsRolle(raaRolle, tag){
+  // Admin-tagget vagt i Workfeed = personen sidder på kontor den dag,
+  // uanset deres almindelige rolle — skal vises i "Andre funktioner",
+  // ikke som almindeligt gulv-personale.
+  if(tag === 'Admin') return 'Kontor';
   if(tag === 'P-møde' || tag === 'P-møde m. vagt') return raaRolle === 'Rådighedsvagt' ? 'Døgnvagt' : (rolleTabel[raaRolle] || raaRolle);
   const tabel = {
     'Daglig leder': 'Leder',
