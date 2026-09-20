@@ -1,0 +1,134 @@
+/* ==================================================================
+   Dagens besked — fuldskærms-overlay kl. 09:02 (se dagens-besked-effekt.js)
+
+   Kun opacity + transform animeres (Finlux Google TV / TVBro er
+   langsom). Ingen filter, blur, box-shadow eller canvas — solens bløde
+   glød er en radial-gradient, som males én gang.
+   Overlayet er position:fixed under <body>, altså uden for flex-layoutet
+   og ovenpå alt andet. Ingen af sidens elementer bruger z-index.
+   ================================================================== */
+
+.dbOverlay{
+  position:fixed;
+  top:0; right:0; bottom:0; left:0;
+  z-index:9999;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  font-family:'Archivo', sans-serif;
+  color:#fff;
+  /* Solopgang set oppefra: dyb blå (tekstzonen) → orange → lys gul ved horisonten */
+  background:linear-gradient(to bottom,
+    #10224a 0%,
+    #1c3a70 38%,
+    #b8563f 68%,
+    #f08a3c 85%,
+    #fbd36b 100%);
+  animation:dbIndtoning 1.8s ease-out both;
+}
+
+.dbOverlay.dbLukker{
+  animation:dbUdtoning 1.5s ease-in-out forwards;
+}
+
+/* ---- Solen: stor blød cirkel der glider op fra bunden ---- */
+
+.dbSol{
+  position:absolute;
+  left:50%;
+  bottom:-35vmin;
+  width:70vmin;
+  height:70vmin;
+  margin-left:-35vmin;
+  border-radius:50%;
+  background:radial-gradient(circle closest-side,
+    #fff8d6 0%,
+    #ffe08a 38%,
+    rgba(255,190,80,.6) 66%,
+    rgba(255,150,50,0) 100%);
+  animation:dbSolOp 5.5s cubic-bezier(.2,.6,.2,1) both;
+}
+
+/* ---- Tekst ---- */
+
+.dbTop,
+.dbMidt{
+  position:relative;   /* lægger sig ovenpå solen */
+}
+
+.dbTop{
+  padding-top:7vh;
+  text-align:center;
+}
+
+.dbHilsen{
+  font-size:1.7vw;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.34em;
+  color:var(--guld);
+  animation:dbTekstInd .9s ease-out .9s both;
+}
+
+.dbDato{
+  margin-top:1vh;
+  font-size:2.5vw;
+  font-weight:600;
+  color:rgba(255,255,255,.88);
+  animation:dbTekstInd .9s ease-out 1.3s both;
+}
+
+.dbMidt{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 8vw 14vh 8vw;
+}
+
+.dbBesked{
+  max-width:78vw;
+  font-size:4.4vw;
+  font-weight:800;
+  line-height:1.16;
+  text-align:center;
+  color:#fff;
+}
+
+.dbOrd{
+  display:inline-block;
+  animation:dbTekstInd .8s ease-out both;   /* animation-delay sættes pr. ord i JS */
+}
+
+/* ---- Keyframes (kun opacity + transform) ---- */
+
+@keyframes dbIndtoning{
+  from{ opacity:0; }
+  to{   opacity:1; }
+}
+
+@keyframes dbUdtoning{
+  from{ opacity:1; }
+  to{   opacity:0; }
+}
+
+@keyframes dbSolOp{
+  from{ opacity:0; transform:translateY(60%); }
+  to{   opacity:1; transform:translateY(0); }
+}
+
+@keyframes dbTekstInd{
+  from{ opacity:0; transform:translateY(24px); }
+  to{   opacity:1; transform:translateY(0); }
+}
+
+/* ---- Reduceret bevægelse: kun en simpel fade af hele overlayet ---- */
+
+@media (prefers-reduced-motion: reduce){
+  .dbSol,
+  .dbHilsen,
+  .dbDato,
+  .dbOrd{
+    animation:none;
+  }
+}
