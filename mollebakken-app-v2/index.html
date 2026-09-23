@@ -330,6 +330,18 @@
 
   .knapFare{ background:var(--rød); color:white; }
 
+  /* ---- P-møde: leder-godkendelse — store knapper, tælefon-venligt ---- */
+  .moedeAfventerKort{ margin-bottom:12px; }
+  .moedeAfventerKort .pmMeta{ font-size:12px; color:var(--tekst-svag); margin:4px 0 12px 0; }
+  .knapStorRække{ display:flex; gap:10px; }
+  .knapStorRække button{
+    flex:1;
+    padding:16px;
+    font-size:15px;
+    font-weight:700;
+    border-radius:10px;
+  }
+
   .prioritetVælg{ display:flex; gap:6px; margin:8px 0; }
   .prioritetVælg button{
     flex:1;
@@ -442,6 +454,37 @@
     transition:left .2s;
   }
   .toggleSwitch.til .knop{ left:20px; }
+
+  .infoskaermRække{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:10px 0;
+    border-bottom:1px solid #eef2ef;
+  }
+  .infoskaermRække:last-child{ border-bottom:none; }
+  .infoskaermRækkeVenstre{ display:flex; align-items:center; gap:10px; flex:1 1 auto; min-width:0; }
+  .infoskaermNavn{ font-size:13px; font-weight:600; min-width:0; }
+  .raekkefoelgeKnapper{ display:flex; flex-direction:column; gap:2px; }
+  .raekkefoelgeKnapper button{
+    width:26px; height:20px;
+    font-size:11px;
+    line-height:1;
+    background:#e2e8e6;
+    color:var(--mørk);
+    padding:0;
+  }
+  .raekkefoelgeKnapper button:disabled{ opacity:.35; }
+  .visningstidInput{
+    width:50px;
+    padding:6px;
+    font-size:12px;
+    text-align:center;
+    border:1px solid #d1d9d6;
+    border-radius:6px;
+  }
+  .visningstidLabel{ font-size:11px; color:var(--tekst-svag); white-space:nowrap; }
 
   .kommerSnart{
     text-align:center;
@@ -726,6 +769,7 @@
     <select class="modeVælger" id="moedeMode" onchange="visMoedeMode()">
       <option value="indsend">📝 Indsend punkt</option>
       <option value="referater">📋 Referater</option>
+      <option value="leder">🔑 Leder</option>
     </select>
 
     <div id="moedeIndsend">
@@ -757,6 +801,21 @@
     <div id="moedeReferater" style="display:none;">
       <div id="moedeReferaterListe"><div class="loading">Henter referater...</div></div>
     </div>
+
+    <div id="moedeLeder" style="display:none;">
+      <div id="moedeLederLaas" class="kort">
+        <h3 style="margin-top:0;">Leder-adgang</h3>
+        <div class="formRække">
+          <input type="password" id="moedeLederKodeInput" inputmode="numeric" placeholder="Kode">
+        </div>
+        <button class="knap" onclick="tjekMoedeLederKode()">Lås op</button>
+        <div id="moedeLederFejl" style="color:var(--rød); font-size:12px; margin-top:8px;"></div>
+      </div>
+
+      <div id="moedeLederIndhold" style="display:none;">
+        <div id="moedeAfventerListe"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ============ ADMIN ============ -->
@@ -764,6 +823,17 @@
     <div class="kort">
       <h3 style="margin-top:0;">Synlige faner</h3>
       <div id="adminIndstillinger"></div>
+    </div>
+
+    <div class="kort">
+      <h3 style="margin-top:0;">Infoskærm (kontoret)</h3>
+      <div id="adminInfoskaerm"><div class="loading">Henter …</div></div>
+    </div>
+
+    <div class="kort">
+      <h3 style="margin-top:0;">Beboerskærm (gangen)</h3>
+      <div style="font-size:12px; color:var(--tekst-svag); margin-bottom:8px;">Slukkede felter bliver tomme, resten bliver på sin plads.</div>
+      <div id="adminBeboerskaerm"><div class="loading">Henter …</div></div>
     </div>
   </div>
 
@@ -899,7 +969,7 @@ function visSide(side){
   if(side === 'program') visProgramMode();
   if(side === 'sammenMed') visSammenMed();
   if(side === 'paragraf104') visP104Mode();
-  if(side === 'admin') hentIndstillingerAdmin();
+  if(side === 'admin'){ hentIndstillingerAdmin(); hentSkaermIndstillinger(); }
   if(side === 'rengoring') hentRengoring();
   if(side === 'personalemoede') visMoedeMode();
 }
@@ -1956,12 +2026,14 @@ function visMoedeMode(){
   const mode = document.getElementById('moedeMode').value;
   document.getElementById('moedeIndsend').style.display = mode === 'indsend' ? 'block' : 'none';
   document.getElementById('moedeReferater').style.display = mode === 'referater' ? 'block' : 'none';
+  document.getElementById('moedeLeder').style.display = mode === 'leder' ? 'block' : 'none';
 
   if(mode === 'indsend'){
     document.getElementById('moedePunktNavn').value = localStorage.getItem('pm_mit_navn') || '';
     hentMoedeNaesteMoede();
   }
   if(mode === 'referater') hentMoedeReferater();
+  if(mode === 'leder' && moedeLederLaastOp) hentMoedeAfventer();
 }
 
 let moedeNaeste = null;
@@ -2056,6 +2128,102 @@ async function hentMoedeMinePunkter(){
   `;
 }
 
+// ---- Leder — godkend/afvis, server-side kode-tjek (se
+// personalemoede-v2/leder-godkendelse-rpc.sql). Samme RPC'er som
+// personalemoede-v2's leder-fane bruger, så begge steder er lige sikre.
+
+let moedeLederLaastOp = false;
+let moedeLederKodeIndtastet = '';
+
+async function tjekMoedeLederKode(){
+  if(!sb) return;
+  const kode = document.getElementById('moedeLederKodeInput').value.trim();
+  const { data, error } = await sb.rpc('leder_kode_gyldig', { p_kode: kode });
+
+  if(error){ console.error(error); visToast('Kunne ikke tjekke koden'); return; }
+
+  if(data === true){
+    moedeLederKodeIndtastet = kode;
+    moedeLederLaastOp = true;
+    document.getElementById('moedeLederLaas').style.display = 'none';
+    document.getElementById('moedeLederIndhold').style.display = 'block';
+    hentMoedeAfventer();
+  } else {
+    document.getElementById('moedeLederFejl').textContent = 'Forkert kode';
+  }
+}
+
+async function hentMoedeAfventer(){
+  const container = document.getElementById('moedeAfventerListe');
+  if(!sb || !moedeNaeste){ container.innerHTML = '<div class="loading">Intet kommende møde oprettet endnu.</div>'; return; }
+
+  const { data, error } = await sb
+    .from('dagsordenspunkter')
+    .select('*')
+    .eq('moede_id', moedeNaeste.id)
+    .eq('status', 'afventer')
+    .order('foreslaaet_at', { ascending: true });
+
+  if(error){ console.error(error); container.innerHTML = '<div class="loading">Kunne ikke hente punkter.</div>'; return; }
+
+  if(!data || data.length === 0){
+    container.innerHTML = '<div class="loading">Ingen punkter afventer godkendelse.</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(p => `
+    <div class="kort moedeAfventerKort">
+      <h3 style="margin-top:0; font-size:14px;">${escapeHtml(p.titel)}</h3>
+      ${p.beskrivelse ? '<div style="font-size:13px; margin-bottom:8px;">' + escapeHtml(p.beskrivelse) + '</div>' : ''}
+      <div class="pmMeta">Foreslået af ${escapeHtml(p.foreslaaet_af || 'ukendt')}</div>
+      <div class="knapStorRække">
+        <button class="knap" onclick="moedeGodkendPunkt('${p.id}')">✓ Godkend</button>
+        <button class="knap knapFare" onclick="moedeAfvisPunkt('${p.id}')">✕ Afvis</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function moedeGodkendPunkt(id){
+  if(!sb || !moedeNaeste) return;
+
+  const { data: maxData, error: maxError } = await sb
+    .from('dagsordenspunkter')
+    .select('raekkefoelge')
+    .eq('moede_id', moedeNaeste.id)
+    .eq('status', 'godkendt')
+    .eq('kilde', 'indsendt')
+    .order('raekkefoelge', { ascending: false })
+    .limit(1);
+
+  if(maxError){ console.error(maxError); visToast('Fejl'); return; }
+  const naesteRaekkefoelge = (maxData && maxData.length > 0) ? maxData[0].raekkefoelge + 1 : 1000;
+
+  const { error } = await sb.rpc('godkend_dagsordenspunkt', {
+    p_kode: moedeLederKodeIndtastet,
+    p_punkt_id: id,
+    p_handling: 'godkendt',
+    p_raekkefoelge: naesteRaekkefoelge
+  });
+
+  if(error){ console.error(error); visToast('Kunne ikke godkende punktet'); return; }
+  visToast('Punkt godkendt');
+  hentMoedeAfventer();
+}
+
+async function moedeAfvisPunkt(id){
+  if(!sb) return;
+  const { error } = await sb.rpc('godkend_dagsordenspunkt', {
+    p_kode: moedeLederKodeIndtastet,
+    p_punkt_id: id,
+    p_handling: 'afvist'
+  });
+
+  if(error){ console.error(error); visToast('Kunne ikke afvise punktet'); return; }
+  visToast('Punkt afvist');
+  hentMoedeAfventer();
+}
+
 function moedeHighlightRadHtml(h){
   let meta = '';
   if(h.type === 'opgave'){
@@ -2139,6 +2307,134 @@ async function toggleIndstilling(fane, nuværendeVærdi){
   indstillingerCache[fane] = !nuværendeVærdi;
   opdaterBundNavSynlighed();
   hentIndstillingerAdmin();
+}
+
+// ==================================================================
+// ADMIN — infoskærm (personaletavle-v2) og beboerskærm (personaleskaerm-v2)
+// Styrer skaerm_indstillinger, en anden tabel end `indstillinger` ovenfor
+// (den styrer kun denne apps egne bundnav-faner). Morgen/aften-rotationen
+// i personaletavle-v2 rører vi ikke her — kun raekkefoelge/visningstid
+// for NORMAL-rotationen, samt beboerskærmens moduler.
+// ==================================================================
+
+const SKAERM_LABELS = {
+  beskeder: 'Beskeder',
+  ugeplaner: 'Dagsplan',
+  afkrydsning: 'Afkrydsning',
+  overlap: 'Overlap',
+  pmoede: 'Fra sidste p-møde',
+  niveau1: 'I huset nu',
+  niveau2: 'Andre funktioner',
+  niveau3: 'Senere i dag',
+  aftensmad: 'Aftensmad',
+  aktivitet: 'Dagens aktivitet',
+  madplan: 'Ugens madplan',
+  vejr: 'Vejr'
+};
+
+function skaermLabel(noegle){
+  return SKAERM_LABELS[noegle] || noegle;
+}
+
+async function hentSkaermIndstillinger(){
+  if(!sb) return;
+  const { data, error } = await sb.from('skaerm_indstillinger').select('*');
+  if(error){ console.error(error); return; }
+
+  const infoskaerm = (data || [])
+    .filter(r => r.skaerm === 'infoskaerm')
+    .sort((a, b) => a.raekkefoelge - b.raekkefoelge);
+  const beboerskaerm = (data || []).filter(r => r.skaerm === 'beboerskaerm');
+
+  renderInfoskaermIndstillinger(infoskaerm);
+  renderBeboerskaermIndstillinger(beboerskaerm);
+}
+
+function renderInfoskaermIndstillinger(rows){
+  document.getElementById('adminInfoskaerm').innerHTML = rows.map((r, i) => `
+    <div class="infoskaermRække">
+      <div class="infoskaermRækkeVenstre">
+        <div class="raekkefoelgeKnapper">
+          <button ${i === 0 ? 'disabled' : ''} onclick="flytInfoskaermRaekkefoelge('${r.id}', -1)">&uarr;</button>
+          <button ${i === rows.length - 1 ? 'disabled' : ''} onclick="flytInfoskaermRaekkefoelge('${r.id}', 1)">&darr;</button>
+        </div>
+        <span class="infoskaermNavn">${escapeHtml(skaermLabel(r.noegle))}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="visningstidLabel">sek.</span>
+        <input type="number" class="visningstidInput" min="5" value="${r.visningstid_sek || 30}" onchange="opdaterVisningstid('${r.id}', this.value)">
+        <div class="toggleSwitch ${r.aktiv ? 'til' : ''}" onclick="toggleSkaermIndstilling('${r.id}', 'infoskaerm', ${r.aktiv})">
+          <div class="knop"></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderBeboerskaermIndstillinger(rows){
+  document.getElementById('adminBeboerskaerm').innerHTML = rows.map(r => `
+    <div class="indstillingRække">
+      <span>${escapeHtml(skaermLabel(r.noegle))}</span>
+      <div class="toggleSwitch ${r.aktiv ? 'til' : ''}" onclick="toggleSkaermIndstilling('${r.id}', 'beboerskaerm', ${r.aktiv})">
+        <div class="knop"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function toggleSkaermIndstilling(id, skaerm, nuværendeVærdi){
+  if(!sb) return;
+
+  // Mindst én infoskærm-fane skal altid være tændt — ingen tilsvarende
+  // krav er nævnt for beboerskærmens moduler.
+  if(skaerm === 'infoskaerm' && nuværendeVærdi){
+    const { count, error: tælFejl } = await sb.from('skaerm_indstillinger')
+      .select('id', { count: 'exact', head: true })
+      .eq('skaerm', 'infoskaerm')
+      .eq('aktiv', true);
+    if(tælFejl){ console.error(tælFejl); visToast('Fejl'); return; }
+    if(count <= 1){ visToast('Mindst én fane skal være tændt'); return; }
+  }
+
+  const { error } = await sb.from('skaerm_indstillinger')
+    .update({ aktiv: !nuværendeVærdi, opdateret: new Date().toISOString() })
+    .eq('id', id);
+  if(error){ console.error(error); visToast('Fejl'); return; }
+  hentSkaermIndstillinger();
+}
+
+async function flytInfoskaermRaekkefoelge(id, retning){
+  if(!sb) return;
+  const { data, error } = await sb.from('skaerm_indstillinger')
+    .select('*')
+    .eq('skaerm', 'infoskaerm')
+    .order('raekkefoelge');
+  if(error){ console.error(error); return; }
+
+  const index = data.findIndex(r => r.id === id);
+  const naboIndex = index + retning;
+  if(index === -1 || naboIndex < 0 || naboIndex >= data.length) return;
+
+  const denne = data[index];
+  const nabo = data[naboIndex];
+
+  const { error: fejl1 } = await sb.from('skaerm_indstillinger').update({ raekkefoelge: nabo.raekkefoelge }).eq('id', denne.id);
+  const { error: fejl2 } = await sb.from('skaerm_indstillinger').update({ raekkefoelge: denne.raekkefoelge }).eq('id', nabo.id);
+  if(fejl1 || fejl2){ console.error(fejl1 || fejl2); visToast('Fejl'); return; }
+
+  hentSkaermIndstillinger();
+}
+
+async function opdaterVisningstid(id, værdi){
+  if(!sb) return;
+  const sekunder = parseInt(værdi, 10);
+  if(!sekunder || sekunder < 5){ visToast('Ugyldig visningstid'); hentSkaermIndstillinger(); return; }
+
+  const { error } = await sb.from('skaerm_indstillinger')
+    .update({ visningstid_sek: sekunder, opdateret: new Date().toISOString() })
+    .eq('id', id);
+  if(error){ console.error(error); visToast('Fejl'); return; }
+  visToast('Gemt');
 }
 
 // ==================================================================

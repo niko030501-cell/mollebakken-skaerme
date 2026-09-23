@@ -133,6 +133,42 @@
       font-weight: 400;
     }
 
+    /* ---- Fra sidste p-møde ---- */
+
+    .pmoedeIndhold{ font-size: 22px; }
+
+    .pmoedeTypeOverskrift{
+      font-family: 'Archivo', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--tekst-2);
+      margin: 22px 0 8px 0;
+    }
+    .pmoedeTypeOverskrift:first-child{ margin-top: 0; }
+
+    .pmoedePunkt{
+      padding: 10px 0;
+      border-bottom: 1px solid var(--streg-svag);
+    }
+    .pmoedeTekst{ font-size: 24px; font-weight: 600; color: var(--blaek); }
+    .pmoedeMeta{ font-size: 16px; color: var(--tekst-2); margin-top: 4px; }
+
+    .pmoedeSideIndikator{
+      position: absolute;
+      bottom: 20px;
+      right: 24px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--tom);
+    }
+
+    .pmoedeTom{
+      font-size: 18px;
+      color: var(--tom);
+    }
+
     .listepunkt.nu .afsender,
     .listepunkt.akut .afsender{ color: rgba(255,255,255,.65); }
 
@@ -340,6 +376,14 @@
   <div id="overlapTjeklisteContainer"></div>
 </div>
 
+<!-- ==================== FRA SIDSTE P-MØDE ==================== -->
+
+<div id="pmoede" class="side">
+  <div id="pmoedeOverskrift" class="stor-overskrift"></div>
+  <div id="pmoedeIndhold" class="pmoedeIndhold"></div>
+  <div id="pmoedeSideIndikator" class="pmoedeSideIndikator"></div>
+</div>
+
 </main>
 
 <!-- ============================================================ -->
@@ -379,7 +423,8 @@ const knapIdPerSide = {
   beskeder:     'btnBeskeder',
   ugeplaner:    'btnUgeplaner',
   afkrydsning:  'btnAfkrydsning',
-  overlap:      'btnOverlap'
+  overlap:      'btnOverlap',
+  pmoede:       'btnPmoede'
 };
 
 const UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
@@ -392,7 +437,10 @@ function visSide(side){
   document.getElementById(side).classList.add('active');
 
   document.querySelectorAll('.fane-nav button').forEach(b => b.classList.remove('aktiv'));
-  document.getElementById(knapIdPerSide[side]).classList.add('aktiv');
+  // Ikke alle faner har en synlig knap i nav'en (fx pmoede, og
+  // afkrydsning/overlap er bevidst skjult) — spring roligt over.
+  const knap = document.getElementById(knapIdPerSide[side]);
+  if(knap) knap.classList.add('aktiv');
 
   aktuelSide = side;
 
@@ -402,6 +450,11 @@ function visSide(side){
   // i bunden af deres respektive vis-funktion, kaldt herunder.
   if(side === 'beskeder') tilpasAlleKolonner('beskederContainer');
   if(side === 'ugeplaner') tilpasAlleKolonner('ugeplanerContainer');
+  if(side === 'pmoede'){
+    pmoedeSideIndex = 0;
+    pmoedeSideStart = Date.now();
+    visPmoedeSide();
+  }
   if(side === 'afkrydsning') hentAfkrydsningsskema();
   if(side === 'overlap') hentOverlap();
 }
@@ -889,10 +942,161 @@ function visOverlap(data){
   tjekContainer.innerHTML = tjekHtml;
 }
 
+// ---- FRA SIDSTE P-MØDE ----
+// Henter de vigtige punkter (highlights) fra referatsystemets seneste
+// afsluttede møde (personalemoede-v2, samme Supabase-projekt). Ingen nye
+// tabeller — genbruger moeder/highlights. Hvis der er flere punkter end
+// der er plads til på én skærm, deles de op i flere "sider" der skifter
+// automatisk mens p-møde-fanen er aktiv, inden for fanens visningstid.
+
+const PMOEDE_TYPE_LABELS = { beslutning: 'Beslutning', opgave: 'Opgave', info: 'Info', til_naeste: 'Til næste møde' };
+const PMOEDE_TYPE_RAEKKEFOELGE = ['beslutning', 'opgave', 'info', 'til_naeste'];
+const PMOEDE_MAKS_PR_SIDE = 6;
+
+let pmoedeData = null;      // { moede, highlights } eller null hvis intet møde/ingen highlights
+let pmoedeSider = [];
+let pmoedeSideIndex = 0;
+let pmoedeSideStart = 0;
+
+function pmoedeDatoLabel(datoStr){
+  const d = new Date(datoStr + 'T00:00:00');
+  if(isNaN(d.getTime())) return '';
+  return UGEDAGE[d.getDay()] + ' ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+async function hentPmoede(){
+  if(!sb) return;
+
+  const { data: moeder, error } = await sb
+    .from('moeder')
+    .select('*')
+    .eq('status', 'afsluttet')
+    .order('dato', { ascending: false })
+    .order('starttid', { ascending: false })
+    .limit(1);
+
+  if(error){ console.error('Fejl pmoede (moeder):', error); return; }
+  const moede = (moeder && moeder.length > 0) ? moeder[0] : null;
+
+  if(!moede){ pmoedeData = null; pmoedeSider = []; return; }
+
+  const { data: highlights, error: hlFejl } = await sb
+    .from('highlights')
+    .select('*')
+    .eq('moede_id', moede.id)
+    .eq('vist_paa_skaerm', true)
+    .order('oprettet_at', { ascending: true });
+
+  if(hlFejl){ console.error('Fejl pmoede (highlights):', hlFejl); return; }
+
+  pmoedeData = { moede, highlights: highlights || [] };
+  byggPmoedeSider();
+
+  if(aktuelSide === 'pmoede') visPmoedeSide();
+}
+
+function byggPmoedeSider(){
+  pmoedeSider = [];
+  if(!pmoedeData || pmoedeData.highlights.length === 0) return;
+
+  const sorteret = pmoedeData.highlights.slice().sort((a, b) =>
+    PMOEDE_TYPE_RAEKKEFOELGE.indexOf(a.type) - PMOEDE_TYPE_RAEKKEFOELGE.indexOf(b.type)
+  );
+
+  for(let i = 0; i < sorteret.length; i += PMOEDE_MAKS_PR_SIDE){
+    pmoedeSider.push(sorteret.slice(i, i + PMOEDE_MAKS_PR_SIDE));
+  }
+}
+
+function visPmoedeSide(){
+  const overskrift = document.getElementById('pmoedeOverskrift');
+  const indhold = document.getElementById('pmoedeIndhold');
+  const indikator = document.getElementById('pmoedeSideIndikator');
+
+  if(!pmoedeData || pmoedeSider.length === 0){
+    overskrift.textContent = 'Fra sidste p-møde';
+    indhold.innerHTML = '<div class="pmoedeTom">Ingen vigtige punkter fra sidste møde.</div>';
+    indikator.textContent = '';
+    return;
+  }
+
+  overskrift.textContent = 'Fra sidste p-møde — ' + pmoedeDatoLabel(pmoedeData.moede.dato);
+
+  const side = pmoedeSider[pmoedeSideIndex] || [];
+  let html = '';
+  let sidsteType = null;
+
+  side.forEach(h => {
+    if(h.type !== sidsteType){
+      html += '<div class="pmoedeTypeOverskrift">' + escapeHtml(PMOEDE_TYPE_LABELS[h.type] || h.type) + '</div>';
+      sidsteType = h.type;
+    }
+    let meta = '';
+    if(h.type === 'opgave'){
+      const dele = [];
+      if(h.ansvarlig) dele.push('Ansvarlig: ' + escapeHtml(h.ansvarlig));
+      if(h.deadline) dele.push('Frist: ' + pmoedeDatoLabel(h.deadline));
+      meta = dele.join(' · ');
+    }
+    html += '<div class="pmoedePunkt"><div class="pmoedeTekst">' + escapeHtml(h.tekst) + '</div>' +
+      (meta ? '<div class="pmoedeMeta">' + meta + '</div>' : '') + '</div>';
+  });
+
+  indhold.innerHTML = html;
+  indikator.textContent = pmoedeSider.length > 1 ? (pmoedeSideIndex + 1) + ' / ' + pmoedeSider.length : '';
+}
+
+function tjekPmoedeSideSkift(){
+  if(aktuelSide !== 'pmoede' || pmoedeSider.length <= 1) return;
+  const totalVisningstid = normaleVisningstider.pmoede || 30000;
+  const varighedPrSide = totalVisningstid / pmoedeSider.length;
+  if(Date.now() - pmoedeSideStart >= varighedPrSide){
+    pmoedeSideIndex = (pmoedeSideIndex + 1) % pmoedeSider.length;
+    pmoedeSideStart = Date.now();
+    visPmoedeSide();
+  }
+}
+
 // ---- TIDSSTYRET ROTATION ----
 
 let normalIndex = 0;
-const normaleSider = ['beskeder', 'ugeplaner'];
+// Fallback indtil skaerm_indstillinger er hentet — fail-safe hvis
+// tabellen ikke kan læses (se hentSkaermIndstillinger()).
+let normaleSider = ['beskeder', 'ugeplaner'];
+let normaleVisningstider = { beskeder: 30000, ugeplaner: 30000 };
+
+// Admin-styret (skaerm_indstillinger, skaerm='infoskaerm') — rækkefølge
+// og visningstid for NORMAL-rotationen. Morgen/aften nedenfor er bevidst
+// IKKE admin-styret, de forbliver hardkodede (aftalt med bruger).
+async function hentSkaermIndstillinger(){
+  if(!sb) return;
+
+  const { data, error } = await sb
+    .from('skaerm_indstillinger')
+    .select('*')
+    .eq('skaerm', 'infoskaerm')
+    .eq('aktiv', true)
+    .order('raekkefoelge');
+
+  // Fail-safe: kan indstillingerne ikke hentes, beholdes den nuværende
+  // (evt. hardkodede fallback-) liste uændret i stedet for at fejle.
+  if(error){ console.error('Fejl skaerm_indstillinger:', error); return; }
+  if(!data || data.length === 0) return;
+
+  let sider = data
+    .map(r => r.noegle)
+    .filter(noegle => noegle !== 'pmoede' || (pmoedeData && pmoedeData.highlights.length > 0));
+
+  if(sider.length === 0) sider = ['beskeder'];   // aldrig en tom rotation
+
+  normaleSider = sider;
+
+  const nyeVisningstider = {};
+  data.forEach(r => { nyeVisningstider[r.noegle] = (r.visningstid_sek || 30) * 1000; });
+  normaleVisningstider = nyeVisningstider;
+
+  if(normalIndex >= normaleSider.length) normalIndex = 0;
+}
 
 let rotationTilstand = 'NORMAL';
 let sidsteNormaltSkift = Date.now();
@@ -949,7 +1153,8 @@ function tjekRotation(){
     return;
   }
 
-  if(Date.now() - sidsteNormaltSkift >= 30000){
+  const nuværendeVisningstid = normaleVisningstider[normaleSider[normalIndex]] || 30000;
+  if(Date.now() - sidsteNormaltSkift >= nuværendeVisningstid){
     normalIndex = (normalIndex + 1) % normaleSider.length;
     visSide(normaleSider[normalIndex]);
     sidsteNormaltSkift = Date.now();
@@ -986,6 +1191,8 @@ hentBeskeder();
 hentUgeplaner();
 opdaterAfkrydsningOverskrift();
 opdaterUr();
+hentPmoede();
+hentSkaermIndstillinger();
 
 // Archivo indlæses asynkront — hvis en kolonne bliver målt/tilpasset FØR
 // fonten er klar, sker det med fallback-fontens (smallere) mål, og
@@ -1001,6 +1208,7 @@ document.fonts.ready.then(function(){
 });
 
 setInterval(tjekRotation, 1000);
+setInterval(tjekPmoedeSideSkift, 1000);
 setInterval(opdaterUr, 1000);
 setInterval(rotérPersonaleBjælke, 10000);
 setInterval(opdaterAfkrydsningOverskrift, 60000);
@@ -1008,6 +1216,8 @@ setInterval(opdaterAfkrydsningOverskrift, 60000);
 setInterval(() => {
   hentBeskeder();
   hentUgeplaner();
+  hentPmoede();
+  hentSkaermIndstillinger();
 }, 60000);
 
 setInterval(tegnUgeplaner, 60000);

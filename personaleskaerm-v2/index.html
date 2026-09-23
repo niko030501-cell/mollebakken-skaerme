@@ -355,6 +355,53 @@ function escapeHtml(str){
 const UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
 
 // ==================================================================
+// SKÆRM-INDSTILLINGER — hentes ved start og ved hver polling (60 sek.).
+// Alt starter som aktiv=true (fail-safe: kan tabellen ikke læses, eller
+// før første hentning er nået, vises alt som normalt).
+// ==================================================================
+
+let beboerskaermAktiv = {
+  niveau1: true, niveau2: true, niveau3: true,
+  aftensmad: true, aktivitet: true, madplan: true, vejr: true
+};
+
+async function hentBeboerskaermIndstillinger(){
+  if(!sb) return;
+
+  const { data, error } = await sb
+    .from('skaerm_indstillinger')
+    .select('noegle, aktiv')
+    .eq('skaerm', 'beboerskaerm');
+
+  // Fail-safe: kan indstillingerne ikke hentes, røres beboerskaermAktiv
+  // ikke — skærmen bliver ved med at vise det den senest fik at vide
+  // (eller alt, hvis dette er første hentning).
+  if(error){ console.error('Fejl skaerm_indstillinger:', error); return; }
+  if(!data) return;
+
+  data.forEach(r => { beboerskaermAktiv[r.noegle] = r.aktiv; });
+  anvendBeboerskaermIndstillinger();
+}
+
+function anvendBeboerskaermIndstillinger(){
+  document.getElementById('niveau1').style.visibility = beboerskaermAktiv.niveau1 ? 'visible' : 'hidden';
+  document.getElementById('niveau2').style.visibility = beboerskaermAktiv.niveau2 ? 'visible' : 'hidden';
+  document.getElementById('niveau3').style.visibility = beboerskaermAktiv.niveau3 ? 'visible' : 'hidden';
+  document.getElementById('aftensmad').style.visibility = beboerskaermAktiv.aftensmad ? 'visible' : 'hidden';
+  document.getElementById('vejrMini').style.visibility = beboerskaermAktiv.vejr ? 'visible' : 'hidden';
+
+  // aktivitet/madplan deler én fælles kasse (aktivitetBoks) og skiftes
+  // mellem i karrusellen — et slukket modul må aldrig kunne vises der.
+  slides = [];
+  if(beboerskaermAktiv.aktivitet) slides.push('aktivitetSlide');
+  if(beboerskaermAktiv.madplan) slides.push('madplanSlide');
+  // `!(slideIndex < slides.length)` fanger også NaN (fx efter en periode
+  // med slides.length===0, hvor modulo-intervallet nedenfor giver NaN).
+  if(!(slideIndex < slides.length)) slideIndex = 0;
+  visSlide();
+}
+
+// ==================================================================
 // Rolle-visningsnavne — rå Workfeed-rolle gemmes i databasen af
 // workfeed-sync, men VISES med samme omdøbning som den oprindelige
 // hentPersonale() i Kode.js. "Rådighedsvagt" (rå) → "Døgnvagt" (vist) —
@@ -426,6 +473,9 @@ function opdaterUr(){
 
 async function hentPersonale(){
   if(!sb) return;
+  // Niveau 1-3 deler denne ene hentning/rendering-omgang — kan kun
+  // springes helt over hvis ALLE tre er slukket.
+  if(!beboerskaermAktiv.niveau1 && !beboerskaermAktiv.niveau2 && !beboerskaermAktiv.niveau3) return;
 
   const visImorgen = skalViseImorgen();
   const dato = måldato();
@@ -609,6 +659,7 @@ function tegnSenere(nattevagt, pmødePersoner){
 
 async function hentMadplan(){
   if(!sb) return;
+  if(!beboerskaermAktiv.madplan) return;
 
   const dato = dagensDato();
   const dagensDag = UGEDAGE[dato.getDay()];
@@ -653,6 +704,7 @@ let aktivitetBilledeInterval = null;
 
 async function hentAktivitet(){
   if(!sb) return;
+  if(!beboerskaermAktiv.aktivitet) return;
 
   const dato = dagensDato();
   const dagensDag = UGEDAGE[dato.getDay()];
@@ -717,6 +769,7 @@ const VEJRKODER = {
 };
 
 async function hentVejr(){
+  if(!beboerskaermAktiv.vejr) return;
   try {
     const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.28&longitude=10.46&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Europe/Copenhagen&forecast_days=1');
     const data = await res.json();
@@ -740,12 +793,15 @@ async function hentVejr(){
 // ==================================================================
 
 let slideIndex = 0;
-const slides = ['aktivitetSlide', 'madplanSlide'];
+let slides = ['aktivitetSlide', 'madplanSlide'];
 
 function visSlide(){
-  slides.forEach((id, i) => {
-    document.getElementById(id).classList.toggle('vis', i === slideIndex);
-  });
+  // Ryd altid begge slides først — et slukket modul kan være blevet
+  // fjernet fra `slides` uden at have mistet sin .vis-klasse fra før.
+  document.getElementById('aktivitetSlide').classList.remove('vis');
+  document.getElementById('madplanSlide').classList.remove('vis');
+  const aktivId = slides[slideIndex];
+  if(aktivId) document.getElementById(aktivId).classList.add('vis');
 }
 
 // ==================================================================
@@ -758,15 +814,18 @@ function hentAlt(){
   hentAktivitet();
 }
 
+hentBeboerskaermIndstillinger();
 hentAlt();
 hentVejr();
 visSlide();
 opdaterUr();
 
+setInterval(hentBeboerskaermIndstillinger, 60000);
 setInterval(hentAlt, 60000);
 setInterval(hentVejr, 1800000);
 setInterval(opdaterUr, 1000);
 setInterval(() => {
+  if(slides.length === 0) return;
   slideIndex = (slideIndex + 1) % slides.length;
   visSlide();
 }, 10000);
