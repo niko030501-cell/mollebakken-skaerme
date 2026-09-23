@@ -695,7 +695,10 @@
     <label for="deltagereInput">Deltagere (valgfri, adskil med komma)</label>
     <input type="text" id="deltagereInput" placeholder="Navn, Navn, Navn">
   </div>
-  <button class="knap" onclick="startMoede()">Start møde</button>
+  <div class="knap-raekke">
+    <button class="knap" onclick="startMoede()">Start møde</button>
+    <button class="knap sekundaer" onclick="printDagsordenFoerStart()">Print dagsorden</button>
+  </div>
 </div>
 
 <div id="side-skriv" style="display:none;">
@@ -1946,10 +1949,45 @@ function printDagsorden(){
     alert('Ingen dagsorden at printe endnu.');
     return;
   }
+  renderOgPrintDagsorden(dagsorden, aktueltMoede.dato);
+}
 
-  let html = '<h1>Dagsorden — ' + escapeHtml(datoLangLabelMedAar(aktueltMoede.dato)) + '</h1>';
+// Bruges fra "Start møde"-skærmen, FØR mødet er startet — dér findes de
+// faste punkter endnu ikke som rækker i dagsordenspunkter (de
+// materialiseres først i materialiserFastePunkter(), kaldt fra
+// klargoerSkriveflade() når mødet startes), så de hentes her direkte fra
+// faste_punkter i stedet og flettes ind i den rigtige rækkefølge sammen
+// med de allerede godkendte indsendte/overførte punkter.
+async function printDagsordenFoerStart(){
+  if(!sb || !aktueltMoede) return;
+
+  const [fasteRes, punkterRes] = await Promise.all([
+    sb.from('faste_punkter').select('*').eq('aktiv', true).order('raekkefoelge'),
+    sb.from('dagsordenspunkter').select('*').eq('moede_id', aktueltMoede.id).eq('status', 'godkendt').order('raekkefoelge')
+  ]);
+
+  if(fasteRes.error || punkterRes.error){
+    visFejlDetalje('Kunne ikke hente dagsordenen:', fasteRes.error || punkterRes.error);
+    return;
+  }
+
+  const fastePunkter = (fasteRes.data || []).map(function(fp){
+    return { titel: fp.titel, beskrivelse: fp.beskrivelse, raekkefoelge: fp.raekkefoelge };
+  });
+  const alle = fastePunkter.concat(punkterRes.data || []).sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
+
+  if(alle.length === 0){
+    alert('Ingen dagsorden at printe endnu.');
+    return;
+  }
+
+  renderOgPrintDagsorden(alle, aktueltMoede.dato);
+}
+
+function renderOgPrintDagsorden(punkter, dato){
+  let html = '<h1>Dagsorden — ' + escapeHtml(datoLangLabelMedAar(dato)) + '</h1>';
   html += '<ol class="dagsordenPrintListe">';
-  dagsorden.forEach(p => {
+  punkter.forEach(p => {
     html += '<li><div class="dagsordenPrintTitel">' + escapeHtml(p.titel) + '</div>' +
       (p.beskrivelse ? '<div class="dagsordenPrintBeskrivelse">' + escapeHtml(p.beskrivelse) + '</div>' : '') +
       '</li>';
