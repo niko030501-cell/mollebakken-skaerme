@@ -558,7 +558,12 @@
       body.printDagsorden #hoved-arkiv{ display:none !important; }
       body.printDagsorden #hoved-referat{ display:block !important; padding:0; }
       body.printDagsorden #hoved-referat > .wrap{ max-width:none; padding:0; }
-      body.printDagsorden #hoved-referat > .wrap > *{ display:none !important; }
+      /* :not() undgår at denne regel og #dagsordenPrintVisning's egen
+         "vis"-regel nedenfor begge er !important og konkurrerer på
+         specificitet — det gjorde de før (denne linje havde flere
+         klasser end den anden regels id+klasse, og vandt fejlagtigt),
+         så print-visningen forblev skjult og siden så tom ud. */
+      body.printDagsorden #hoved-referat > .wrap > *:not(#dagsordenPrintVisning){ display:none !important; }
       body.printDagsorden #dagsordenPrintVisning{ display:block !important; }
     }
   </style>
