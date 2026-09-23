@@ -965,6 +965,7 @@ function visSide(side){
 
   aktuelSide = side;
 
+  if(side === 'forside') tegnForside();
   if(side === 'opgaver') visOpgaverMode();
   if(side === 'program') visProgramMode();
   if(side === 'sammenMed') visSammenMed();
@@ -975,7 +976,10 @@ function visSide(side){
 }
 
 function gåTilForside(){
-  tegnForside();
+  // tegnForside() kaldes nu inde fra visSide() selv (samme mønster som
+  // opgaver/program/osv.), så forsiden altid tegnes uanset hvor man
+  // navigerer fra — fx tilbage-knappen fra Admin, som tidligere gav en
+  // tom forside fordi den kaldte visSide('forside') direkte.
   visSide('forside');
 }
 
