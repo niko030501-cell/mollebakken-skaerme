@@ -692,6 +692,7 @@
 
 <div id="side-start" class="kort" style="display:none;">
   <h2>Start møde</h2>
+  <div id="ordstyrerVisning" class="tom-tilstand" style="display:none; margin-bottom:12px;"></div>
   <div class="felt">
     <label for="referentInput">Referent (dit navn)</label>
     <input type="text" id="referentInput" placeholder="Skriv dit fulde navn">
@@ -976,7 +977,28 @@
       <label for="nytMoedeTid">Starttid (valgfri)</label>
       <input type="time" id="nytMoedeTid">
     </div>
+    <div class="felt">
+      <label for="nytMoedeReferentInput">Referent (valgfri)</label>
+      <input type="text" id="nytMoedeReferentInput" placeholder="Navn">
+    </div>
+    <div class="felt">
+      <label for="nytMoedeOrdstyrerInput">Ordstyrer (valgfri)</label>
+      <input type="text" id="nytMoedeOrdstyrerInput" placeholder="Navn">
+    </div>
     <button class="knap" style="background:var(--fane-leder);" onclick="opretNaesteMoede()">Opret møde</button>
+  </div>
+
+  <div id="moedeInfoKort" class="kort" style="display:none;">
+    <h2>Referent &amp; ordstyrer</h2>
+    <div class="tom-tilstand" style="margin-bottom:10px;">Gemmes automatisk — virker både før og mens mødet er i gang.</div>
+    <div class="felt">
+      <label for="moedeInfoReferentInput">Referent</label>
+      <input type="text" id="moedeInfoReferentInput" placeholder="Navn" onchange="gemMoedeInfo()">
+    </div>
+    <div class="felt">
+      <label for="moedeInfoOrdstyrerInput">Ordstyrer</label>
+      <input type="text" id="moedeInfoOrdstyrerInput" placeholder="Navn" onchange="gemMoedeInfo()">
+    </div>
   </div>
 
   <div id="lederTilfoejKort" class="kort" style="display:none;">
@@ -1449,11 +1471,15 @@ async function opretNaesteMoede(){
   const dato = document.getElementById('nytMoedeDato').value;
   if(!dato){ alert('Vælg en dato.'); return; }
   const starttid = document.getElementById('nytMoedeTid').value || null;
+  const referent = document.getElementById('nytMoedeReferentInput').value.trim();
+  const ordstyrer = document.getElementById('nytMoedeOrdstyrerInput').value.trim();
 
   const { data, error } = await sb.from('moeder').insert({
     dato: dato,
     starttid: starttid,
-    status: 'planlagt'
+    status: 'planlagt',
+    referent: referent || null,
+    ordstyrer: ordstyrer || null
   }).select().single();
 
   if(error){ visFejlDetalje('Kunne ikke oprette mødet:', error); return; }
@@ -1462,6 +1488,8 @@ async function opretNaesteMoede(){
 
   document.getElementById('nytMoedeDato').value = '';
   document.getElementById('nytMoedeTid').value = '';
+  document.getElementById('nytMoedeReferentInput').value = '';
+  document.getElementById('nytMoedeOrdstyrerInput').value = '';
   hentNaesteMoede();
 }
 
@@ -1700,6 +1728,8 @@ async function hentGodkendtSorterListe(){
   if(moedeFejl){ console.error('Fejl møde (rækkefølge):', moedeFejl); return; }
   lederSorterMoede = (moeder && moeder.length > 0) ? moeder[0] : null;
 
+  visMoedeInfoKort();
+
   if(!lederSorterMoede){ godkendtSorterCache = []; visGodkendtSorterListe(); return; }
 
   const { data, error } = await sb
@@ -1712,6 +1742,32 @@ async function hentGodkendtSorterListe(){
   if(error){ console.error('Fejl godkendt rækkefølge:', error); return; }
   godkendtSorterCache = data || [];
   visGodkendtSorterListe();
+}
+
+// Genbruger samme møde-opslag som Rækkefølge-listen ovenfor (planlagt
+// ELLER igang), så referent/ordstyrer også kan ændres mens mødet kører.
+function visMoedeInfoKort(){
+  const kort = document.getElementById('moedeInfoKort');
+  kort.style.display = lederSorterMoede ? 'block' : 'none';
+  if(!lederSorterMoede) return;
+
+  document.getElementById('moedeInfoReferentInput').value = lederSorterMoede.referent || '';
+  document.getElementById('moedeInfoOrdstyrerInput').value = lederSorterMoede.ordstyrer || '';
+}
+
+async function gemMoedeInfo(){
+  if(!sb || !lederSorterMoede) return;
+  const referent = document.getElementById('moedeInfoReferentInput').value.trim();
+  const ordstyrer = document.getElementById('moedeInfoOrdstyrerInput').value.trim();
+
+  const { error } = await sb.from('moeder').update({
+    referent: referent || null,
+    ordstyrer: ordstyrer || null
+  }).eq('id', lederSorterMoede.id);
+
+  if(error){ visFejlDetalje('Kunne ikke gemme:', error); return; }
+  lederSorterMoede.referent = referent || null;
+  lederSorterMoede.ordstyrer = ordstyrer || null;
 }
 
 function visGodkendtSorterListe(){
@@ -1804,7 +1860,16 @@ async function hentAktueltMoede(){
   document.getElementById('moedeLinje').textContent = tekst;
 
   if(aktueltMoede.status === 'planlagt'){
-    document.getElementById('referentInput').value = mitNavn();
+    document.getElementById('referentInput').value = aktueltMoede.referent || mitNavn();
+
+    const ordstyrerEl = document.getElementById('ordstyrerVisning');
+    if(aktueltMoede.ordstyrer){
+      ordstyrerEl.textContent = 'Ordstyrer: ' + aktueltMoede.ordstyrer;
+      ordstyrerEl.style.display = 'block';
+    } else {
+      ordstyrerEl.style.display = 'none';
+    }
+
     visMoedeTilstand('side-start');
     return;
   }
