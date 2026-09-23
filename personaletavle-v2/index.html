@@ -310,6 +310,7 @@
   <nav class="fane-nav">
     <button id="btnBeskeder" class="aktiv" onclick="visSide('beskeder')">Beskeder</button>
     <button id="btnUgeplaner" onclick="visSide('ugeplaner')">Dagsplan</button>
+    <button id="btnPmoede" onclick="visSide('pmoede')" style="display:none;">P-møde</button>
   </nav>
 
   <div id="topHøjreInfo">
@@ -1082,6 +1083,14 @@ async function hentSkaermIndstillinger(){
   // (evt. hardkodede fallback-) liste uændret i stedet for at fejle.
   if(error){ console.error('Fejl skaerm_indstillinger:', error); return; }
   if(!data || data.length === 0) return;
+
+  // P-møde-knappen i nav'en følger kun admin-tændt/slukket — vises altid
+  // når den er tændt, uanset om der lige nu er highlights at vise (klikker
+  // man ind manuelt uden indhold, vises den almindelige tom-tilstand).
+  // Den AUTOMATISKE rotation nedenfor er strengere og springer den over
+  // når der intet er at vise, så den uovervågede skærm ikke "farer forbi"
+  // en tom side.
+  document.getElementById('btnPmoede').style.display = data.some(r => r.noegle === 'pmoede') ? '' : 'none';
 
   let sider = data
     .map(r => r.noegle)
