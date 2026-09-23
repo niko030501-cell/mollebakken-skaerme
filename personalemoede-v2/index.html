@@ -1795,9 +1795,68 @@ function visGodkendtSorterListe(){
             ' onclick="flytPunkt(\'' + p.id + '\', 1)">&darr;</button>' +
         '</div>' +
       '</div>' +
+      '<div class="knap-raekke" style="margin-top:8px;">' +
+        '<button class="knap lille sekundaer" onclick="visGodkendtRedigerBoks(\'' + p.id + '\')">Rediger</button>' +
+        '<button class="knap lille farlig" onclick="sletGodkendtPunkt(\'' + p.id + '\')">Slet</button>' +
+      '</div>' +
+      '<div id="godkendtEkstra-' + p.id + '"></div>' +
       '</div>';
   });
   container.innerHTML = html;
+}
+
+function visGodkendtRedigerBoks(id){
+  const punkt = godkendtSorterCache.find(p => p.id === id);
+  if(!punkt) return;
+  const ekstra = document.getElementById('godkendtEkstra-' + id);
+  ekstra.innerHTML =
+    '<div class="rediger-boks">' +
+      '<div class="felt">' +
+        '<label>Titel</label>' +
+        '<input type="text" id="godkendtRedigerTitel-' + id + '" value="' + escapeHtml(punkt.titel) + '">' +
+      '</div>' +
+      '<div class="felt">' +
+        '<label>Beskrivelse</label>' +
+        '<textarea id="godkendtRedigerBeskrivelse-' + id + '">' + escapeHtml(punkt.beskrivelse || '') + '</textarea>' +
+      '</div>' +
+      '<div class="knap-raekke">' +
+        '<button class="knap lille" onclick="gemGodkendtRedigering(\'' + id + '\')">Gem</button>' +
+        '<button class="knap lille sekundaer" onclick="visGodkendtSorterListe()">Annuller</button>' +
+      '</div>' +
+    '</div>';
+}
+
+async function gemGodkendtRedigering(id){
+  const titel = document.getElementById('godkendtRedigerTitel-' + id).value.trim();
+  if(!titel){ alert('Titlen må ikke være tom.'); return; }
+  const beskrivelse = document.getElementById('godkendtRedigerBeskrivelse-' + id).value.trim();
+
+  const { error } = await sb.from('dagsordenspunkter').update({
+    titel: titel,
+    beskrivelse: beskrivelse || null
+  }).eq('id', id);
+
+  if(error){ visFejlDetalje('Kunne ikke gemme ændringen:', error); return; }
+  hentGodkendtSorterListe();
+}
+
+// Fjerner punktet fra dagsordenen ved at sætte status til 'afvist' —
+// samme vej som almindelig afvisning (godkend_dagsordenspunkt()), så
+// det går igennem den samme server-side kode-kontrol og trigger-vagt,
+// i stedet for at kræve en ny (ugennemtestet) slette-tilladelse i RLS.
+async function sletGodkendtPunkt(id){
+  const punkt = godkendtSorterCache.find(p => p.id === id);
+  if(!punkt) return;
+  if(!confirm('Fjern "' + punkt.titel + '" fra dagsordenen?')) return;
+
+  const { error } = await sb.rpc('godkend_dagsordenspunkt', {
+    p_kode: lederKodeIndtastet,
+    p_punkt_id: id,
+    p_handling: 'afvist'
+  });
+
+  if(error){ visFejlDetalje('Kunne ikke fjerne punktet:', error); return; }
+  hentGodkendtSorterListe();
 }
 
 async function flytPunkt(id, retning){
