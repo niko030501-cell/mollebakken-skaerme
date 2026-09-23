@@ -34,6 +34,13 @@
     .fane-nav{ flex-wrap:wrap; margin-bottom:16px; }
     .fane-nav button{ flex:1 1 auto; }
 
+    /* Manglede hidtil: uden denne regel var alle underfaner (Indsend/
+       Dagsorden/Mine opgaver, Arkivs Møder/Søg) synlige oven i hinanden
+       hele tiden, uanset hvilken der var valgt — kun selve knappen skiftede
+       udseende. Sandsynlig hovedårsag til at forsiden virkede forvirrende. */
+    .side{ display:none; }
+    .side.aktiv{ display:block; }
+
     .kort{
       background:var(--flade);
       border-radius:8px;
@@ -154,8 +161,8 @@
        TOP-NIVEAU — de fire hovedfaner (Indsend/Referat/Storskærm/Arkiv)
        ================================================================== */
 
-    #hoved-indsend, #hoved-referat, #hoved-storskaerm, #hoved-arkiv{ display:none; }
-    #hoved-indsend.aktiv, #hoved-referat.aktiv, #hoved-arkiv.aktiv{ display:block; }
+    #hoved-indsend, #hoved-referat, #hoved-storskaerm, #hoved-arkiv, #hoved-leder{ display:none; }
+    #hoved-indsend.aktiv, #hoved-referat.aktiv, #hoved-arkiv.aktiv, #hoved-leder.aktiv{ display:block; }
 
     #topHeader{
       display:flex;
@@ -191,6 +198,21 @@
     }
 
     #hovedNav button.aktiv{ background:var(--brand); color:#fff; }
+
+    /* Hver hovedfane har sin egen farve i navigationen, så det er
+       tydeligt hvilket "rum" man er i (bruger-feedback: forvirrende med
+       kun én farve overalt). Lokale variabler — rører ikke shared/tokens.css. */
+    :root{
+      --fane-leder: #8a6212;
+      --fane-referat: #2f5fa8;
+      --fane-storskaerm: #0f7a72;
+      --fane-arkiv: #6b4fa0;
+    }
+
+    #hovedNav button#hovedBtnReferat.aktiv{ background:var(--fane-referat); }
+    #hovedNav button#hovedBtnStorskaerm.aktiv{ background:var(--fane-storskaerm); }
+    #hovedNav button#hovedBtnArkiv.aktiv{ background:var(--fane-arkiv); }
+    #hovedNav button#hovedBtnLeder.aktiv{ background:var(--fane-leder); }
 
     /* ==================================================================
        INDSEND-fane (index.html)
@@ -486,7 +508,7 @@
       #hoved-arkiv .kort{ background:#fff; padding:0; margin-bottom:20px; }
       #hoved-arkiv .side{ display:block !important; }
       #side-liste{ display:none !important; }
-      #hoved-indsend, #hoved-referat, #hoved-storskaerm{ display:none !important; }
+      #hoved-indsend, #hoved-referat, #hoved-storskaerm, #hoved-leder{ display:none !important; }
     }
   </style>
 </head>
@@ -527,6 +549,7 @@
   <button id="hovedBtnReferat" onclick="visHovedSide('referat')">Referat</button>
   <button id="hovedBtnStorskaerm" onclick="aabenStorskaermINytVindue()">Storskærm</button>
   <button id="hovedBtnArkiv" onclick="visHovedSide('arkiv')">Arkiv</button>
+  <button id="hovedBtnLeder" onclick="visHovedSide('leder')">Leder</button>
 </nav>
 
 <!-- ==================================================================
@@ -541,7 +564,6 @@
   <button id="btnIndsend" class="aktiv" onclick="visSide('indsend')">Indsend</button>
   <button id="btnDagsorden" onclick="visSide('dagsorden')">Dagsorden</button>
   <button id="btnOpgaver" onclick="visSide('opgaver')">Mine opgaver</button>
-  <button id="btnLeder" onclick="visSide('leder')">Leder</button>
 </nav>
 
 <div id="side-indsend" class="side aktiv">
@@ -592,62 +614,6 @@
   </div>
 </div>
 
-<div id="side-leder" class="side">
-
-  <div id="lederLaas">
-    <div class="kort">
-      <h2>Leder-adgang</h2>
-      <div class="felt">
-        <input type="password" id="lederKodeInput" inputmode="numeric" placeholder="Kode">
-      </div>
-      <button class="knap" onclick="tjekLederKode()">Lås op</button>
-      <div id="lederFejl"></div>
-    </div>
-  </div>
-
-  <div id="lederIndhold" style="display:none;">
-
-    <div id="opretMoedeKort" class="kort" style="display:none;">
-      <h2>Opret næste møde</h2>
-      <div class="felt">
-        <label for="nytMoedeDato">Dato</label>
-        <input type="date" id="nytMoedeDato">
-      </div>
-      <div class="felt">
-        <label for="nytMoedeTid">Starttid (valgfri)</label>
-        <input type="time" id="nytMoedeTid">
-      </div>
-      <button class="knap" onclick="opretNaesteMoede()">Opret møde</button>
-    </div>
-
-    <div id="lederTilfoejKort" class="kort" style="display:none;">
-      <h2>Tilføj punkt direkte</h2>
-      <div class="tom-tilstand" style="margin-bottom:10px;">Går direkte på dagsordenen — kræver ikke godkendelse.</div>
-      <div class="felt">
-        <label for="lederPunktTitelInput">Titel</label>
-        <input type="text" id="lederPunktTitelInput" placeholder="Kort titel">
-      </div>
-      <div class="felt">
-        <label for="lederPunktBeskrivelseInput">Beskrivelse (valgfri)</label>
-        <textarea id="lederPunktBeskrivelseInput" placeholder="Uddyb hvis nødvendigt"></textarea>
-      </div>
-      <button class="knap" onclick="tilfoejLederPunktDirekte()">Tilføj til dagsorden</button>
-    </div>
-
-    <div id="godkendelseKort" class="kort" style="display:none;">
-      <h2>Afventer godkendelse</h2>
-      <div id="afventerListe"><div class="tom-tilstand">Henter …</div></div>
-    </div>
-
-    <div id="godkendtSorterKort" class="kort" style="display:none;">
-      <h2>Godkendt rækkefølge</h2>
-      <div id="godkendtSorterListe"><div class="tom-tilstand">Henter …</div></div>
-    </div>
-
-  </div>
-
-</div>
-
 </div>
 </div>
 
@@ -661,7 +627,7 @@
 
 <div id="side-ingen" class="kort" style="display:none;">
   <div class="tom-tilstand">
-    Der er intet møde at skrive referat for. Opret et møde under "Leder"-fanen på Indsend-siden.
+    Der er intet møde at skrive referat for. Opret et møde under "Leder"-fanen.
   </div>
 </div>
 
@@ -884,6 +850,69 @@
 </div>
 </div>
 
+<!-- ==================================================================
+     LEDER — flyttet ud som selvstændig hovedfane (tidligere en
+     underfane under Indsend). Gult farve-tema (--fane-leder) for
+     tydeligt at signalere "adskilt, adgangsbegrænset område".
+     ================================================================== -->
+<div id="hoved-leder">
+<div class="wrap w-640">
+
+<div id="lederLaas">
+  <div class="kort" style="border:2px solid var(--fane-leder);">
+    <h2 style="color:var(--fane-leder);">Leder-adgang</h2>
+    <div class="felt">
+      <input type="password" id="lederKodeInput" inputmode="numeric" placeholder="Kode">
+    </div>
+    <button class="knap" style="background:var(--fane-leder);" onclick="tjekLederKode()">Lås op</button>
+    <div id="lederFejl"></div>
+  </div>
+</div>
+
+<div id="lederIndhold" style="display:none;">
+
+  <div id="opretMoedeKort" class="kort" style="display:none;">
+    <h2>Opret næste møde</h2>
+    <div class="felt">
+      <label for="nytMoedeDato">Dato</label>
+      <input type="date" id="nytMoedeDato">
+    </div>
+    <div class="felt">
+      <label for="nytMoedeTid">Starttid (valgfri)</label>
+      <input type="time" id="nytMoedeTid">
+    </div>
+    <button class="knap" style="background:var(--fane-leder);" onclick="opretNaesteMoede()">Opret møde</button>
+  </div>
+
+  <div id="lederTilfoejKort" class="kort" style="display:none;">
+    <h2>Tilføj punkt direkte</h2>
+    <div class="tom-tilstand" style="margin-bottom:10px;">Går direkte på dagsordenen — kræver ikke godkendelse.</div>
+    <div class="felt">
+      <label for="lederPunktTitelInput">Titel</label>
+      <input type="text" id="lederPunktTitelInput" placeholder="Kort titel">
+    </div>
+    <div class="felt">
+      <label for="lederPunktBeskrivelseInput">Beskrivelse (valgfri)</label>
+      <textarea id="lederPunktBeskrivelseInput" placeholder="Uddyb hvis nødvendigt"></textarea>
+    </div>
+    <button class="knap" style="background:var(--fane-leder);" onclick="tilfoejLederPunktDirekte()">Tilføj til dagsorden</button>
+  </div>
+
+  <div id="godkendelseKort" class="kort" style="display:none;">
+    <h2>Afventer godkendelse</h2>
+    <div id="afventerListe"><div class="tom-tilstand">Henter …</div></div>
+  </div>
+
+  <div id="godkendtSorterKort" class="kort" style="display:none;">
+    <h2>Godkendt rækkefølge</h2>
+    <div id="godkendtSorterListe"><div class="tom-tilstand">Henter …</div></div>
+  </div>
+
+</div>
+
+</div>
+</div>
+
 <!-- ============================================================ -->
 <!-- SCRIPT                                                        -->
 <!-- ============================================================ -->
@@ -1045,8 +1074,8 @@ async function overfoerFraSidsteMoede(nytMoedeId){
 // TOP-NIVEAU NAVIGATION
 // ==================================================================
 
-const hovedSider = ['indsend', 'referat', 'storskaerm', 'arkiv'];
-let hovedSideInitialiseret = { indsend: false, referat: false, storskaerm: false, arkiv: false };
+const hovedSider = ['indsend', 'referat', 'storskaerm', 'arkiv', 'leder'];
+let hovedSideInitialiseret = { indsend: false, referat: false, storskaerm: false, arkiv: false, leder: false };
 
 function visHovedSide(side){
   hovedSider.forEach(s => {
@@ -1058,6 +1087,7 @@ function visHovedSide(side){
   if(side === 'indsend') hentNaesteMoede();
   if(side === 'referat') hentAktueltMoede();
   if(side === 'arkiv' && !hovedSideInitialiseret.arkiv){ hentAfsluttedeMoeder(); hovedSideInitialiseret.arkiv = true; }
+  if(side === 'leder' && lederLaastOp) hentLederData();
 }
 
 /* ==================================================================
@@ -1071,11 +1101,10 @@ function visSide(side){
   document.querySelectorAll('#hoved-indsend .side').forEach(d => d.classList.remove('aktiv'));
   document.getElementById('side-' + side).classList.add('aktiv');
   document.querySelectorAll('#hoved-indsend > .wrap > .fane-nav button').forEach(b => b.classList.remove('aktiv'));
-  document.getElementById({ indsend: 'btnIndsend', dagsorden: 'btnDagsorden', opgaver: 'btnOpgaver', leder: 'btnLeder' }[side]).classList.add('aktiv');
+  document.getElementById({ indsend: 'btnIndsend', dagsorden: 'btnDagsorden', opgaver: 'btnOpgaver' }[side]).classList.add('aktiv');
 
   if(side === 'dagsorden') hentGodkendtDagsorden();
   if(side === 'opgaver') hentMineOpgaver();
-  if(side === 'leder' && lederLaastOp) hentLederData();
 }
 
 async function hentNaesteMoede(){
