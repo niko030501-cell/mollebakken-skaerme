@@ -234,16 +234,21 @@
 
     .moede-layout{ display:flex; gap:16px; align-items:flex-start; }
 
-    #sidepanel{
+    #sidepanelWrap{
       width:260px;
       flex-shrink:0;
+      position:sticky;
+      top:16px;
+    }
+
+    #printDagsordenKnap{ width:100%; margin-bottom:8px; }
+
+    #sidepanel{
       background:var(--flade);
       border-radius:8px;
       padding:10px;
-      max-height:calc(100vh - 220px);
+      max-height:calc(100vh - 260px);
       overflow-y:auto;
-      position:sticky;
-      top:16px;
     }
 
     .sidepunkt{
@@ -322,7 +327,8 @@
 
     @media (max-width: 760px){
       .moede-layout{ flex-direction:column; }
-      #sidepanel{ width:100%; max-height:180px; position:static; }
+      #sidepanelWrap{ width:100%; position:static; }
+      #sidepanel{ max-height:180px; }
     }
 
     /* ==================================================================
@@ -499,6 +505,13 @@
     .opsummering-gruppe h3{ font-size:12px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
     .opsummering-linje{ font-size:13px; margin-top:4px; }
 
+    #dagsordenPrintVisning{ display:none; }
+    #dagsordenPrintVisning h1{ font-size:22px; margin-bottom:16px; }
+    .dagsordenPrintListe{ padding-left:22px; }
+    .dagsordenPrintListe li{ margin-bottom:14px; }
+    .dagsordenPrintTitel{ font-size:15px; font-weight:700; }
+    .dagsordenPrintBeskrivelse{ font-size:13px; color:var(--tekst-2); margin-top:2px; }
+
     @media print{
       .ikke-print{ display:none !important; }
       body{ background:#fff; }
@@ -509,6 +522,16 @@
       #hoved-arkiv .side{ display:block !important; }
       #side-liste{ display:none !important; }
       #hoved-indsend, #hoved-referat, #hoved-storskaerm, #hoved-leder{ display:none !important; }
+
+      /* Print af dagsorden fra Referat-fanen (printDagsorden()) — en
+         separat, ren print-visning, ikke selve arbejdsfladen med
+         noter/highlights. body.printDagsorden sættes lige før
+         window.print() kaldes, se printDagsorden(). */
+      body.printDagsorden #hoved-arkiv{ display:none !important; }
+      body.printDagsorden #hoved-referat{ display:block !important; padding:0; }
+      body.printDagsorden #hoved-referat > .wrap{ max-width:none; padding:0; }
+      body.printDagsorden #hoved-referat > .wrap > *{ display:none !important; }
+      body.printDagsorden #dagsordenPrintVisning{ display:block !important; }
     }
   </style>
 </head>
@@ -650,7 +673,10 @@
 <div id="side-skriv" style="display:none;">
   <div class="moede-layout">
 
-    <aside id="sidepanel"></aside>
+    <div id="sidepanelWrap">
+      <button id="printDagsordenKnap" class="knap sekundaer lille ikke-print" onclick="printDagsorden()">Print dagsorden</button>
+      <aside id="sidepanel"></aside>
+    </div>
 
     <div id="hovedpanel">
       <div class="kort">
@@ -732,6 +758,10 @@
     </div>
   </div>
 </div>
+
+<!-- Ren print-visning af dagsordenen, bygget af printDagsorden() lige
+     før window.print() — ikke selve arbejdsfladen, se CSS @media print. -->
+<div id="dagsordenPrintVisning"></div>
 
 </div>
 </div>
@@ -1783,6 +1813,34 @@ function renderSidepanel(){
   });
   container.innerHTML = html;
 }
+
+// Ren udskrift af dagsordenen (ikke selve arbejdsfladen med noter/
+// highlights) — så lederen kan dele den ud til alle deltagere ved
+// mødets start. Bruger samme .printDagsorden-mønster som Arkivs
+// eksisterende print-knap (body-klasse + @media print).
+function printDagsorden(){
+  if(!aktueltMoede || dagsorden.length === 0){
+    alert('Ingen dagsorden at printe endnu.');
+    return;
+  }
+
+  let html = '<h1>Dagsorden — ' + escapeHtml(datoLangLabelMedAar(aktueltMoede.dato)) + '</h1>';
+  html += '<ol class="dagsordenPrintListe">';
+  dagsorden.forEach(p => {
+    html += '<li><div class="dagsordenPrintTitel">' + escapeHtml(p.titel) + '</div>' +
+      (p.beskrivelse ? '<div class="dagsordenPrintBeskrivelse">' + escapeHtml(p.beskrivelse) + '</div>' : '') +
+      '</li>';
+  });
+  html += '</ol>';
+
+  document.getElementById('dagsordenPrintVisning').innerHTML = html;
+  document.body.classList.add('printDagsorden');
+  window.print();
+}
+
+window.addEventListener('afterprint', function(){
+  document.body.classList.remove('printDagsorden');
+});
 
 function visPunkt(index){
   const punkt = dagsorden[index];
