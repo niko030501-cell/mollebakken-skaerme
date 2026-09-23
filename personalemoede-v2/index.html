@@ -1779,11 +1779,14 @@ function visGodkendtSorterListe(){
 
   let html = '';
   godkendtSorterCache.forEach((p, i) => {
+    let meta = p.pause_minutter ? '⏸ Pause · ' + p.pause_minutter + ' min' : kildeLabel(p.kilde);
+    if(p.foreslaaet_af) meta += ' · Foreslået af ' + escapeHtml(p.foreslaaet_af);
+
     html += '<div class="pm-raekke">' +
       '<div class="pm-raekke-top">' +
         '<div>' +
           '<div class="pm-titel">' + escapeHtml(p.titel) + '</div>' +
-          '<div class="pm-meta">' + (p.pause_minutter ? '⏸ Pause · ' + p.pause_minutter + ' min' : kildeLabel(p.kilde)) + '</div>' +
+          '<div class="pm-meta">' + meta + '</div>' +
         '</div>' +
         '<div class="sorter-knapper">' +
           '<button class="knap lille kvadrat sekundaer" ' + (i === 0 ? 'disabled' : '') +
@@ -2087,7 +2090,8 @@ function visPunkt(index){
     rydPauseSlutTid();
   }
 
-  document.getElementById('punktKildeTag').textContent = kildeLabel(punkt.kilde);
+  document.getElementById('punktKildeTag').textContent = kildeLabel(punkt.kilde) +
+    (punkt.foreslaaet_af ? ' · Foreslået af ' + punkt.foreslaaet_af : '');
   document.getElementById('punktTitel').textContent = punkt.titel;
   document.getElementById('punktBeskrivelse').textContent = punkt.beskrivelse || '';
 
@@ -2810,8 +2814,11 @@ function tegnReferatDetalje(){
   } else {
     let html = '';
     detaljeCache.punkter.forEach(item => {
+      let eyebrow = kildeLabel(item.punkt.kilde);
+      if(item.punkt.foreslaaet_af) eyebrow += ' · Foreslået af ' + item.punkt.foreslaaet_af;
+
       html += '<div class="referat-punkt">' +
-        '<div class="eyebrow">' + escapeHtml(kildeLabel(item.punkt.kilde)) + '</div>' +
+        '<div class="eyebrow">' + escapeHtml(eyebrow) + '</div>' +
         '<div class="referat-punkt-titel">' + escapeHtml(item.punkt.titel) + '</div>' +
         (item.punkt.beskrivelse ? '<div class="referat-punkt-beskrivelse">' + escapeHtml(item.punkt.beskrivelse) + '</div>' : '') +
         (item.note && item.note.tekst ? '<div class="referat-punkt-note">' + escapeHtml(item.note.tekst) + '</div>' : '') +
