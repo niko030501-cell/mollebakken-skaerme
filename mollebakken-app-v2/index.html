@@ -814,6 +814,7 @@
 
       <div id="moedeLederIndhold" style="display:none;">
         <div id="moedeAfventerListe"></div>
+        <div id="moedeGodkendteListe"></div>
       </div>
     </div>
   </div>
@@ -2159,7 +2160,11 @@ async function tjekMoedeLederKode(){
 
 async function hentMoedeAfventer(){
   const container = document.getElementById('moedeAfventerListe');
-  if(!sb || !moedeNaeste){ container.innerHTML = '<div class="loading">Intet kommende møde oprettet endnu.</div>'; return; }
+  if(!sb || !moedeNaeste){
+    container.innerHTML = '<div class="loading">Intet kommende møde oprettet endnu.</div>';
+    document.getElementById('moedeGodkendteListe').innerHTML = '';
+    return;
+  }
 
   const { data, error } = await sb
     .from('dagsordenspunkter')
@@ -2172,20 +2177,140 @@ async function hentMoedeAfventer(){
 
   if(!data || data.length === 0){
     container.innerHTML = '<div class="loading">Ingen punkter afventer godkendelse.</div>';
+  } else {
+    container.innerHTML = data.map(p => `
+      <div class="kort moedeAfventerKort">
+        <h3 style="margin-top:0; font-size:14px;">${escapeHtml(p.titel)}</h3>
+        ${p.beskrivelse ? '<div style="font-size:13px; margin-bottom:8px;">' + escapeHtml(p.beskrivelse) + '</div>' : ''}
+        <div class="pmMeta">Foreslået af ${escapeHtml(p.foreslaaet_af || 'ukendt')}</div>
+        <div class="knapStorRække">
+          <button class="knap" onclick="moedeGodkendPunkt('${p.id}')">✓ Godkend</button>
+          <button class="knap knapFare" onclick="moedeAfvisPunkt('${p.id}')">✕ Afvis</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  hentMoedeGodkendte();
+}
+
+// Godkendte punkter — leder kunne før kun godkende/afvise, men ikke
+// rette eller fjerne noget der allerede var godkendt (fx indsendt af en
+// medarbejder). Genbruger samme mønster som personalemoede-v2's
+// Rækkefølge-liste (emner som overskrift, løse punkter for sig), men
+// uden omrokering — det styres fra selve referatsystemet.
+let moedeGodkendteCache = [];
+
+async function hentMoedeGodkendte(){
+  const container = document.getElementById('moedeGodkendteListe');
+  if(!sb || !moedeNaeste){ container.innerHTML = ''; return; }
+
+  const [emnerRes, punkterRes] = await Promise.all([
+    sb.from('emner').select('*').eq('moede_id', moedeNaeste.id).eq('aktiv', true).order('raekkefoelge'),
+    sb.from('dagsordenspunkter').select('*').eq('moede_id', moedeNaeste.id).eq('status', 'godkendt').order('raekkefoelge')
+  ]);
+
+  if(emnerRes.error || punkterRes.error){
+    console.error(emnerRes.error || punkterRes.error);
+    container.innerHTML = '<div class="loading">Kunne ikke hente godkendte punkter.</div>';
     return;
   }
 
-  container.innerHTML = data.map(p => `
-    <div class="kort moedeAfventerKort">
-      <h3 style="margin-top:0; font-size:14px;">${escapeHtml(p.titel)}</h3>
-      ${p.beskrivelse ? '<div style="font-size:13px; margin-bottom:8px;">' + escapeHtml(p.beskrivelse) + '</div>' : ''}
-      <div class="pmMeta">Foreslået af ${escapeHtml(p.foreslaaet_af || 'ukendt')}</div>
-      <div class="knapStorRække">
-        <button class="knap" onclick="moedeGodkendPunkt('${p.id}')">✓ Godkend</button>
-        <button class="knap knapFare" onclick="moedeAfvisPunkt('${p.id}')">✕ Afvis</button>
+  const emner = emnerRes.data || [];
+  const punkter = punkterRes.data || [];
+  moedeGodkendteCache = punkter;
+
+  if(punkter.length === 0){
+    container.innerHTML = '<h3 style="font-size:14px; margin:16px 0 8px 0;">Godkendte punkter</h3><div class="loading">Ingen godkendte punkter endnu.</div>';
+    return;
+  }
+
+  const standalone = punkter.filter(p => !p.emne_id);
+  const grupperet = {};
+  punkter.forEach(p => { if(p.emne_id){ (grupperet[p.emne_id] = grupperet[p.emne_id] || []).push(p); } });
+
+  let html = '<h3 style="font-size:14px; margin:16px 0 8px 0;">Godkendte punkter</h3>';
+
+  emner.forEach(e => {
+    const pts = grupperet[e.id] || [];
+    if(pts.length === 0) return;
+    html += '<div class="kort" style="margin-bottom:8px;"><h4 style="margin:0 0 10px 0; font-size:13px;">📁 ' + escapeHtml(e.titel) + (e.varighed_minutter ? ' · ' + e.varighed_minutter + ' min' : '') + '</h4>';
+    pts.forEach(p => { html += moedeGodkendtPunktHtml(p); });
+    html += '</div>';
+  });
+
+  if(standalone.length > 0){
+    html += '<div class="kort">';
+    standalone.forEach(p => { html += moedeGodkendtPunktHtml(p); });
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function moedeGodkendtPunktHtml(p){
+  return `
+    <div class="beskedRække" style="flex-direction:column; align-items:stretch; gap:8px;">
+      <div>
+        <strong>${escapeHtml(p.titel)}</strong>
+        ${p.beskrivelse ? '<div style="font-size:12px; color:var(--tekst-svag); margin-top:2px;">' + escapeHtml(p.beskrivelse) + '</div>' : ''}
+        <div style="font-size:12px; color:var(--tekst-svag); margin-top:4px;">${escapeHtml(p.foreslaaet_af || 'ukendt')}</div>
       </div>
+      <div class="knapStorRække">
+        <button class="knap knapLille" onclick="moedeVisRedigerBoks('${p.id}')">Rediger</button>
+        <button class="knap knapFare" onclick="moedeSletGodkendtPunkt('${p.id}')">Slet</button>
+      </div>
+      <div id="moedeRedigerBoks-${p.id}"></div>
     </div>
-  `).join('');
+  `;
+}
+
+function moedeVisRedigerBoks(id){
+  const punkt = moedeGodkendteCache.find(p => p.id === id);
+  if(!punkt) return;
+  const boks = document.getElementById('moedeRedigerBoks-' + id);
+
+  boks.innerHTML = `
+    <div class="formRække">
+      <label>Titel</label>
+      <input type="text" id="moedeRedigerTitel-${id}" value="${escapeHtml(punkt.titel)}">
+    </div>
+    <div class="formRække">
+      <label>Beskrivelse</label>
+      <textarea id="moedeRedigerBeskrivelse-${id}">${escapeHtml(punkt.beskrivelse || '')}</textarea>
+    </div>
+    <div class="knapStorRække">
+      <button class="knap" onclick="moedeGemRedigering('${id}')">Gem</button>
+      <button class="knap knapLille" onclick="hentMoedeGodkendte()">Annuller</button>
+    </div>
+  `;
+}
+
+async function moedeGemRedigering(id){
+  if(!sb) return;
+  const titel = document.getElementById('moedeRedigerTitel-' + id).value.trim();
+  if(!titel){ visToast('Titlen må ikke være tom'); return; }
+  const beskrivelse = document.getElementById('moedeRedigerBeskrivelse-' + id).value.trim();
+
+  const { error } = await sb.from('dagsordenspunkter').update({ titel, beskrivelse: beskrivelse || null }).eq('id', id);
+  if(error){ console.error(error); visToast('Kunne ikke gemme ændringen'); return; }
+  visToast('Gemt');
+  hentMoedeGodkendte();
+}
+
+async function moedeSletGodkendtPunkt(id){
+  if(!sb) return;
+  if(!confirm('Fjern punktet fra dagsordenen?')) return;
+
+  const { error } = await sb.rpc('godkend_dagsordenspunkt', {
+    p_kode: moedeLederKodeIndtastet,
+    p_punkt_id: id,
+    p_handling: 'afvist'
+  });
+
+  if(error){ console.error(error); visToast('Kunne ikke fjerne punktet'); return; }
+  visToast('Punkt fjernet');
+  hentMoedeGodkendte();
 }
 
 async function moedeGodkendPunkt(id){
