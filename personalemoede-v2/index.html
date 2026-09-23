@@ -306,6 +306,16 @@
     .highlight-sektion{ margin-top:18px; }
     .highlight-sektion .hint{ font-size:11px; color:var(--tom); margin-bottom:8px; }
 
+    #pausePanel{ padding:10px 0 4px 0; }
+    .pause-nedtaelling{
+      font-size:48px;
+      font-weight:800;
+      font-variant-numeric:tabular-nums;
+      color:var(--brand);
+      text-align:center;
+      margin:10px 0 16px 0;
+    }
+
     .highlight-knap{ border-top:3px solid transparent; }
     .highlight-knap.beslutning{ border-top-color:var(--hl-beslutning); }
     .highlight-knap.opgave{ border-top-color:var(--guld); }
@@ -403,6 +413,24 @@
     }
 
     #roligDato{ margin-top:14px; font-size:clamp(18px, 2vw, 26px); font-weight:600; color:var(--tekst-2); }
+
+    #pauseTilstand{ text-align:center; }
+
+    #pauseTilstandTitel{
+      font-size:clamp(28px, 3.2vw, 44px);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--guld-moerk);
+    }
+
+    #pauseTilstandNedtaelling{
+      margin-top:20px;
+      font-size:clamp(80px, 14vw, 220px);
+      font-weight:800;
+      font-variant-numeric:tabular-nums;
+      line-height:1;
+    }
 
     #roligUndertekst{
       margin-top:28px;
@@ -684,26 +712,47 @@
         <div id="punktTitel"></div>
         <div id="punktBeskrivelse"></div>
 
-        <label for="noteTextarea">Noter</label>
-        <textarea id="noteTextarea" rows="10" placeholder="Skriv løbende noter til punktet …" oninput="markerNoteDirty()" onblur="gemAktuelNote()"></textarea>
-        <div id="noteStatus" class="note-status"></div>
-
-        <label class="behandlet-linje">
-          <input type="checkbox" id="behandletCheckbox" onchange="skiftBehandlet()">
-          Punktet er behandlet
-        </label>
-
-        <div class="highlight-sektion">
-          <label>Highlights</label>
-          <div class="hint">Vises live på Storskærm-fanen, med det samme.</div>
-          <div class="knap-raekke">
-            <button class="knap lille highlight-knap beslutning" onclick="visHighlightForm('beslutning')">Beslutning</button>
-            <button class="knap lille highlight-knap opgave" onclick="visHighlightForm('opgave')">Opgave</button>
-            <button class="knap lille highlight-knap info" onclick="visHighlightForm('info')">Info</button>
-            <button class="knap lille highlight-knap til_naeste" onclick="visHighlightForm('til_naeste')">Til næste møde</button>
+        <div id="pausePanel" style="display:none;">
+          <div id="pauseFoerStart">
+            <div class="felt">
+              <label for="pauseVarighedInput">Varighed (minutter)</label>
+              <input type="number" id="pauseVarighedInput" min="1" style="max-width:100px;" onchange="gemPauseVarighed()">
+            </div>
+            <button class="knap" onclick="startPause()">Start pause</button>
           </div>
-          <div id="highlightForm" style="display:none;"></div>
-          <div id="highlightListe"></div>
+
+          <div id="pauseUnderNedtaelling" style="display:none;">
+            <div id="pauseNedtaellingTekst" class="pause-nedtaelling"></div>
+            <div class="knap-raekke">
+              <button class="knap lille sekundaer" onclick="justerPause(-1)">−1 min</button>
+              <button class="knap lille sekundaer" onclick="justerPause(1)">+1 min</button>
+              <button class="knap lille farlig" onclick="stopPause()">Stop pause</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="normalPunktIndhold">
+          <label for="noteTextarea">Noter</label>
+          <textarea id="noteTextarea" rows="10" placeholder="Skriv løbende noter til punktet …" oninput="markerNoteDirty()" onblur="gemAktuelNote()"></textarea>
+          <div id="noteStatus" class="note-status"></div>
+
+          <label class="behandlet-linje">
+            <input type="checkbox" id="behandletCheckbox" onchange="skiftBehandlet()">
+            Punktet er behandlet
+          </label>
+
+          <div class="highlight-sektion">
+            <label>Highlights</label>
+            <div class="hint">Vises live på Storskærm-fanen, med det samme.</div>
+            <div class="knap-raekke">
+              <button class="knap lille highlight-knap beslutning" onclick="visHighlightForm('beslutning')">Beslutning</button>
+              <button class="knap lille highlight-knap opgave" onclick="visHighlightForm('opgave')">Opgave</button>
+              <button class="knap lille highlight-knap info" onclick="visHighlightForm('info')">Info</button>
+              <button class="knap lille highlight-knap til_naeste" onclick="visHighlightForm('til_naeste')">Til næste møde</button>
+            </div>
+            <div id="highlightForm" style="display:none;"></div>
+            <div id="highlightListe"></div>
+          </div>
         </div>
 
         <div class="navigations-raekke">
@@ -793,6 +842,11 @@
         <div id="nuMeta" class="nu-meta"></div>
       </div>
       <div id="tidligereListe"></div>
+    </div>
+
+    <div id="pauseTilstand" style="display:none;">
+      <div id="pauseTilstandTitel">Pause</div>
+      <div id="pauseTilstandNedtaelling"></div>
     </div>
 
   </main>
@@ -931,13 +985,24 @@
     <button class="knap" style="background:var(--fane-leder);" onclick="tilfoejLederPunktDirekte()">Tilføj til dagsorden</button>
   </div>
 
+  <div id="lederPauseKort" class="kort" style="display:none;">
+    <h2>Tilføj pause</h2>
+    <div class="tom-tilstand" style="margin-bottom:10px;">Lægges ind på dagsordenen som et almindeligt punkt.</div>
+    <div class="felt">
+      <label for="lederPauseMinutterInput">Varighed (minutter)</label>
+      <input type="number" id="lederPauseMinutterInput" min="1" value="10" style="max-width:100px;">
+    </div>
+    <button class="knap" style="background:var(--fane-leder);" onclick="tilfoejPauseDirekte()">Tilføj pause til dagsorden</button>
+  </div>
+
   <div id="godkendelseKort" class="kort" style="display:none;">
     <h2>Afventer godkendelse</h2>
     <div id="afventerListe"><div class="tom-tilstand">Henter …</div></div>
   </div>
 
-  <div id="godkendtSorterKort" class="kort" style="display:none;">
-    <h2>Godkendt rækkefølge</h2>
+  <div id="godkendtSorterKort" class="kort">
+    <h2>Rækkefølge</h2>
+    <div class="tom-tilstand" style="margin-bottom:10px;">Virker både før og mens mødet er i gang.</div>
     <div id="godkendtSorterListe"><div class="tom-tilstand">Henter …</div></div>
   </div>
 
@@ -1360,12 +1425,14 @@ async function hentLederData(){
 
   document.getElementById('opretMoedeKort').style.display = naesteMoede ? 'none' : 'block';
   document.getElementById('lederTilfoejKort').style.display = naesteMoede ? 'block' : 'none';
+  document.getElementById('lederPauseKort').style.display = naesteMoede ? 'block' : 'none';
   document.getElementById('godkendelseKort').style.display = naesteMoede ? 'block' : 'none';
-  document.getElementById('godkendtSorterKort').style.display = naesteMoede ? 'block' : 'none';
 
-  if(!naesteMoede) return;
+  if(naesteMoede) await hentAfventerListe();
 
-  await hentAfventerListe();
+  // Rækkefølgen skal kunne omrokeres uanset om mødet er 'planlagt' eller
+  // allerede 'igang' — henter derfor sit eget møde uafhængigt af
+  // naesteMoede (som kun dækker 'planlagt').
   await hentGodkendtSorterListe();
 }
 
@@ -1427,6 +1494,41 @@ async function tilfoejLederPunktDirekte(){
 
   document.getElementById('lederPunktTitelInput').value = '';
   document.getElementById('lederPunktBeskrivelseInput').value = '';
+  hentGodkendtSorterListe();
+}
+
+async function tilfoejPauseDirekte(){
+  if(!sb || !naesteMoede) return;
+  const minutter = parseInt(document.getElementById('lederPauseMinutterInput').value, 10);
+  if(!minutter || minutter < 1){ alert('Skriv et gyldigt antal minutter.'); return; }
+
+  const { data: maxData, error: maxError } = await sb
+    .from('dagsordenspunkter')
+    .select('raekkefoelge')
+    .eq('moede_id', naesteMoede.id)
+    .eq('status', 'godkendt')
+    .eq('kilde', 'indsendt')
+    .order('raekkefoelge', { ascending: false })
+    .limit(1);
+
+  if(maxError){ visFejlDetalje('Kunne ikke tilføje pausen:', maxError); return; }
+  const naesteRaekkefoelge = (maxData && maxData.length > 0)
+    ? maxData[0].raekkefoelge + 1
+    : RAEKKEFOELGE_INDSENDT_BASE;
+
+  const { error } = await sb.from('dagsordenspunkter').insert({
+    moede_id: naesteMoede.id,
+    titel: 'Pause',
+    kilde: 'indsendt',
+    foreslaaet_af: 'Leder',
+    status: 'godkendt',
+    raekkefoelge: naesteRaekkefoelge,
+    pause_minutter: minutter
+  });
+
+  if(error){ visFejlDetalje('Kunne ikke tilføje pausen:', error); return; }
+
+  document.getElementById('lederPauseMinutterInput').value = '10';
   hentGodkendtSorterListe();
 }
 
@@ -1569,12 +1671,33 @@ async function gemRedigering(id){
 }
 
 let godkendtSorterCache = [];
+let lederSorterMoede = null;
 
+// Finder selv det relevante møde (planlagt ELLER igang) — i modsætning
+// til naesteMoede (kun planlagt), så lederen også kan omrokere mens
+// mødet kører. OBS: faste punkter materialiseres først i
+// dagsordenspunkter når mødet startes (se materialiserFastePunkter()),
+// så de dukker først op her når mødet er 'igang'.
 async function hentGodkendtSorterListe(){
+  if(!sb) return;
+
+  const { data: moeder, error: moedeFejl } = await sb
+    .from('moeder')
+    .select('*')
+    .in('status', ['planlagt', 'igang'])
+    .order('dato', { ascending: true })
+    .order('starttid', { ascending: true })
+    .limit(1);
+
+  if(moedeFejl){ console.error('Fejl møde (rækkefølge):', moedeFejl); return; }
+  lederSorterMoede = (moeder && moeder.length > 0) ? moeder[0] : null;
+
+  if(!lederSorterMoede){ godkendtSorterCache = []; visGodkendtSorterListe(); return; }
+
   const { data, error } = await sb
     .from('dagsordenspunkter')
     .select('*')
-    .eq('moede_id', naesteMoede.id)
+    .eq('moede_id', lederSorterMoede.id)
     .eq('status', 'godkendt')
     .order('raekkefoelge', { ascending: true });
 
@@ -1596,7 +1719,7 @@ function visGodkendtSorterListe(){
       '<div class="pm-raekke-top">' +
         '<div>' +
           '<div class="pm-titel">' + escapeHtml(p.titel) + '</div>' +
-          '<div class="pm-meta">' + kildeLabel(p.kilde) + '</div>' +
+          '<div class="pm-meta">' + (p.pause_minutter ? '⏸ Pause · ' + p.pause_minutter + ' min' : kildeLabel(p.kilde)) + '</div>' +
         '</div>' +
         '<div class="sorter-knapper">' +
           '<button class="knap lille kvadrat sekundaer" ' + (i === 0 ? 'disabled' : '') +
@@ -1842,13 +1965,30 @@ window.addEventListener('afterprint', function(){
   document.body.classList.remove('printDagsorden');
 });
 
+let pauseTickInterval = null;
+let pauseAktivPunktId = null;   // hvilket punkt der "ejer" aktueltMoede.pause_slut_tid
+
 function visPunkt(index){
   const punkt = dagsorden[index];
   if(!punkt) return;
 
+  // Forlader man det punkt der startede en aktiv pause (fx til et andet
+  // punkt, eller til et andet pausepunkt), ryddes den, så Storskærm ikke
+  // bliver hængende på en nedtælling der ikke længere er relevant.
+  if(aktueltMoede && aktueltMoede.pause_slut_tid && pauseAktivPunktId && pauseAktivPunktId !== punkt.id){
+    rydPauseSlutTid();
+  }
+
   document.getElementById('punktKildeTag').textContent = kildeLabel(punkt.kilde);
   document.getElementById('punktTitel').textContent = punkt.titel;
   document.getElementById('punktBeskrivelse').textContent = punkt.beskrivelse || '';
+
+  const erPause = !!punkt.pause_minutter;
+  document.getElementById('pausePanel').style.display = erPause ? 'block' : 'none';
+  document.getElementById('normalPunktIndhold').style.display = erPause ? 'none' : 'block';
+
+  if(erPause) visPausePunkt(punkt);
+  else stopPauseNedtaellingVisning();
 
   const note = noteState[punkt.id] || { tekst: '', dirty: false };
   noteState[punkt.id] = note;
@@ -1866,6 +2006,138 @@ function visPunkt(index){
   renderHighlightsForCurrentPunkt();
   renderSidepanel();
 }
+
+function visPausePunkt(punkt){
+  document.getElementById('pauseVarighedInput').value = punkt.pause_minutter;
+
+  if(aktueltMoede.pause_slut_tid){
+    pauseAktivPunktId = punkt.id;   // genopretter sporing efter fx en genindlæsning af siden
+    document.getElementById('pauseFoerStart').style.display = 'none';
+    document.getElementById('pauseUnderNedtaelling').style.display = 'block';
+    startPauseNedtaellingVisning();
+  } else {
+    document.getElementById('pauseFoerStart').style.display = 'block';
+    document.getElementById('pauseUnderNedtaelling').style.display = 'none';
+  }
+}
+
+async function gemPauseVarighed(){
+  const punkt = dagsorden[aktivIndex];
+  if(!punkt || !punkt.pause_minutter) return;
+  const minutter = parseInt(document.getElementById('pauseVarighedInput').value, 10);
+  if(!minutter || minutter < 1) return;
+
+  punkt.pause_minutter = minutter;
+  const { error } = await sb.from('dagsordenspunkter').update({ pause_minutter: minutter }).eq('id', punkt.id);
+  if(error) console.error('Fejl ved gem af pause-varighed:', error);
+}
+
+async function startPause(){
+  const punkt = dagsorden[aktivIndex];
+  if(!punkt || !punkt.pause_minutter) return;
+
+  const slutTid = new Date(Date.now() + punkt.pause_minutter * 60000);
+  const { error } = await sb.from('moeder').update({ pause_slut_tid: slutTid.toISOString() }).eq('id', aktueltMoede.id);
+  if(error){ visFejlDetalje('Kunne ikke starte pausen:', error); return; }
+
+  aktueltMoede.pause_slut_tid = slutTid.toISOString();
+  visPausePunkt(punkt);
+}
+
+async function justerPause(deltaMinutter){
+  if(!aktueltMoede.pause_slut_tid) return;
+  const nySlutTid = new Date(new Date(aktueltMoede.pause_slut_tid).getTime() + deltaMinutter * 60000);
+
+  const { error } = await sb.from('moeder').update({ pause_slut_tid: nySlutTid.toISOString() }).eq('id', aktueltMoede.id);
+  if(error){ visFejlDetalje('Kunne ikke justere pausen:', error); return; }
+
+  aktueltMoede.pause_slut_tid = nySlutTid.toISOString();
+  opdaterPauseNedtaellingTekst();
+}
+
+function stopPause(){
+  rydPauseSlutTid();
+  const punkt = dagsorden[aktivIndex];
+  if(punkt) visPausePunkt(punkt);
+}
+
+// Synkron opdatering af lokal tilstand (så efterfølgende kode i samme
+// funktion straks ser den ryddede pause), DB-skrivningen selv kører i
+// baggrunden. Kaldes både ved eksplicit "Stop pause" og når man navigerer
+// væk fra det punkt der ejer den aktive pause.
+function rydPauseSlutTid(){
+  if(!aktueltMoede) return;
+  aktueltMoede.pause_slut_tid = null;
+  pauseAktivPunktId = null;
+  stopPauseNedtaellingVisning();
+  sb.from('moeder').update({ pause_slut_tid: null }).eq('id', aktueltMoede.id).then(function(res){
+    if(res.error) console.error('Fejl ved nulstilling af pause:', res.error);
+  });
+}
+
+function startPauseNedtaellingVisning(){
+  opdaterPauseNedtaellingTekst();
+  if(pauseTickInterval) clearInterval(pauseTickInterval);
+  pauseTickInterval = setInterval(opdaterPauseNedtaellingTekst, 1000);
+}
+
+function stopPauseNedtaellingVisning(){
+  if(pauseTickInterval){ clearInterval(pauseTickInterval); pauseTickInterval = null; }
+}
+
+function opdaterPauseNedtaellingTekst(){
+  const el = document.getElementById('pauseNedtaellingTekst');
+  if(!el || !aktueltMoede || !aktueltMoede.pause_slut_tid){ if(el) el.textContent = ''; return; }
+
+  const resterendeSek = Math.round((new Date(aktueltMoede.pause_slut_tid).getTime() - Date.now()) / 1000);
+  if(resterendeSek <= 0){
+    el.textContent = 'Pausen er slut!';
+    return;
+  }
+  const min = Math.floor(resterendeSek / 60);
+  const sek = resterendeSek % 60;
+  el.textContent = String(min).padStart(2, '0') + ':' + String(sek).padStart(2, '0');
+}
+
+// Lederen kan omrokere rækkefølgen fra Leder-fanen mens mødet er i gang
+// (se hentGodkendtSorterListe()) — poller derfor jævnligt for at fange
+// det, uden at forstyrre igangværende noteskrivning: kun rækkefølgen
+// opdateres og listen tegnes om, selve punkt-objekterne/formularen røres
+// ikke, og det aktive punkt følges via dets id, ikke dets indeks.
+async function tjekDagsordenOmrokering(){
+  if(!sb || !aktueltMoede || dagsorden.length === 0) return;
+  if(document.getElementById('side-skriv').style.display === 'none') return;
+
+  const { data, error } = await sb
+    .from('dagsordenspunkter')
+    .select('id, raekkefoelge')
+    .eq('moede_id', aktueltMoede.id)
+    .eq('status', 'godkendt');
+
+  if(error || !data) return;
+
+  const raekkefoelgePerId = {};
+  data.forEach(function(r){ raekkefoelgePerId[r.id] = r.raekkefoelge; });
+
+  const erAendret = dagsorden.some(function(p){
+    return raekkefoelgePerId[p.id] !== undefined && raekkefoelgePerId[p.id] !== p.raekkefoelge;
+  });
+  if(!erAendret) return;
+
+  const aktivtPunktId = dagsorden[aktivIndex] ? dagsorden[aktivIndex].id : null;
+
+  dagsorden.forEach(function(p){ if(raekkefoelgePerId[p.id] !== undefined) p.raekkefoelge = raekkefoelgePerId[p.id]; });
+  dagsorden.sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
+
+  if(aktivtPunktId){
+    const nytIndex = dagsorden.findIndex(function(p){ return p.id === aktivtPunktId; });
+    if(nytIndex !== -1) aktivIndex = nytIndex;
+  }
+
+  renderSidepanel();
+}
+
+setInterval(tjekDagsordenOmrokering, 60000);
 
 function hopTilPunkt(index){
   gemAktuelNote();
@@ -2126,7 +2398,7 @@ async function afslutMoede(){
 
   await gemAktuelNote();
 
-  const { error } = await sb.from('moeder').update({ status: 'afsluttet' }).eq('id', aktueltMoede.id);
+  const { error } = await sb.from('moeder').update({ status: 'afsluttet', pause_slut_tid: null }).eq('id', aktueltMoede.id);
   if(error){ visFejlDetalje('Kunne ikke afslutte mødet:', error); return; }
 
   const behandletAntal = dagsorden.filter(p => p.behandlet).length;
@@ -2158,9 +2430,10 @@ function springNaesteMoedeOver(){
    ================================================================== */
 
 function visSkaermTilstand(id){
-  ['roligTilstand','aktivTilstand'].forEach(s => {
+  ['roligTilstand','aktivTilstand','pauseTilstand'].forEach(s => {
     document.getElementById(s).style.display = (s === id) ? (s === 'aktivTilstand' ? 'flex' : 'block') : 'none';
   });
+  if(id !== 'pauseTilstand') stopSkaermPauseTick();
 }
 
 function skaermHighlightMetaHtml(h){
@@ -2168,6 +2441,34 @@ function skaermHighlightMetaHtml(h){
   let html = '<span>Ansvarlig: ' + escapeHtml(h.ansvarlig || '') + '</span>';
   if(h.deadline) html += '<span>Deadline: ' + escapeHtml(datoKortLabel(h.deadline)) + '</span>';
   return html;
+}
+
+let skaermPauseTickInterval = null;
+let skaermPauseSlutTid = null;
+
+function visPauseTilstand(slutTid){
+  skaermPauseSlutTid = slutTid;
+  opdaterSkaermPauseNedtaelling();
+  if(!skaermPauseTickInterval) skaermPauseTickInterval = setInterval(opdaterSkaermPauseNedtaelling, 1000);
+  visSkaermTilstand('pauseTilstand');
+}
+
+function stopSkaermPauseTick(){
+  if(skaermPauseTickInterval){ clearInterval(skaermPauseTickInterval); skaermPauseTickInterval = null; }
+}
+
+function opdaterSkaermPauseNedtaelling(){
+  const el = document.getElementById('pauseTilstandNedtaelling');
+  if(!el || !skaermPauseSlutTid) return;
+
+  const resterendeSek = Math.round((skaermPauseSlutTid.getTime() - Date.now()) / 1000);
+  if(resterendeSek <= 0){
+    el.textContent = 'Pausen er slut!';
+    return;
+  }
+  const min = Math.floor(resterendeSek / 60);
+  const sek = resterendeSek % 60;
+  el.textContent = String(min).padStart(2, '0') + ':' + String(sek).padStart(2, '0');
 }
 
 function visRoligTilstand(moede){
@@ -2235,6 +2536,13 @@ async function pollSkaerm(){
 
   if(moede.status !== 'igang'){
     visRoligTilstand(moede);
+    return;
+  }
+
+  // Pause har forrang over highlights, mens den er aktiv — se
+  // rydPauseSlutTid() i Referat-fanen for hvornår den ryddes igen.
+  if(moede.pause_slut_tid){
+    visPauseTilstand(new Date(moede.pause_slut_tid));
     return;
   }
 
