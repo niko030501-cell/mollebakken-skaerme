@@ -137,6 +137,23 @@
     .pm-meta{ font-size:11px; color:var(--tom); margin-top:4px; }
     .pm-begrundelse{ font-size:12px; color:var(--status-afvist); margin-top:4px; }
 
+    #emneHeader{
+      font-size:12px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:var(--tekst-2);
+      margin-bottom:8px;
+    }
+
+    .pm-emne{ padding:10px 0; border-bottom:1px solid var(--streg-svag); }
+    .pm-emne:last-child{ border-bottom:none; }
+    .pm-emne .pm-titel{ font-size:15px; }
+    .pm-emne-indhold{ margin:10px 0 0 16px; padding-left:12px; border-left:2px solid var(--streg); }
+    .pm-emne-indhold .pm-raekke:last-child{ padding-bottom:0; }
+    .pm-raekke-indrykket{ border-bottom:1px dashed var(--streg-svag); }
+    .pm-raekke-indrykket:last-child{ border-bottom:none; }
+
     .tom-tilstand{ font-size:13px; color:var(--tom); padding:6px 0; }
 
     .rediger-boks{ margin-top:10px; padding-top:10px; border-top:1px dashed var(--streg); }
@@ -272,6 +289,16 @@
     .sidepunkt.behandlet:not(.nuvaerende){ color:var(--tekst-2); opacity:.7; }
 
     .sidepunkt-ikon{ flex-shrink:0; width:14px; text-align:center; }
+
+    .sidepanel-emne{
+      font-size:10px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:var(--tekst-2);
+      padding:10px 10px 2px 10px;
+    }
+    .sidepanel-emne:first-child{ padding-top:2px; }
 
     #hovedpanel{ flex:1; min-width:0; }
 
@@ -539,6 +566,14 @@
     .dagsordenPrintListe li{ margin-bottom:14px; }
     .dagsordenPrintTitel{ font-size:15px; font-weight:700; }
     .dagsordenPrintBeskrivelse{ font-size:13px; color:var(--tekst-2); margin-top:2px; }
+    .dagsordenPrintEmne{
+      font-size:13px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      margin:18px 0 6px 0;
+    }
+    .dagsordenPrintEmne:first-child{ margin-top:0; }
 
     @media print{
       .ikke-print{ display:none !important; }
@@ -716,6 +751,7 @@
     </div>
 
     <div id="hovedpanel">
+      <div id="emneHeader" style="display:none;"></div>
       <div class="kort">
         <div id="punktKildeTag" class="punkt-kilde-tag"></div>
         <div id="punktTitel"></div>
@@ -1001,6 +1037,20 @@
     </div>
   </div>
 
+  <div id="lederEmneKort" class="kort" style="display:none;">
+    <h2>Tilføj emne</h2>
+    <div class="tom-tilstand" style="margin-bottom:10px;">En overskrift man kan samle punkter under, fx "Nyt fra Møllebakken".</div>
+    <div class="felt">
+      <label for="lederEmneTitelInput">Navn</label>
+      <input type="text" id="lederEmneTitelInput" placeholder="Kort navn">
+    </div>
+    <div class="felt">
+      <label for="lederEmneVarighedInput">Varighed (valgfri, minutter)</label>
+      <input type="number" id="lederEmneVarighedInput" min="1" style="max-width:100px;">
+    </div>
+    <button class="knap" style="background:var(--fane-leder);" onclick="tilfoejEmne()">Tilføj emne</button>
+  </div>
+
   <div id="lederTilfoejKort" class="kort" style="display:none;">
     <h2>Tilføj punkt direkte</h2>
     <div class="tom-tilstand" style="margin-bottom:10px;">Går direkte på dagsordenen — kræver ikke godkendelse.</div>
@@ -1011,6 +1061,16 @@
     <div class="felt">
       <label for="lederPunktBeskrivelseInput">Beskrivelse (valgfri)</label>
       <textarea id="lederPunktBeskrivelseInput" placeholder="Uddyb hvis nødvendigt"></textarea>
+    </div>
+    <div class="felt">
+      <label for="lederPunktEmneSelect">Emne (valgfri)</label>
+      <select id="lederPunktEmneSelect">
+        <option value="">Står for sig selv</option>
+      </select>
+    </div>
+    <div class="felt">
+      <label for="lederPunktVarighedInput">Varighed (valgfri, minutter)</label>
+      <input type="number" id="lederPunktVarighedInput" min="1" style="max-width:100px;">
     </div>
     <button class="knap" style="background:var(--fane-leder);" onclick="tilfoejLederPunktDirekte()">Tilføj til dagsorden</button>
   </div>
@@ -1149,6 +1209,70 @@ function kildeLabel(kilde){
 // fast: 0-999 · indsendt: 1000-1999 · overført: 2000+ · ad hoc: altid sidst.
 const RAEKKEFOELGE_INDSENDT_BASE = 1000;
 const RAEKKEFOELGE_OVERFOERT_BASE = 2000;
+
+// ==================================================================
+// EMNER — delt struktureringsfunktion, bruges af Leder-fanens
+// rækkefølge-liste, Referat-fanens dagsorden og print-dagsorden.
+// Emner er overskrifter man kan gruppere dagsordenspunkter under —
+// punkter kan også stå helt for sig selv (emne_id null). Emner og
+// top-niveau (emner + løse punkter) deler samme raekkefoelge-tal, så
+// de kan omrokeres indbyrdes; punkter INDE i et emne har deres egen
+// indbyrdes rækkefølge via deres almindelige raekkefoelge.
+// ==================================================================
+
+async function hentStruktureretDagsorden(moedeId){
+  const [emnerRes, punkterRes] = await Promise.all([
+    sb.from('emner').select('*').eq('moede_id', moedeId).eq('aktiv', true).order('raekkefoelge'),
+    sb.from('dagsordenspunkter').select('*').eq('moede_id', moedeId).eq('status', 'godkendt').order('raekkefoelge')
+  ]);
+
+  if(emnerRes.error) return { fejl: emnerRes.error };
+  if(punkterRes.error) return { fejl: punkterRes.error };
+
+  const emner = emnerRes.data || [];
+  const punkter = punkterRes.data || [];
+
+  const standalone = punkter.filter(function(p){ return !p.emne_id; });
+  const grupperet = {};
+  punkter.forEach(function(p){
+    if(p.emne_id){
+      if(!grupperet[p.emne_id]) grupperet[p.emne_id] = [];
+      grupperet[p.emne_id].push(p);
+    }
+  });
+
+  const topNiveau = emner.map(function(e){ return { type: 'emne', id: e.id, data: e, raekkefoelge: e.raekkefoelge }; })
+    .concat(standalone.map(function(p){ return { type: 'punkt', id: p.id, data: p, raekkefoelge: p.raekkefoelge }; }))
+    .sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
+
+  // Flad liste i den rigtige samlede rækkefølge — bruges af Referat
+  // (dagsorden-arrayet skal stadig være fladt af hensyn til Forrige/
+  // Næste-navigationen) og af print.
+  const fladListe = [];
+  topNiveau.forEach(function(item){
+    if(item.type === 'punkt'){
+      fladListe.push(item.data);
+    } else {
+      const punkterIEmnet = (grupperet[item.id] || []).slice().sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
+      punkterIEmnet.forEach(function(p){ fladListe.push(p); });
+    }
+  });
+
+  return { emner: emner, topNiveau: topNiveau, grupperet: grupperet, fladListe: fladListe };
+}
+
+// Beregner næste ledige raekkefoelge på TOP-NIVEAU (emner + løse
+// punkter, delt talrække) for et givet møde — bruges når man opretter
+// et nyt emne eller et nyt løst punkt.
+async function naesteTopNiveauRaekkefoelge(moedeId){
+  const { data: emnerData } = await sb.from('emner').select('raekkefoelge').eq('moede_id', moedeId);
+  const { data: punkterData } = await sb.from('dagsordenspunkter').select('raekkefoelge').eq('moede_id', moedeId).eq('status', 'godkendt').is('emne_id', null);
+
+  let maks = RAEKKEFOELGE_INDSENDT_BASE - 1;
+  (emnerData || []).forEach(function(e){ if(e.raekkefoelge > maks) maks = e.raekkefoelge; });
+  (punkterData || []).forEach(function(p){ if(p.raekkefoelge > maks) maks = p.raekkefoelge; });
+  return maks + 1;
+}
 
 // Overfører automatisk til_naeste-highlights og udsatte punkter fra det
 // senest afsluttede møde til det nyoprettede møde. Kaldes både når leder
@@ -1454,6 +1578,7 @@ async function hentLederData(){
   if(!sb) return;
 
   document.getElementById('opretMoedeKort').style.display = naesteMoede ? 'none' : 'block';
+  document.getElementById('lederEmneKort').style.display = naesteMoede ? 'block' : 'none';
   document.getElementById('lederTilfoejKort').style.display = naesteMoede ? 'block' : 'none';
   document.getElementById('lederPauseKort').style.display = naesteMoede ? 'block' : 'none';
   document.getElementById('godkendelseKort').style.display = naesteMoede ? 'block' : 'none';
@@ -1501,20 +1626,23 @@ async function tilfoejLederPunktDirekte(){
   const titel = document.getElementById('lederPunktTitelInput').value.trim();
   if(!titel){ alert('Skriv en titel til punktet.'); return; }
   const beskrivelse = document.getElementById('lederPunktBeskrivelseInput').value.trim();
+  const emneId = document.getElementById('lederPunktEmneSelect').value || null;
+  const varighedRaa = document.getElementById('lederPunktVarighedInput').value;
+  const varighed = varighedRaa ? parseInt(varighedRaa, 10) : null;
 
-  const { data: maxData, error: maxError } = await sb
-    .from('dagsordenspunkter')
-    .select('raekkefoelge')
-    .eq('moede_id', naesteMoede.id)
-    .eq('status', 'godkendt')
-    .eq('kilde', 'indsendt')
-    .order('raekkefoelge', { ascending: false })
-    .limit(1);
-
-  if(maxError){ visFejlDetalje('Kunne ikke tilføje punktet:', maxError); return; }
-  const naesteRaekkefoelge = (maxData && maxData.length > 0)
-    ? maxData[0].raekkefoelge + 1
-    : RAEKKEFOELGE_INDSENDT_BASE;
+  let naesteRaekkefoelge;
+  if(emneId){
+    const { data: maxData, error: maxError } = await sb
+      .from('dagsordenspunkter')
+      .select('raekkefoelge')
+      .eq('emne_id', emneId)
+      .order('raekkefoelge', { ascending: false })
+      .limit(1);
+    if(maxError){ visFejlDetalje('Kunne ikke tilføje punktet:', maxError); return; }
+    naesteRaekkefoelge = (maxData && maxData.length > 0) ? maxData[0].raekkefoelge + 1 : 0;
+  } else {
+    naesteRaekkefoelge = await naesteTopNiveauRaekkefoelge(naesteMoede.id);
+  }
 
   const { error } = await sb.from('dagsordenspunkter').insert({
     moede_id: naesteMoede.id,
@@ -1523,13 +1651,40 @@ async function tilfoejLederPunktDirekte(){
     kilde: 'indsendt',
     foreslaaet_af: 'Leder',
     status: 'godkendt',
-    raekkefoelge: naesteRaekkefoelge
+    raekkefoelge: naesteRaekkefoelge,
+    emne_id: emneId,
+    varighed_minutter: varighed
   });
 
   if(error){ visFejlDetalje('Kunne ikke tilføje punktet:', error); return; }
 
   document.getElementById('lederPunktTitelInput').value = '';
   document.getElementById('lederPunktBeskrivelseInput').value = '';
+  document.getElementById('lederPunktEmneSelect').value = '';
+  document.getElementById('lederPunktVarighedInput').value = '';
+  hentGodkendtSorterListe();
+}
+
+async function tilfoejEmne(){
+  if(!sb || !naesteMoede) return;
+  const titel = document.getElementById('lederEmneTitelInput').value.trim();
+  if(!titel){ alert('Skriv et navn til emnet.'); return; }
+  const varighedRaa = document.getElementById('lederEmneVarighedInput').value;
+  const varighed = varighedRaa ? parseInt(varighedRaa, 10) : null;
+
+  const raekkefoelge = await naesteTopNiveauRaekkefoelge(naesteMoede.id);
+
+  const { error } = await sb.from('emner').insert({
+    moede_id: naesteMoede.id,
+    titel: titel,
+    varighed_minutter: varighed,
+    raekkefoelge: raekkefoelge
+  });
+
+  if(error){ visFejlDetalje('Kunne ikke tilføje emnet:', error); return; }
+
+  document.getElementById('lederEmneTitelInput').value = '';
+  document.getElementById('lederEmneVarighedInput').value = '';
   hentGodkendtSorterListe();
 }
 
@@ -1706,7 +1861,7 @@ async function gemRedigering(id){
   hentAfventerListe();
 }
 
-let godkendtSorterCache = [];
+let struktureretDagsorden = { emner: [], topNiveau: [], grupperet: {}, fladListe: [] };
 let lederSorterMoede = null;
 
 // Finder selv det relevante møde (planlagt ELLER igang) — i modsætning
@@ -1730,18 +1885,30 @@ async function hentGodkendtSorterListe(){
 
   visMoedeInfoKort();
 
-  if(!lederSorterMoede){ godkendtSorterCache = []; visGodkendtSorterListe(); return; }
+  if(!lederSorterMoede){
+    struktureretDagsorden = { emner: [], topNiveau: [], grupperet: {}, fladListe: [] };
+    visGodkendtSorterListe();
+    opdaterEmneSelect();
+    return;
+  }
 
-  const { data, error } = await sb
-    .from('dagsordenspunkter')
-    .select('*')
-    .eq('moede_id', lederSorterMoede.id)
-    .eq('status', 'godkendt')
-    .order('raekkefoelge', { ascending: true });
-
-  if(error){ console.error('Fejl godkendt rækkefølge:', error); return; }
-  godkendtSorterCache = data || [];
+  const resultat = await hentStruktureretDagsorden(lederSorterMoede.id);
+  if(resultat.fejl){ console.error('Fejl rækkefølge:', resultat.fejl); return; }
+  struktureretDagsorden = resultat;
   visGodkendtSorterListe();
+  opdaterEmneSelect();
+}
+
+// Holder "Tilføj punkt direkte"-formularens emne-vælger opdateret med
+// de emner der findes på det kommende møde lige nu.
+function opdaterEmneSelect(){
+  const select = document.getElementById('lederPunktEmneSelect');
+  const nuvaerendeValg = select.value;
+  select.innerHTML = '<option value="">Står for sig selv</option>' +
+    struktureretDagsorden.emner.map(function(e){
+      return '<option value="' + e.id + '">' + escapeHtml(e.titel) + '</option>';
+    }).join('');
+  select.value = nuvaerendeValg;
 }
 
 // Genbruger samme møde-opslag som Rækkefølge-listen ovenfor (planlagt
@@ -1770,43 +1937,101 @@ async function gemMoedeInfo(){
   lederSorterMoede.ordstyrer = ordstyrer || null;
 }
 
+function pmMetaForPunkt(p){
+  let meta = p.pause_minutter ? '⏸ Pause · ' + p.pause_minutter + ' min' : kildeLabel(p.kilde);
+  if(p.varighed_minutter) meta += ' · ' + p.varighed_minutter + ' min';
+  if(p.foreslaaet_af) meta += ' · Foreslået af ' + escapeHtml(p.foreslaaet_af);
+  return meta;
+}
+
+// emneId er null for løse punkter (top-niveau), ellers det emne punktet
+// hører under — afgør både indrykning og hvilken flyt-funktion op/ned
+// skal kalde (top-niveau vs. indenfor emnet).
+function godkendtPunktRaekkeHtml(p, erFoerste, erSidste, emneId){
+  const flytKald = emneId
+    ? 'flytPunktIEmne(\'' + emneId + '\', \'' + p.id + '\''
+    : 'flytTopNiveau(\'punkt\', \'' + p.id + '\'';
+
+  return '<div class="pm-raekke' + (emneId ? ' pm-raekke-indrykket' : '') + '">' +
+    '<div class="pm-raekke-top">' +
+      '<div>' +
+        '<div class="pm-titel">' + escapeHtml(p.titel) + '</div>' +
+        '<div class="pm-meta">' + pmMetaForPunkt(p) + '</div>' +
+      '</div>' +
+      '<div class="sorter-knapper">' +
+        '<button class="knap lille kvadrat sekundaer" ' + (erFoerste ? 'disabled' : '') +
+          ' onclick="' + flytKald + ', -1)">&uarr;</button>' +
+        '<button class="knap lille kvadrat sekundaer" ' + (erSidste ? 'disabled' : '') +
+          ' onclick="' + flytKald + ', 1)">&darr;</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="knap-raekke" style="margin-top:8px;">' +
+      '<button class="knap lille sekundaer" onclick="visGodkendtRedigerBoks(\'' + p.id + '\')">Rediger</button>' +
+      '<button class="knap lille farlig" onclick="sletGodkendtPunkt(\'' + p.id + '\')">Slet</button>' +
+    '</div>' +
+    '<div id="godkendtEkstra-' + p.id + '"></div>' +
+    '</div>';
+}
+
 function visGodkendtSorterListe(){
   const container = document.getElementById('godkendtSorterListe');
-  if(godkendtSorterCache.length === 0){
-    container.innerHTML = '<div class="tom-tilstand">Ingen godkendte punkter endnu.</div>';
+  const topNiveau = struktureretDagsorden.topNiveau;
+
+  if(topNiveau.length === 0){
+    container.innerHTML = '<div class="tom-tilstand">Ingen godkendte punkter eller emner endnu.</div>';
     return;
   }
 
   let html = '';
-  godkendtSorterCache.forEach((p, i) => {
-    let meta = p.pause_minutter ? '⏸ Pause · ' + p.pause_minutter + ' min' : kildeLabel(p.kilde);
-    if(p.foreslaaet_af) meta += ' · Foreslået af ' + escapeHtml(p.foreslaaet_af);
+  topNiveau.forEach(function(item, i){
+    const erFoerste = (i === 0);
+    const erSidste = (i === topNiveau.length - 1);
 
-    html += '<div class="pm-raekke">' +
+    if(item.type === 'punkt'){
+      html += godkendtPunktRaekkeHtml(item.data, erFoerste, erSidste, null);
+      return;
+    }
+
+    const e = item.data;
+    const punkterIEmnet = (struktureretDagsorden.grupperet[e.id] || []).slice()
+      .sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
+
+    html += '<div class="pm-emne">' +
       '<div class="pm-raekke-top">' +
         '<div>' +
-          '<div class="pm-titel">' + escapeHtml(p.titel) + '</div>' +
-          '<div class="pm-meta">' + meta + '</div>' +
+          '<div class="pm-titel">📁 ' + escapeHtml(e.titel) + '</div>' +
+          (e.varighed_minutter ? '<div class="pm-meta">' + e.varighed_minutter + ' min</div>' : '') +
         '</div>' +
         '<div class="sorter-knapper">' +
-          '<button class="knap lille kvadrat sekundaer" ' + (i === 0 ? 'disabled' : '') +
-            ' onclick="flytPunkt(\'' + p.id + '\', -1)">&uarr;</button>' +
-          '<button class="knap lille kvadrat sekundaer" ' + (i === godkendtSorterCache.length - 1 ? 'disabled' : '') +
-            ' onclick="flytPunkt(\'' + p.id + '\', 1)">&darr;</button>' +
+          '<button class="knap lille kvadrat sekundaer" ' + (erFoerste ? 'disabled' : '') +
+            ' onclick="flytTopNiveau(\'emne\', \'' + e.id + '\', -1)">&uarr;</button>' +
+          '<button class="knap lille kvadrat sekundaer" ' + (erSidste ? 'disabled' : '') +
+            ' onclick="flytTopNiveau(\'emne\', \'' + e.id + '\', 1)">&darr;</button>' +
         '</div>' +
       '</div>' +
       '<div class="knap-raekke" style="margin-top:8px;">' +
-        '<button class="knap lille sekundaer" onclick="visGodkendtRedigerBoks(\'' + p.id + '\')">Rediger</button>' +
-        '<button class="knap lille farlig" onclick="sletGodkendtPunkt(\'' + p.id + '\')">Slet</button>' +
+        '<button class="knap lille sekundaer" onclick="visEmneRedigerBoks(\'' + e.id + '\')">Rediger emne</button>' +
+        '<button class="knap lille farlig" onclick="sletEmne(\'' + e.id + '\')">Slet emne</button>' +
       '</div>' +
-      '<div id="godkendtEkstra-' + p.id + '"></div>' +
-      '</div>';
+      '<div id="emneEkstra-' + e.id + '"></div>';
+
+    if(punkterIEmnet.length === 0){
+      html += '<div class="tom-tilstand" style="padding-left:14px; margin-top:8px;">Ingen punkter i dette emne endnu.</div>';
+    } else {
+      html += '<div class="pm-emne-indhold">';
+      punkterIEmnet.forEach(function(p, j){
+        html += godkendtPunktRaekkeHtml(p, j === 0, j === punkterIEmnet.length - 1, e.id);
+      });
+      html += '</div>';
+    }
+    html += '</div>';
   });
+
   container.innerHTML = html;
 }
 
 function visGodkendtRedigerBoks(id){
-  const punkt = godkendtSorterCache.find(p => p.id === id);
+  const punkt = struktureretDagsorden.fladListe.find(p => p.id === id);
   if(!punkt) return;
   const ekstra = document.getElementById('godkendtEkstra-' + id);
   ekstra.innerHTML =
@@ -1819,6 +2044,11 @@ function visGodkendtRedigerBoks(id){
         '<label>Beskrivelse</label>' +
         '<textarea id="godkendtRedigerBeskrivelse-' + id + '">' + escapeHtml(punkt.beskrivelse || '') + '</textarea>' +
       '</div>' +
+      (punkt.pause_minutter ? '' :
+      '<div class="felt">' +
+        '<label>Varighed (valgfri, minutter)</label>' +
+        '<input type="number" min="1" style="max-width:100px;" id="godkendtRedigerVarighed-' + id + '" value="' + (punkt.varighed_minutter || '') + '">' +
+      '</div>') +
       '<div class="knap-raekke">' +
         '<button class="knap lille" onclick="gemGodkendtRedigering(\'' + id + '\')">Gem</button>' +
         '<button class="knap lille sekundaer" onclick="visGodkendtSorterListe()">Annuller</button>' +
@@ -1831,10 +2061,14 @@ async function gemGodkendtRedigering(id){
   if(!titel){ alert('Titlen må ikke være tom.'); return; }
   const beskrivelse = document.getElementById('godkendtRedigerBeskrivelse-' + id).value.trim();
 
-  const { error } = await sb.from('dagsordenspunkter').update({
-    titel: titel,
-    beskrivelse: beskrivelse || null
-  }).eq('id', id);
+  const opdatering = { titel: titel, beskrivelse: beskrivelse || null };
+  const varighedInput = document.getElementById('godkendtRedigerVarighed-' + id);
+  if(varighedInput){
+    const varighedRaa = varighedInput.value;
+    opdatering.varighed_minutter = varighedRaa ? parseInt(varighedRaa, 10) : null;
+  }
+
+  const { error } = await sb.from('dagsordenspunkter').update(opdatering).eq('id', id);
 
   if(error){ visFejlDetalje('Kunne ikke gemme ændringen:', error); return; }
   hentGodkendtSorterListe();
@@ -1845,7 +2079,7 @@ async function gemGodkendtRedigering(id){
 // det går igennem den samme server-side kode-kontrol og trigger-vagt,
 // i stedet for at kræve en ny (ugennemtestet) slette-tilladelse i RLS.
 async function sletGodkendtPunkt(id){
-  const punkt = godkendtSorterCache.find(p => p.id === id);
+  const punkt = struktureretDagsorden.fladListe.find(p => p.id === id);
   if(!punkt) return;
   if(!confirm('Fjern "' + punkt.titel + '" fra dagsordenen?')) return;
 
@@ -1859,19 +2093,90 @@ async function sletGodkendtPunkt(id){
   hentGodkendtSorterListe();
 }
 
-async function flytPunkt(id, retning){
-  const i = godkendtSorterCache.findIndex(p => p.id === id);
-  const j = i + retning;
-  if(i < 0 || j < 0 || j >= godkendtSorterCache.length) return;
+function visEmneRedigerBoks(id){
+  const emne = struktureretDagsorden.emner.find(e => e.id === id);
+  if(!emne) return;
+  const ekstra = document.getElementById('emneEkstra-' + id);
+  ekstra.innerHTML =
+    '<div class="rediger-boks">' +
+      '<div class="felt">' +
+        '<label>Navn</label>' +
+        '<input type="text" id="emneRedigerTitel-' + id + '" value="' + escapeHtml(emne.titel) + '">' +
+      '</div>' +
+      '<div class="felt">' +
+        '<label>Varighed (valgfri, minutter)</label>' +
+        '<input type="number" min="1" style="max-width:100px;" id="emneRedigerVarighed-' + id + '" value="' + (emne.varighed_minutter || '') + '">' +
+      '</div>' +
+      '<div class="knap-raekke">' +
+        '<button class="knap lille" onclick="gemEmneRedigering(\'' + id + '\')">Gem</button>' +
+        '<button class="knap lille sekundaer" onclick="visGodkendtSorterListe()">Annuller</button>' +
+      '</div>' +
+    '</div>';
+}
 
-  const a = godkendtSorterCache[i];
-  const b = godkendtSorterCache[j];
-  const aRaekkefoelge = a.raekkefoelge;
-  const bRaekkefoelge = b.raekkefoelge;
+async function gemEmneRedigering(id){
+  const titel = document.getElementById('emneRedigerTitel-' + id).value.trim();
+  if(!titel){ alert('Navnet må ikke være tomt.'); return; }
+  const varighedRaa = document.getElementById('emneRedigerVarighed-' + id).value;
+  const varighed = varighedRaa ? parseInt(varighedRaa, 10) : null;
+
+  const { error } = await sb.from('emner').update({ titel: titel, varighed_minutter: varighed }).eq('id', id);
+  if(error){ visFejlDetalje('Kunne ikke gemme ændringen:', error); return; }
+  hentGodkendtSorterListe();
+}
+
+// "Sletter" ved at sætte aktiv=false, ikke en rigtig sletning — samme
+// begrundelse som punkternes 'afvist'-status, se emner.sql. Punkterne
+// under emnet forsvinder ikke, de bliver bare stående uden synlig
+// overskrift (hentStruktureretDagsorden grupperer dem stadig via
+// emne_id, men det inaktive emne selv vises ikke i topNiveau).
+async function sletEmne(id){
+  const emne = struktureretDagsorden.emner.find(e => e.id === id);
+  if(!emne) return;
+  const punktAntal = (struktureretDagsorden.grupperet[id] || []).length;
+  const advarsel = punktAntal > 0
+    ? 'Slet emnet "' + emne.titel + '"? De ' + punktAntal + ' punkter under det bliver stående, men uden overskrift.'
+    : 'Slet emnet "' + emne.titel + '"?';
+  if(!confirm(advarsel)) return;
+
+  const { error } = await sb.from('emner').update({ aktiv: false }).eq('id', id);
+  if(error){ visFejlDetalje('Kunne ikke slette emnet:', error); return; }
+  hentGodkendtSorterListe();
+}
+
+async function flytTopNiveau(type, id, retning){
+  const top = struktureretDagsorden.topNiveau;
+  const i = top.findIndex(function(item){ return item.type === type && item.id === id; });
+  const j = i + retning;
+  if(i < 0 || j < 0 || j >= top.length) return;
+
+  const a = top[i];
+  const b = top[j];
+  const tabelA = a.type === 'emne' ? 'emner' : 'dagsordenspunkter';
+  const tabelB = b.type === 'emne' ? 'emner' : 'dagsordenspunkter';
 
   const [resA, resB] = await Promise.all([
-    sb.from('dagsordenspunkter').update({ raekkefoelge: bRaekkefoelge }).eq('id', a.id),
-    sb.from('dagsordenspunkter').update({ raekkefoelge: aRaekkefoelge }).eq('id', b.id)
+    sb.from(tabelA).update({ raekkefoelge: b.raekkefoelge }).eq('id', a.id),
+    sb.from(tabelB).update({ raekkefoelge: a.raekkefoelge }).eq('id', b.id)
+  ]);
+
+  if(resA.error || resB.error){ visFejlDetalje('Kunne ikke ændre rækkefølgen:', resA.error || resB.error); return; }
+  hentGodkendtSorterListe();
+}
+
+async function flytPunktIEmne(emneId, id, retning){
+  const liste = (struktureretDagsorden.grupperet[emneId] || []).slice()
+    .sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
+  const i = liste.findIndex(function(p){ return p.id === id; });
+  const j = i + retning;
+  if(i < 0 || j < 0 || j >= liste.length) return;
+
+  const a = liste[i];
+  const b = liste[j];
+
+  const [resA, resB] = await Promise.all([
+    sb.from('dagsordenspunkter').update({ raekkefoelge: b.raekkefoelge }).eq('id', a.id),
+    sb.from('dagsordenspunkter').update({ raekkefoelge: a.raekkefoelge }).eq('id', b.id)
   ]);
 
   if(resA.error || resB.error){ visFejlDetalje('Kunne ikke ændre rækkefølgen:', resA.error || resB.error); return; }
@@ -2012,16 +2317,15 @@ async function materialiserFastePunkter(){
   if(error) console.error('Fejl ved materialisering af faste punkter:', error);
 }
 
-async function hentDagsordenOgNoter(){
-  const punktRes = await sb
-    .from('dagsordenspunkter')
-    .select('*')
-    .eq('moede_id', aktueltMoede.id)
-    .eq('status', 'godkendt')
-    .order('raekkefoelge', { ascending: true });
+let emneMap = {};   // emne_id -> emne, til overskrifter mens man skriver referat
 
-  if(punktRes.error){ console.error('Fejl dagsorden:', punktRes.error); return; }
-  dagsorden = punktRes.data || [];
+async function hentDagsordenOgNoter(){
+  const struktur = await hentStruktureretDagsorden(aktueltMoede.id);
+  if(struktur.fejl){ console.error('Fejl dagsorden:', struktur.fejl); return; }
+
+  dagsorden = struktur.fladListe;
+  emneMap = {};
+  struktur.emner.forEach(function(e){ emneMap[e.id] = e; });
 
   if(dagsorden.length === 0){ noteState = {}; highlightsState = {}; renderSidepanel(); return; }
 
@@ -2058,6 +2362,11 @@ function renderSidepanel(){
 
   let html = '';
   dagsorden.forEach((p, i) => {
+    const forrige = dagsorden[i - 1];
+    if(p.emne_id && emneMap[p.emne_id] && (!forrige || forrige.emne_id !== p.emne_id)){
+      html += '<div class="sidepanel-emne">📁 ' + escapeHtml(emneMap[p.emne_id].titel) + '</div>';
+    }
+
     let klasse = 'sidepunkt';
     if(i === aktivIndex) klasse += ' nuvaerende';
     else if(p.behandlet) klasse += ' behandlet';
@@ -2076,12 +2385,31 @@ function renderSidepanel(){
 // highlights) — så lederen kan dele den ud til alle deltagere ved
 // mødets start. Bruger samme .printDagsorden-mønster som Arkivs
 // eksisterende print-knap (body-klasse + @media print).
+// Bygger den samme "type:'punkt'|'emne'"-liste som printDagsordenFoerStart()
+// nedenfor, ud fra den flade dagsorden + emneMap man allerede har under
+// selve mødet — så begge print-veje deler renderOgPrintDagsorden().
 function printDagsorden(){
   if(!aktueltMoede || dagsorden.length === 0){
     alert('Ingen dagsorden at printe endnu.');
     return;
   }
-  renderOgPrintDagsorden(dagsorden, aktueltMoede.dato);
+
+  const kombineret = [];
+  let sidsteEmneId = null;
+  dagsorden.forEach(function(p){
+    if(p.emne_id && emneMap[p.emne_id]){
+      if(p.emne_id !== sidsteEmneId){
+        kombineret.push({ type: 'emne', emne: emneMap[p.emne_id], punkter: [] });
+        sidsteEmneId = p.emne_id;
+      }
+      kombineret[kombineret.length - 1].punkter.push(p);
+    } else {
+      kombineret.push({ type: 'punkt', titel: p.titel, beskrivelse: p.beskrivelse });
+      sidsteEmneId = null;
+    }
+  });
+
+  renderOgPrintDagsorden(kombineret, aktueltMoede.dato);
 }
 
 // Bruges fra "Start møde"-skærmen, FØR mødet er startet — dér findes de
@@ -2089,42 +2417,64 @@ function printDagsorden(){
 // materialiseres først i materialiserFastePunkter(), kaldt fra
 // klargoerSkriveflade() når mødet startes), så de hentes her direkte fra
 // faste_punkter i stedet og flettes ind i den rigtige rækkefølge sammen
-// med de allerede godkendte indsendte/overførte punkter.
+// med den allerede opbyggede emne+punkt-struktur.
 async function printDagsordenFoerStart(){
   if(!sb || !aktueltMoede) return;
 
-  const [fasteRes, punkterRes] = await Promise.all([
+  const [fasteRes, struktur] = await Promise.all([
     sb.from('faste_punkter').select('*').eq('aktiv', true).order('raekkefoelge'),
-    sb.from('dagsordenspunkter').select('*').eq('moede_id', aktueltMoede.id).eq('status', 'godkendt').order('raekkefoelge')
+    hentStruktureretDagsorden(aktueltMoede.id)
   ]);
 
-  if(fasteRes.error || punkterRes.error){
-    visFejlDetalje('Kunne ikke hente dagsordenen:', fasteRes.error || punkterRes.error);
-    return;
-  }
+  if(fasteRes.error){ visFejlDetalje('Kunne ikke hente dagsordenen:', fasteRes.error); return; }
+  if(struktur.fejl){ visFejlDetalje('Kunne ikke hente dagsordenen:', struktur.fejl); return; }
 
   const fastePunkter = (fasteRes.data || []).map(function(fp){
-    return { titel: fp.titel, beskrivelse: fp.beskrivelse, raekkefoelge: fp.raekkefoelge };
+    return { type: 'punkt', titel: fp.titel, beskrivelse: fp.beskrivelse, raekkefoelge: fp.raekkefoelge };
   });
-  const alle = fastePunkter.concat(punkterRes.data || []).sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
 
-  if(alle.length === 0){
+  const topNiveauSomListe = struktur.topNiveau.map(function(item){
+    if(item.type === 'punkt'){
+      return { type: 'punkt', titel: item.data.titel, beskrivelse: item.data.beskrivelse, raekkefoelge: item.raekkefoelge };
+    }
+    const punkterIEmnet = (struktur.grupperet[item.id] || []).slice().sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
+    return { type: 'emne', emne: item.data, punkter: punkterIEmnet, raekkefoelge: item.raekkefoelge };
+  });
+
+  const kombineret = fastePunkter.concat(topNiveauSomListe).sort(function(a, b){ return a.raekkefoelge - b.raekkefoelge; });
+
+  if(kombineret.length === 0){
     alert('Ingen dagsorden at printe endnu.');
     return;
   }
 
-  renderOgPrintDagsorden(alle, aktueltMoede.dato);
+  renderOgPrintDagsorden(kombineret, aktueltMoede.dato);
 }
 
-function renderOgPrintDagsorden(punkter, dato){
+function renderOgPrintDagsorden(liste, dato){
   let html = '<h1>Dagsorden — ' + escapeHtml(datoLangLabelMedAar(dato)) + '</h1>';
-  html += '<ol class="dagsordenPrintListe">';
-  punkter.forEach(p => {
-    html += '<li><div class="dagsordenPrintTitel">' + escapeHtml(p.titel) + '</div>' +
+
+  function punktHtml(p){
+    return '<li><div class="dagsordenPrintTitel">' + escapeHtml(p.titel) + '</div>' +
       (p.beskrivelse ? '<div class="dagsordenPrintBeskrivelse">' + escapeHtml(p.beskrivelse) + '</div>' : '') +
       '</li>';
+  }
+
+  let aabenListe = false;
+  liste.forEach(function(item){
+    if(item.type === 'emne'){
+      if(aabenListe){ html += '</ol>'; aabenListe = false; }
+      html += '<div class="dagsordenPrintEmne">📁 ' + escapeHtml(item.emne.titel) +
+        (item.emne.varighed_minutter ? ' · ' + item.emne.varighed_minutter + ' min' : '') + '</div>';
+      html += '<ol class="dagsordenPrintListe">';
+      item.punkter.forEach(function(p){ html += punktHtml(p); });
+      html += '</ol>';
+    } else {
+      if(!aabenListe){ html += '<ol class="dagsordenPrintListe">'; aabenListe = true; }
+      html += punktHtml(item);
+    }
   });
-  html += '</ol>';
+  if(aabenListe) html += '</ol>';
 
   document.getElementById('dagsordenPrintVisning').innerHTML = html;
   document.body.classList.add('printDagsorden');
@@ -2147,6 +2497,19 @@ function visPunkt(index){
   // bliver hængende på en nedtælling der ikke længere er relevant.
   if(aktueltMoede && aktueltMoede.pause_slut_tid && pauseAktivPunktId && pauseAktivPunktId !== punkt.id){
     rydPauseSlutTid();
+  }
+
+  // Vis emnets navn som overskrift, men kun når man rent faktisk træder
+  // ind i det (første punkt i emnets sammenhængende blok) — ikke gentaget
+  // foran hvert enkelt punkt i emnet.
+  const forrigePunkt = dagsorden[index - 1];
+  const emne = punkt.emne_id ? emneMap[punkt.emne_id] : null;
+  const emneHeaderEl = document.getElementById('emneHeader');
+  if(emne && (!forrigePunkt || forrigePunkt.emne_id !== punkt.emne_id)){
+    emneHeaderEl.textContent = '📁 ' + emne.titel + (emne.varighed_minutter ? ' · ' + emne.varighed_minutter + ' min' : '');
+    emneHeaderEl.style.display = 'block';
+  } else {
+    emneHeaderEl.style.display = 'none';
   }
 
   document.getElementById('punktKildeTag').textContent = kildeLabel(punkt.kilde) +
