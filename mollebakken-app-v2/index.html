@@ -342,6 +342,29 @@
     border-radius:10px;
   }
 
+  /* ---- Skærm: skjul personale på beboerskærmen ---- */
+  .skDagVælg{ display:flex; gap:8px; margin-bottom:14px; }
+  .skDagVælg button{
+    flex:1; padding:12px; font-size:14px; font-weight:700;
+    background:var(--kort); color:var(--mørk); border:1px solid #d1d9d6; border-radius:10px;
+  }
+  .skDagVælg button.valgt{ background:var(--mørk); color:white; border-color:var(--mørk); }
+  .skRække{ padding:12px 0; border-top:1px solid #e3e9e6; }
+  .skRække:first-child{ border-top:none; }
+  .skRækkeTop{ display:flex; align-items:center; gap:10px; }
+  .skRækkeTop .skNavn{ flex:1; min-width:0; }
+  .skNavn strong{ display:block; font-size:15px; }
+  .skMeta{ font-size:12px; color:var(--tekst-svag); font-variant-numeric:tabular-nums; }
+  .skRækkeTop button{ padding:10px 16px; font-size:14px; font-weight:700; border-radius:10px; flex-shrink:0; }
+  .skVisIgen{ background:var(--grøn); color:white; }
+  .skSkjul{ background:var(--baggrund); color:var(--mørk); border:1px solid #d1d9d6 !important; }
+  .skAarsagValg{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .skAarsagValg button{ padding:14px 8px; font-size:14px; font-weight:700; border-radius:10px; background:var(--mørk); color:white; }
+  .skAarsagValg button.skUden{ background:var(--baggrund); color:var(--mørk); border:1px solid #d1d9d6; }
+  .skAarsagValg button.skAnnuller{ grid-column:1 / -1; background:none; color:var(--tekst-svag); padding:8px; font-weight:600; }
+  .skRække.erSkjult .skNavn strong{ color:var(--tekst-svag); text-decoration:line-through; }
+  .skTom{ font-size:13px; color:var(--tekst-svag); padding:4px 0; }
+
   .prioritetVælg{ display:flex; gap:6px; margin:8px 0; }
   .prioritetVælg button{
     flex:1;
@@ -819,6 +842,29 @@
     </div>
   </div>
 
+  <!-- ============ SKÆRM (skjul personale på beboerskærmen) ============ -->
+  <div id="skaerm" class="side">
+    <div style="font-size:13px; color:var(--tekst-svag); margin-bottom:12px;">
+      Skjul en medarbejder på beboerskærmen i gangen, fx ved sygdom eller af hensyn til en beboer.
+      Det ændrer ikke vagtplanen. Skjulningen gælder resten af dagen (eller til vagten slutter, hvis den går over midnat).
+    </div>
+
+    <div class="kort">
+      <h3 style="margin-top:0;">Skjult lige nu</h3>
+      <div id="skaermSkjultListe"><div class="loading">Henter …</div></div>
+    </div>
+
+    <div class="skDagVælg">
+      <button id="skaermDagIdag" onclick="vælgSkaermDag(0)">I dag</button>
+      <button id="skaermDagImorgen" onclick="vælgSkaermDag(1)">I morgen</button>
+    </div>
+
+    <div class="kort">
+      <h3 style="margin-top:0;" id="skaermVagterOverskrift">På vagt</h3>
+      <div id="skaermVagtListe"><div class="loading">Henter vagter …</div></div>
+    </div>
+  </div>
+
   <!-- ============ ADMIN ============ -->
   <div id="admin" class="side">
     <div class="kort">
@@ -847,6 +893,7 @@
     <button class="skjultPaaForside skjultPaaValg" id="navRengoring" onclick="visSide('rengoring')"><span class="ikon">🧹</span>Rengøring</button>
     <button class="skjultPaaForside skjultPaaValg" id="navP104" onclick="visSide('paragraf104')"><span class="ikon">💡</span>§104</button>
     <button class="skjultPaaForside skjultPaaValg" id="navPersonalemoede" onclick="visSide('personalemoede')"><span class="ikon">🗣️</span>P-møde</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navSkaerm" onclick="visSide('skaerm')"><span class="ikon">📺</span>Skærm</button>
   </div>
 
 </div>
@@ -938,13 +985,14 @@ const sideTitler = {
   rengoring: 'Rengøring',
   paragraf104: '§104',
   personalemoede: 'Personalemøde',
+  skaerm: 'Beboerskærm',
   admin: 'Admin'
 };
 
 const navKnapPerSide = {
   forside: 'navForside', opgaver: 'navOpgaver', program: 'navProgram',
   la2: 'navLa2', sammenMed: 'navSammenMed', rengoring: 'navRengoring', paragraf104: 'navP104',
-  personalemoede: 'navPersonalemoede'
+  personalemoede: 'navPersonalemoede', skaerm: 'navSkaerm'
 };
 
 let aktuelSide = 'valg';
@@ -974,6 +1022,7 @@ function visSide(side){
   if(side === 'admin'){ hentIndstillingerAdmin(); hentSkaermIndstillinger(); }
   if(side === 'rengoring') hentRengoring();
   if(side === 'personalemoede') visMoedeMode();
+  if(side === 'skaerm') visSkaerm();
 }
 
 function gåTilForside(){
@@ -1009,7 +1058,8 @@ const FEATURE_KORT = [
   { fane: 'sammenMed',   ikon: '🤝', titel: 'Hvem er du med',   side: 'sammenMed' },
   { fane: 'rengøring',   ikon: '🧹', titel: 'Rengøring',        side: 'rengoring' },
   { fane: 'paragraf104', ikon: '💡', titel: '§104',             side: 'paragraf104' },
-  { fane: 'personalemoede', ikon: '🗣️', titel: 'Personalemøde', side: 'personalemoede' }
+  { fane: 'personalemoede', ikon: '🗣️', titel: 'Personalemøde', side: 'personalemoede' },
+  { fane: 'skaerm',      ikon: '📺', titel: 'Beboerskærm',      side: 'skaerm' }
 ];
 
 let indstillingerCache = {};
@@ -2408,6 +2458,278 @@ async function hentMoedeReferater(){
       </div>
     `;
   }).join('');
+}
+
+// ==================================================================
+// SKÆRM — skjul enkelte medarbejdere på beboerskærmen (personaleskaerm-v2)
+// Rent visningsfilter: skriver KUN i skjult_personale, aldrig i
+// personaleskaerm_vagter (som workfeed-sync tømmer og genskriver hvert
+// 15. min — derfor peger en skjulning på navn + dag, ikke på vagt-id).
+// Se shared/skjult-personale-schema.sql.
+// ==================================================================
+
+const SKJUL_AARSAGER = { syg: 'Syg', hensyn: 'Hensyn til beboer', andet: 'Andet' };
+const SK_ROLLE = {
+  'Rådighedsvagt': 'Døgnvagt', 'Vågen nattevagt': 'Nattevagt', 'Socialfaglig medarbejder': 'Medarbejder',
+  'Daglig leder': 'Leder', 'Køkkenpersonale': 'Køkken', 'SSA': 'Medicinvagt'
+};
+
+let skaermDagOffset = null; // 0 = i dag, 1 = i morgen (null = vælg ud fra klokken)
+let skaermPersoner = [];    // [{navn, rolle, start, slut}] for valgt dag, ét element pr. navn
+let skaermSkjulninger = []; // aktive (ikke-udløbne) rækker fra skjult_personale
+let skaermAabenIndex = -1;  // person med årsagsvalg foldet ud
+let skaermTravl = false;    // en skriv er i gang — undgå dobbelttryk
+let skaermInterval = null;
+
+// "YYYY-MM-DD" → lokal midnat den dag (browser-lokal tid, ikke UTC).
+function skStartAfDag(iso){
+  const d = iso.split('-');
+  return new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]));
+}
+
+function skDagISO(offset){
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return datoISO(d);
+}
+
+function skKlok(d){
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+// Samme regel som i personaleskaerm-v2 (findSkjulning dér) — holdes ens,
+// så appen og skærmen altid er enige om hvem der er skjult.
+// En skjulning for dag D gælder listen for D. Går personens vagt over
+// midnat, gælder den også listen for D+1 — men kun når D+1 faktisk ER
+// begyndt (ikke i 19:30-forhåndsvisningen af i morgen), og kun indtil
+// udløb (= slutningen af den vagt der går over midnat).
+function findSkjulning(skjulninger, navn, visteDagISO, nu){
+  const visteStart = skStartAfDag(visteDagISO);
+  const dagenFør = new Date(visteStart);
+  dagenFør.setDate(dagenFør.getDate() - 1);
+  const dagenFørISO = datoISO(dagenFør);
+  return skjulninger.find(s => {
+    if(s.navn !== navn) return false;
+    if(new Date(s.udloeber) <= nu) return false;
+    if(s.dag === visteDagISO) return true;
+    return s.dag === dagenFørISO && nu >= visteStart;
+  }) || null;
+}
+
+// Udløb: midnat efter dagen — eller slutningen af personens vagt, hvis den
+// fortsætter over midnat (Workfeed splitter døgn-/nattevagter i to rækker
+// ved midnat; fortsættelsen har dag = D+1 og starter kl. 00:00).
+async function skBeregnUdloeber(navn, dagISO){
+  const midnat = skStartAfDag(dagISO);
+  midnat.setDate(midnat.getDate() + 1);
+  let udloeber = midnat;
+  const { data, error } = await sb.from('personaleskaerm_vagter')
+    .select('dag,start,slut').eq('navn', navn).in('dag', [dagISO, datoISO(midnat)]);
+  if(error){ console.error('Fejl udløb:', error); return udloeber; }
+  (data || []).forEach(r => {
+    const start = new Date(r.start);
+    const slut = new Date(r.slut);
+    const hørerTil = r.dag === dagISO || start.getTime() <= midnat.getTime();
+    if(hørerTil && slut > udloeber) udloeber = slut;
+  });
+  return udloeber;
+}
+
+function skDagTekst(iso){
+  if(iso === skDagISO(0)) return 'I dag';
+  if(iso === skDagISO(1)) return 'I morgen';
+  if(iso === skDagISO(-1)) return 'I går';
+  const d = skStartAfDag(iso);
+  return UGEDAGE[(d.getDay() + 6) % 7] + ' ' + d.getDate() + '/' + (d.getMonth() + 1);
+}
+
+function skUdloebTekst(udloeberStr){
+  const u = new Date(udloeberStr);
+  const erMidnat = u.getHours() === 0 && u.getMinutes() === 0;
+  if(erMidnat){
+    const dagenFør = new Date(u.getTime() - 60000);
+    const dag = datoISO(dagenFør);
+    if(dag === skDagISO(0)) return 'til midnat';
+    if(dag === skDagISO(1)) return 'til midnat i morgen';
+    return 'til midnat ' + skDagTekst(dag).toLowerCase();
+  }
+  const dag = datoISO(u);
+  if(dag === skDagISO(0)) return 'til kl. ' + skKlok(u);
+  return 'til ' + skDagTekst(dag).toLowerCase() + ' kl. ' + skKlok(u);
+}
+
+function visSkaerm(){
+  if(skaermDagOffset === null){
+    // Samme 19:30-skift som beboerskærmen: om aftenen er det morgendagens
+    // liste der står på skærmen, så det er den man oftest vil rette i.
+    const nu = new Date();
+    skaermDagOffset = (nu.getHours() > 19 || (nu.getHours() === 19 && nu.getMinutes() >= 30)) ? 1 : 0;
+  }
+  skaermAabenIndex = -1;
+  hentSkaerm();
+  if(!skaermInterval){
+    skaermInterval = setInterval(() => {
+      // Opdater ikke mens nogen er midt i at vælge årsag — listen må ikke
+      // flytte sig under fingeren.
+      if(aktuelSide === 'skaerm' && skaermAabenIndex === -1 && !skaermTravl) hentSkaerm();
+    }, 60000);
+  }
+}
+
+function vælgSkaermDag(offset){
+  skaermDagOffset = offset;
+  skaermAabenIndex = -1;
+  hentSkaerm();
+}
+
+async function hentSkaerm(){
+  if(!sb) return;
+  document.getElementById('skaermDagIdag').classList.toggle('valgt', skaermDagOffset === 0);
+  document.getElementById('skaermDagImorgen').classList.toggle('valgt', skaermDagOffset === 1);
+  document.getElementById('skaermVagterOverskrift').textContent = 'På vagt ' + (skaermDagOffset === 1 ? 'i morgen' : 'i dag');
+
+  const nu = new Date();
+  const dag = skDagISO(skaermDagOffset);
+  const [vagterRes, skjultRes] = await Promise.all([
+    sb.from('personaleskaerm_vagter').select('navn,rolle,start,slut').eq('dag', dag).order('start'),
+    sb.from('skjult_personale').select('*').gt('udloeber', nu.toISOString()).order('dag').order('navn')
+  ]);
+
+  if(skjultRes.error){
+    console.error('Fejl skjult_personale:', skjultRes.error);
+    document.getElementById('skaermSkjultListe').innerHTML = '<div class="skTom">Kunne ikke hente listen. Prøv igen om lidt.</div>';
+  } else {
+    skaermSkjulninger = skjultRes.data || [];
+    tegnSkaermSkjulte();
+  }
+
+  if(vagterRes.error){
+    console.error('Fejl vagter:', vagterRes.error);
+    document.getElementById('skaermVagtListe').innerHTML = '<div class="skTom">Kunne ikke hente vagterne. Prøv igen om lidt.</div>';
+    return;
+  }
+
+  // Én række pr. navn (midnatssplit / flere vagter samme dag slås sammen
+  // til ét tidsrum) — det er personen der skjules, ikke den enkelte vagt.
+  const pr = new Map();
+  (vagterRes.data || []).forEach(r => {
+    const start = new Date(r.start);
+    const slut = new Date(r.slut);
+    const eks = pr.get(r.navn);
+    if(!eks){ pr.set(r.navn, { navn: r.navn, rolle: SK_ROLLE[r.rolle] || r.rolle, start, slut }); return; }
+    if(start < eks.start) eks.start = start;
+    if(slut > eks.slut) eks.slut = slut;
+  });
+  skaermPersoner = [...pr.values()];
+  tegnSkaermVagter();
+}
+
+function tegnSkaermSkjulte(){
+  const el = document.getElementById('skaermSkjultListe');
+  if(skaermSkjulninger.length === 0){
+    el.innerHTML = '<div class="skTom">Ingen er skjult. Alle på vagt vises på skærmen.</div>';
+    return;
+  }
+  el.innerHTML = skaermSkjulninger.map((s, i) => {
+    const dele = [skDagTekst(s.dag)];
+    if(s.aarsag && SKJUL_AARSAGER[s.aarsag]) dele.push(SKJUL_AARSAGER[s.aarsag]);
+    dele.push(skUdloebTekst(s.udloeber));
+    return '<div class="skRække"><div class="skRækkeTop">' +
+      '<div class="skNavn"><strong>' + escapeHtml(s.navn) + '</strong>' +
+      '<div class="skMeta">' + escapeHtml(dele.join(' · ')) + '</div></div>' +
+      '<button class="skVisIgen" onclick="skaermVisIgen(' + i + ')">Vis igen</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function tegnSkaermVagter(){
+  const el = document.getElementById('skaermVagtListe');
+  if(skaermPersoner.length === 0){
+    el.innerHTML = '<div class="skTom">Ingen vagter fundet for ' + (skaermDagOffset === 1 ? 'i morgen' : 'i dag') + '.</div>';
+    return;
+  }
+  const nu = new Date();
+  const dag = skDagISO(skaermDagOffset);
+  el.innerHTML = skaermPersoner.map((p, i) => {
+    const skjul = findSkjulning(skaermSkjulninger, p.navn, dag, nu);
+    let meta = p.rolle + ' · ' + skKlok(p.start) + '–' + skKlok(p.slut);
+    if(skaermDagOffset === 0 && p.slut < nu) meta += ' · vagten er slut';
+    if(skjul) meta += ' · skjult på skærmen';
+
+    let knap;
+    if(skjul){
+      knap = '<button class="skVisIgen" onclick="skaermVisIgen(' + skaermSkjulninger.indexOf(skjul) + ')">Vis igen</button>';
+    } else if(skaermAabenIndex === i){
+      knap = '';
+    } else {
+      knap = '<button class="skSkjul" onclick="skaermAabnSkjul(' + i + ')">Skjul</button>';
+    }
+
+    let valg = '';
+    if(!skjul && skaermAabenIndex === i){
+      valg = '<div class="skAarsagValg">' +
+        '<button onclick="skaermSkjul(' + i + ', \'syg\')">Syg</button>' +
+        '<button onclick="skaermSkjul(' + i + ', \'hensyn\')">Hensyn til beboer</button>' +
+        '<button onclick="skaermSkjul(' + i + ', \'andet\')">Andet</button>' +
+        '<button class="skUden" onclick="skaermSkjul(' + i + ', null)">Uden årsag</button>' +
+        '<button class="skAnnuller" onclick="skaermLukSkjul()">Annullér</button>' +
+        '</div>';
+    }
+
+    return '<div class="skRække' + (skjul ? ' erSkjult' : '') + '"><div class="skRækkeTop">' +
+      '<div class="skNavn"><strong>' + escapeHtml(p.navn) + '</strong>' +
+      '<div class="skMeta">' + escapeHtml(meta) + '</div></div>' +
+      knap + '</div>' + valg + '</div>';
+  }).join('');
+}
+
+function skaermAabnSkjul(i){
+  skaermAabenIndex = i;
+  tegnSkaermVagter();
+}
+
+function skaermLukSkjul(){
+  skaermAabenIndex = -1;
+  tegnSkaermVagter();
+}
+
+async function skaermSkjul(i, aarsag){
+  if(!sb || skaermTravl) return;
+  const p = skaermPersoner[i];
+  if(!p) return;
+  skaermTravl = true;
+  try {
+    const dag = skDagISO(skaermDagOffset);
+    const udloeber = await skBeregnUdloeber(p.navn, dag);
+    const { error } = await sb.from('skjult_personale').insert({
+      navn: p.navn, dag: dag, udloeber: udloeber.toISOString(), aarsag: aarsag || null
+    });
+    if(error){
+      console.error('Fejl skjul:', error);
+      visToast(error.code === '23505' ? 'Er allerede skjult' : 'Fejl – prøv igen');
+    } else {
+      visToast(p.navn + ' er skjult på skærmen (inden for 1 min.)', 3000);
+    }
+  } finally {
+    skaermTravl = false;
+    skaermAabenIndex = -1;
+    hentSkaerm();
+  }
+}
+
+async function skaermVisIgen(i){
+  if(!sb || skaermTravl) return;
+  const s = skaermSkjulninger[i];
+  if(!s) return;
+  skaermTravl = true;
+  try {
+    const { error } = await sb.from('skjult_personale').delete().eq('id', s.id);
+    if(error){ console.error('Fejl vis igen:', error); visToast('Fejl – prøv igen'); }
+    else visToast(s.navn + ' vises igen på skærmen (inden for 1 min.)', 3000);
+  } finally {
+    skaermTravl = false;
+    hentSkaerm();
+  }
 }
 
 // ==================================================================

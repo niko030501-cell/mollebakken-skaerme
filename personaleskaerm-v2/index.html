@@ -482,7 +482,11 @@ async function hentPersonale(){
   const datoStr = datoISO(dato);
   document.getElementById('overskriftDag').textContent = UGEDAGE[dato.getDay()] + (visImorgen ? ' (i morgen)' : '');
 
-  const { data, error } = await sb.from('personaleskaerm_vagter').select('*').eq('dag', datoStr);
+  const [vagterRes, skjulninger] = await Promise.all([
+    sb.from('personaleskaerm_vagter').select('*').eq('dag', datoStr),
+    hentSkjulninger()
+  ]);
+  const { data, error } = vagterRes;
   if(error){ console.error('Fejl personale:', error); return; }
 
   const nu = new Date();
@@ -521,9 +525,58 @@ async function hentPersonale(){
   const nattevagt = alle.filter(p => p.rolle === 'Nattevagt');
   const funktioner = alle.filter(p => !iMødeNu(p) && p.rolle !== 'Medarbejder' && p.rolle !== 'Døgnvagt' && p.rolle !== 'Nattevagt');
 
-  tegnGulv(gulv);
-  tegnFunktioner(funktioner);
-  tegnSenere(nattevagt, beregnPmødePersoner(alle, nu));
+  // Skjult personale (styres fra appens "Skærm"-fane) filtreres fra HELT
+  // til sidst — al beregning ovenfor (dedup, felter, P-møde-timing via
+  // `alle`) kører uændret, så en skjult person aldrig kan påvirke hvem
+  // andre der vises eller hvornår mødet regnes for slut.
+  const vises = p => !findSkjulning(skjulninger, p.navn, datoStr, nu);
+
+  tegnGulv(gulv.filter(vises));
+  tegnFunktioner(funktioner.filter(vises));
+  tegnSenere(nattevagt.filter(vises), beregnPmødePersoner(alle, nu).filter(vises));
+}
+
+// ==================================================================
+// SKJULT PERSONALE — rent visningsfilter, se shared/skjult-personale-schema.sql.
+// Fail-safe: kan tabellen ikke læses, returneres en tom liste, og ALLE
+// vises som hidtil. Skærmen fejler aldrig i retning af at skjule nogen.
+// ==================================================================
+
+async function hentSkjulninger(){
+  try {
+    const { data, error } = await sb.from('skjult_personale')
+      .select('navn,dag,udloeber').gt('udloeber', new Date().toISOString());
+    if(error){ console.error('Fejl skjult_personale (viser alle):', error); return []; }
+    return data || [];
+  } catch (e) {
+    console.error('Fejl skjult_personale (viser alle):', e);
+    return [];
+  }
+}
+
+// "YYYY-MM-DD" → lokal midnat den dag (browser-lokal tid, ikke UTC).
+function skStartAfDag(iso){
+  const d = iso.split('-');
+  return new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]));
+}
+
+// SAMME regel som findSkjulning() i mollebakken-app-v2 — holdes ens, så
+// appen og skærmen altid er enige om hvem der er skjult.
+// En skjulning for dag D gælder listen for D. Går personens vagt over
+// midnat, gælder den også listen for D+1 — men kun når D+1 faktisk ER
+// begyndt (ikke i 19:30-forhåndsvisningen af i morgen), og kun indtil
+// udløb (= slutningen af den vagt der går over midnat).
+function findSkjulning(skjulninger, navn, visteDagISO, nu){
+  const visteStart = skStartAfDag(visteDagISO);
+  const dagenFør = new Date(visteStart);
+  dagenFør.setDate(dagenFør.getDate() - 1);
+  const dagenFørISO = datoISO(dagenFør);
+  return skjulninger.find(s => {
+    if(s.navn !== navn) return false;
+    if(new Date(s.udloeber) <= nu) return false;
+    if(s.dag === visteDagISO) return true;
+    return s.dag === dagenFørISO && nu >= visteStart;
+  }) || null;
 }
 
 // Nogle Planday-navne bærer et eller flere rolle-præfikser direkte i
