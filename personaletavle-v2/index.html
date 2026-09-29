@@ -213,6 +213,84 @@
       font-weight: 700;
     }
 
+    /* ---- Vedhæftet fil (knap under en besked) ----
+       Til fjernbetjening (ikke touch): et rigtigt <button>, som kan få fokus
+       med piletaster og åbnes med OK/Enter. Hvilende = rolig lys knap med
+       ramme, så den ikke forstyrrer normal visning. Fokus = "nu-block"
+       (kontrasten vendt om, som .listepunkt.nu i tokens.css) plus en
+       tyk guld-kant, så man kan se hvor man er på afstand. */
+
+    .filRække{
+      flex: 0 0 100%;
+      min-width: 0;
+      display: flex;
+      justify-content: flex-start;
+      margin-top: calc(4px * var(--tekst-skala, 1));
+    }
+
+    .listepunkt.harFil{ flex-wrap: wrap; }
+
+    .filKnap{
+      display: inline-flex;
+      align-items: center;
+      gap: .45em;
+      min-width: 0;
+      max-width: 100%;
+      font-family: 'Archivo', sans-serif;
+      font-size: calc(12.5px * var(--tekst-skala, 1));
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--blaek);
+      background: #fff;
+      border: 2px solid var(--blaek);
+      border-radius: 4px;
+      padding: calc(4px * var(--tekst-skala, 1)) calc(9px * var(--tekst-skala, 1));
+      cursor: pointer;
+      text-align: left;
+    }
+    .filKnap[hidden]{ display: none; }
+
+    .filKnap .filNavn{
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .filKnap svg{
+      width: 1.15em;
+      height: 1.15em;
+      flex-shrink: 0;
+    }
+
+    .filKnap:focus{
+      background: var(--blaek);
+      color: #fff;
+      border-color: var(--guld);
+      outline: 4px solid var(--guld);
+      outline-offset: 2px;
+    }
+
+    #personaleFilKnap{ margin-top: 8px; }
+
+    #filFejlBoks{
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      z-index: 50;
+      max-width: 80%;
+      background: var(--blaek);
+      color: #fff;
+      border: 3px solid var(--guld);
+      border-radius: 6px;
+      padding: 12px 22px;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+    }
+    #filFejlBoks[hidden]{ display: none; }
+
     /* ---- Overskrifter ---- */
 
     .forklaring{
@@ -335,6 +413,7 @@
   <div id="personaleBjælke" class="personaleBjælke" style="display:none;">
     <div class="eyebrow">Personale</div>
     <div id="personaleBjælkeTekst"></div>
+    <button type="button" id="personaleFilKnap" class="filKnap" hidden></button>
   </div>
   <div class="forklaring">
     <span class="forklaringPunkt"><span class="forklaringSwatch swatchAkut"></span>Akut / vigtigt</span>
@@ -387,6 +466,8 @@
 </div>
 
 </main>
+
+<div id="filFejlBoks" role="alert" hidden></div>
 
 <!-- ============================================================ -->
 <!-- SCRIPT                                                        -->
@@ -555,7 +636,156 @@ async function hentBeskeder(){
   visBeskeder(data || []);
 }
 
+// ---- Vedhæftede filer (knap under en besked) ----
+// Knapperne bygges med DOM-metoder (aldrig HTML-strenge), og filnavnet
+// sættes med textContent. Stien/linket findes IKKE i siden: linket hentes
+// først når nogen åbner filen (det udløber efter 60 sek.).
+
+const FIL_PAUSE_MS = 60000;   // rotationen står stille så længe nogen navigerer, +60 sek. efter sidste tryk
+let filPauseIndtil = 0;
+let filÅbner = false;
+let filFejlTimer = null;
+let sidsteBeskedSignatur = null;
+
+function lavBinderIkon(){
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2.4');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  const sti = document.createElementNS(NS, 'path');
+  sti.setAttribute('d', 'M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48');
+  svg.appendChild(sti);
+  return svg;
+}
+
+// Fylder en .filKnap med ikon + filnavn og gør den klar til at åbne beskeden.
+function udfyldFilKnap(knap, beskedId, filNavn){
+  knap.textContent = '';
+  knap.dataset.beskedId = beskedId;
+  knap.setAttribute('aria-label', 'Åbn vedhæftning: ' + filNavn);
+  knap.appendChild(lavBinderIkon());
+  const navn = document.createElement('span');
+  navn.className = 'filNavn';
+  navn.textContent = filNavn;
+  knap.appendChild(navn);
+}
+
+function lavFilKnap(beskedId, filNavn){
+  const knap = document.createElement('button');
+  knap.type = 'button';
+  knap.className = 'filKnap';
+  udfyldFilKnap(knap, beskedId, filNavn);
+  return knap;
+}
+
+function synligeFilKnapper(){
+  return Array.prototype.filter.call(document.querySelectorAll('#beskeder .filKnap'), function(k){ return !k.hidden; });
+}
+
+function forlængFilPause(){
+  filPauseIndtil = Date.now() + FIL_PAUSE_MS;
+}
+
+function visFilFejl(tekst){
+  const boks = document.getElementById('filFejlBoks');
+  boks.textContent = tekst;
+  boks.hidden = false;
+  clearTimeout(filFejlTimer);
+  filFejlTimer = setTimeout(function(){ boks.hidden = true; }, 8000);
+}
+
+// Henter et friskt 60-sekunders link når der trykkes, og åbner filen i SAMME
+// vindue — så fjernbetjeningens tilbage-knap fører tilbage til tavlen.
+async function åbnBeskedFil(knap){
+  if(filÅbner || !sb) return;
+  filÅbner = true;
+  forlængFilPause();
+  const navnEl = knap.querySelector('.filNavn');
+  const oprindeligt = navnEl ? navnEl.textContent : '';
+  if(navnEl) navnEl.textContent = 'Åbner…';
+  try{
+    const { data, error } = await sb.functions.invoke('besked-fil', {
+      body: { action: 'hent', besked_id: knap.dataset.beskedId }
+    });
+    if(error || !data || !data.url) throw (error || new Error('Intet link'));
+    window.location.assign(data.url);
+  } catch(e){
+    console.error('Kunne ikke åbne fil:', e);
+    visFilFejl('Filen kunne ikke åbnes. Prøv igen om lidt.');
+  } finally {
+    if(navnEl) navnEl.textContent = oprindeligt;
+    filÅbner = false;
+  }
+}
+
+// Klik/OK på en filknap (delegeret, så knapperne kan bygges om uden nye lyttere)
+document.addEventListener('click', function(e){
+  const knap = e.target.closest ? e.target.closest('.filKnap') : null;
+  if(knap) åbnBeskedFil(knap);
+});
+
+// Piletaster flytter fokus mellem filknapperne (lineært); OK/Enter åbner via den
+// almindelige button-aktivering. Springes over mens morgen-overlayet vises.
+document.addEventListener('keydown', function(e){
+  if(aktuelSide !== 'beskeder') return;
+  if(document.querySelector('.dbOverlay')) return;
+  const knapper = synligeFilKnapper();
+  if(knapper.length === 0) return;
+
+  const frem = e.key === 'ArrowDown' || e.key === 'ArrowRight';
+  const tilbage = e.key === 'ArrowUp' || e.key === 'ArrowLeft';
+  if(!frem && !tilbage){
+    if(e.key === 'Enter' && knapper.indexOf(document.activeElement) !== -1) forlængFilPause();
+    return;
+  }
+
+  e.preventDefault();
+  const nu = knapper.indexOf(document.activeElement);
+  let næste;
+  if(nu === -1) næste = frem ? 0 : knapper.length - 1;
+  else næste = (nu + (frem ? 1 : -1) + knapper.length) % knapper.length;
+  knapper[næste].focus();
+  if(knapper[næste].scrollIntoView) knapper[næste].scrollIntoView({ block: 'nearest' });
+  forlængFilPause();
+});
+
+document.addEventListener('focusin', function(e){
+  if(e.target.classList && e.target.classList.contains('filKnap')) forlængFilPause();
+});
+
+function visPersonaleBjælke(){
+  const b = personaleBeskeder[personaleIndex];
+  document.getElementById('personaleBjælkeTekst').textContent = b.tekst;
+  const knap = document.getElementById('personaleFilKnap');
+  if(b.filNavn){
+    udfyldFilKnap(knap, b.id, b.filNavn);
+    knap.hidden = false;
+  } else {
+    knap.hidden = true;
+  }
+}
+
 function visBeskeder(data){
+  // Er intet ændret (typisk hvert 60. sek.), rører vi slet ikke ved siden —
+  // så fokus på en filknap nulstilles aldrig af den almindelige opdatering.
+  const signatur = datoISO(new Date()) + '|' + JSON.stringify(data.map(r => [
+    r.id, r.beboer, r.prioritet, r.besked, r.dato, r.afsender, r.fil_sti, r.fil_navn
+  ]));
+  if(signatur === sidsteBeskedSignatur) return;
+  sidsteBeskedSignatur = signatur;
+
+  // Er noget ændret, gendannes fokus på samme besked's knap bagefter.
+  const fokuseret = document.activeElement;
+  const fokusId = (fokuseret && fokuseret.classList && fokuseret.classList.contains('filKnap'))
+    ? fokuseret.dataset.beskedId : null;
+  const foregåendePersonaleId = personaleBeskeder.length > 0 && personaleBeskeder[personaleIndex]
+    ? personaleBeskeder[personaleIndex].id : null;
+
   const container = document.getElementById('beskederContainer');
   container.innerHTML = '';
   personaleBeskeder = [];
@@ -564,7 +794,7 @@ function visBeskeder(data){
 
   data.forEach(r => {
     if(r.beboer === 'Personale'){
-      personaleBeskeder.push(r.besked);
+      personaleBeskeder.push({ id: r.id, tekst: r.besked, filNavn: r.fil_sti ? (r.fil_navn || 'Vedhæftet fil') : null });
       return;
     }
     if(!grupper[r.beboer]) grupper[r.beboer] = [];
@@ -593,7 +823,7 @@ function visBeskeder(data){
         ? '<span class="afsender"> &middot; ' + escapeHtml(item.afsender) + '</span>'
         : '';
 
-      return '<li class="listepunkt' + (ekstraKlasse ? ' ' + ekstraKlasse : '') + '">' +
+      return '<li class="listepunkt' + (ekstraKlasse ? ' ' + ekstraKlasse : '') + (item.fil_sti ? ' harFil' : '') + '">' +
         '<span class="klokkeslæt">' + escapeHtml(label) + '</span>' +
         '<span class="tekst">' + escapeHtml(item.besked) + afsender + '</span>' +
         flag +
@@ -604,16 +834,34 @@ function visBeskeder(data){
       '<span class="beboer-tag ' + beboer.toLowerCase() + '">' + beboer.toUpperCase() + '</span>' +
       '<ul>' + liHtml + '</ul>';
 
+    // Filknapperne sættes på med DOM-metoder (li'erne står i samme rækkefølge som items).
+    const lier = kolonne.querySelectorAll('li');
+    items.forEach((item, i) => {
+      if(!item.fil_sti) return;
+      const række = document.createElement('div');
+      række.className = 'filRække';
+      række.appendChild(lavFilKnap(item.id, item.fil_navn || 'Vedhæftet fil'));
+      lier[i].appendChild(række);
+    });
+
     container.appendChild(kolonne);
   }
 
   const bjælke = document.getElementById('personaleBjælke');
   if(personaleBeskeder.length > 0){
     bjælke.style.display = 'block';
-    document.getElementById('personaleBjælkeTekst').textContent = personaleBeskeder[0];
-    personaleIndex = 0;
+    // Bliv på den besked bjælken viste, hvis den stadig findes
+    let nytIndex = personaleBeskeder.findIndex(b => b.id === foregåendePersonaleId);
+    personaleIndex = nytIndex >= 0 ? nytIndex : 0;
+    visPersonaleBjælke();
   } else {
     bjælke.style.display = 'none';
+    document.getElementById('personaleFilKnap').hidden = true;
+  }
+
+  if(fokusId){
+    const gen = synligeFilKnapper().find(k => k.dataset.beskedId === fokusId);
+    if(gen) gen.focus({ preventScroll: true });
   }
 
   tilpasAlleKolonner('beskederContainer');
@@ -1131,7 +1379,23 @@ function minutterNu(){
   return nu.getHours() * 60 + nu.getMinutes();
 }
 
+// Står rotationen stille fordi nogen navigerer til en filknap? Når der har været
+// ro i FIL_PAUSE_MS, slippes fokus, og fanen får en frisk visningstid i stedet
+// for at skifte med det samme.
+function filPauseAktiv(){
+  if(filPauseIndtil === 0) return false;
+  if(Date.now() < filPauseIndtil) return true;
+  filPauseIndtil = 0;
+  const fokuseret = document.activeElement;
+  if(fokuseret && fokuseret.classList && fokuseret.classList.contains('filKnap')) fokuseret.blur();
+  sidsteNormaltSkift = Date.now();
+  faseStart = Date.now();
+  return false;
+}
+
 function tjekRotation(){
+  if(filPauseAktiv()) return;
+
   const minutter = minutterNu();
   const erMorgen = minutter >= 540 && minutter < 555;
   const erAften = minutter >= 1230 && minutter < 1290;
@@ -1189,9 +1453,10 @@ function opdaterUr(){
 
 function rotérPersonaleBjælke(){
   if(personaleBeskeder.length < 2) return;
+  // Står fokus på bjælkens filknap, skifter beskeden ikke under fingrene på brugeren.
+  if(document.activeElement === document.getElementById('personaleFilKnap')) return;
   personaleIndex = (personaleIndex + 1) % personaleBeskeder.length;
-  document.getElementById('personaleBjælkeTekst').textContent =
-    personaleBeskeder[personaleIndex];
+  visPersonaleBjælke();
 }
 
 // ---- INITIALISER ----
