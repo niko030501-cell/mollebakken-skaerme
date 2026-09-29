@@ -66,7 +66,7 @@
     min-height:100vh;
     background:var(--baggrund);
     position:relative;
-    padding-bottom:70px;
+    padding-bottom:calc(72px + env(safe-area-inset-bottom));   /* plads til bundmenuen (+ iPhones hjemmebar) */
   }
 
   @media (min-width:600px){
@@ -146,24 +146,26 @@
     background:none;
     color:#c9d6d3;
     padding:8px 2px;
-    font-size:9px;
+    min-height:56px;   /* trykflade > 44 px */
+    font-size:11px;
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:2px;
+    justify-content:center;
+    gap:3px;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
   }
 
-  #bundNav button .ikon{ font-size:16px; }
+  #bundNav button .ikon{ display:inline-flex; }
 
-  #bundNav button.aktivFane{ color:var(--guld-lys); }
+  /* Aktiv fane = nu-block: kontrasten vendes om for ikon OG tekst sammen (begge bruger currentColor) */
+  #bundNav button.aktivFane{ color:var(--guld-lys); background:var(--blaek); }
 
   #bundNav .skjultPaaForside,
   #bundNav .skjultPaaValg{ display:flex; }
 
-  body.paaForside #bundNav,
   body.paaValg #bundNav{ display:none; }
 
   @media (min-width:900px){
@@ -180,9 +182,9 @@
       justify-content:flex-start;
       gap:10px;
       padding:12px 20px;
+      min-height:0;
       font-size:13px;
     }
-    body.paaForside #bundNav,
     body.paaValg #bundNav{ display:flex; }
   }
 
@@ -237,44 +239,63 @@
 
   /* ---- Forside ---- */
 
-  .kortGrid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:14px;
-  }
-
-  .featureKort{
-    background:var(--kort);
-    border-radius:14px;
-    padding:20px 14px;
-    text-align:center;
-    box-shadow:0 4px 14px rgba(30,57,55,.08);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:8px;
-  }
-
-  .featureKort .ikon{ font-size:30px; }
-  .featureKort .titel{ font-weight:600; font-size:13px; }
+  #forside{ padding:28px 20px 32px; }
+  .fsHoved{ margin:0 0 24px; }
+  .fsUgedag{ font-size:15px; font-weight:600; color:var(--tekst-svag); }
+  .fsDato{ font-family:'Fraunces', serif; font-size:40px; line-height:1.1; margin:2px 0 0; color:var(--mørk); }
+  .fsGrid{ display:grid; grid-template-columns:1fr; gap:16px; }
+  .fsKort{ background:var(--kort); border:1px solid #e1e7e4; border-radius:12px; padding:22px; min-width:0; }
+  .fsKort[hidden]{ display:none; }
+  .fsKort.bred{ grid-column:1 / -1; }
+  .fsTitel{ font-family:'Fraunces', serif; font-size:22px; line-height:1.2; margin:0 0 14px; color:var(--mørk); }
+  .fsTitelRække{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .fsTitelRække .fsTitel{ margin:0; }
+  .fsMaerke{ background:var(--guld); color:var(--mørk); font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .fsMaerke[hidden]{ display:none; }
+  .fsTom, .fsFejl{ font-size:16px; color:var(--tekst-svag); padding:4px 0; }
+  .fsFejl{ color:#991b1b; }
+  .fsPerson{ padding:10px 0; border-top:1px solid #edf1ef; }
+  .fsPerson:first-child{ border-top:none; padding-top:0; }
+  .fsNavn{ font-size:17px; font-weight:600; }
+  .fsMeta{ font-size:14px; color:var(--tekst-svag); }
+  .fsRække{ display:flex; gap:14px; padding:12px 0; border-top:1px solid #edf1ef; align-items:flex-start; }
+  .fsRække:first-child{ border-top:none; padding-top:0; }
+  .fsIkon{ display:inline-flex; color:var(--tekst-svag); flex-shrink:0; margin-top:1px; }
+  .fsTekst{ min-width:0; }
+  .fsLabel{ font-size:13px; color:var(--tekst-svag); }
+  .fsVærdi{ font-size:17px; line-height:1.4; overflow-wrap:anywhere; }
+  .fsEkstra{ font-size:14px; color:var(--tekst-svag); line-height:1.4; margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .fsBesked{ padding:14px 0; border-top:1px solid #edf1ef; }
+  .fsBesked:first-child{ border-top:none; padding-top:0; }
+  .fsBesked.rød{ border-left:3px solid var(--rød); padding-left:12px; }
+  .fsBesked.gul{ border-left:3px solid var(--guld); padding-left:12px; }
+  .fsBeskedTop{ display:flex; align-items:center; gap:10px; margin-bottom:6px; flex-wrap:wrap; }
+  .fsChip{ display:inline-block; color:#fff; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:3px 9px; border-radius:4px; }
+  .fsBeskedTekst{ font-size:17px; line-height:1.5; overflow-wrap:anywhere; }
+  .fsFil{ display:inline-flex; align-items:center; gap:8px; margin-top:10px; max-width:100%; background:transparent; color:var(--mørk); border:1.5px solid var(--mørk); border-radius:8px; padding:8px 14px; font-size:15px; font-weight:600; min-height:40px; }
+  .fsFil span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fsFil:hover, .fsFil:focus{ background:var(--mørk); color:var(--guld-lys); }
+  .fsGenveje{ display:flex; gap:12px; flex-wrap:wrap; margin-top:24px; }
+  .fsGenveje[hidden]{ display:none; }
+  .fsKnap{ display:inline-flex; align-items:center; gap:8px; min-height:46px; padding:12px 22px; border-radius:10px; font-size:16px; font-weight:600; background:transparent; color:var(--mørk); border:1.5px solid var(--mørk); }
+  .fsKnap.primaer{ background:var(--guld); border-color:var(--guld); }
+  .fsKnap span[data-ikon]{ margin-right:0; }
 
   /* Alt herunder er dimensioneret til en telefonskærm (max ~480px). I
      sidemenu-layoutet (≥900px, se ovenfor) er indholdskolonnen derimod op
      til ~830px bred, så uden en øvre grænse strækker formularer, knapper
      og dropdowns sig ud over hele bredden og ser forkert store/spinkle ud.
      Kapper derfor kort/formularer til en læselig bredde, og lader
-     forsidens kortgrid folde til flere kolonner i stedet for at strække
-     de to faste kolonner. */
+     forsidens kort ligge i to kolonner. */
   @media (min-width:900px){
     .side > .kort,
     .side > .modeVælger,
     .side > .kommerSnart{
       max-width:600px;
     }
-    .kortGrid{
-      grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
-      max-width:700px;
-    }
+    #forside{ padding:40px 40px 48px; }
+    .fsDato{ font-size:48px; }
+    .fsGrid{ grid-template-columns:1fr 1fr; }
   }
 
   /* ---- Generelle kort/formularer ---- */
@@ -329,6 +350,15 @@
   .knapLille{ padding:5px 10px; font-size:11px; border-radius:6px; }
 
   .knapFare{ background:var(--rød); color:white; }
+
+  /* Ikoner (shared/ikoner.js): indsættes i span[data-ikon] via indsætIkoner(). Ikon + tekst i samme knap
+     får lidt luft; ikon alene (.alene, sættes automatisk) og faste .ikon-pladser får ingen. */
+  span[data-ikon], .ikonSpan{ display:inline-flex; vertical-align:middle; margin-right:.4em; }
+  span[data-ikon].alene, .ikon[data-ikon]{ margin-right:0; }
+  .farvePrik{ display:inline-block; width:18px; height:18px; border-radius:50%; vertical-align:middle; }
+  .farvePrik.rød{ background:#ef4444; }
+  .farvePrik.gul{ background:#f59e0b; }
+  .farvePrik.grøn{ background:#22c55e; }
 
   /* ---- P-møde: leder-godkendelse — store knapper, tælefon-venligt ---- */
   .moedeAfventerKort{ margin-bottom:12px; }
@@ -534,7 +564,7 @@
     padding:60px 20px;
     color:var(--tekst-svag);
   }
-  .kommerSnart .ikon{ font-size:40px; margin-bottom:12px; }
+  .kommerSnart .ikon{ display:inline-flex; margin-bottom:12px; }
 
   /* ---- Personalemøde ---- */
 
@@ -562,6 +592,57 @@
   .hlBadge.opgave{ background:var(--guld); color:var(--mørk); }
   .hlBadge.info{ background:var(--hl-info); }
   .hlBadge.til_naeste{ background:var(--brand); }
+
+  /* ---- Mobil: "Mere"-ark (bottom sheet) og bundmenu med 5 pladser ---- */
+
+  #bundNav button#navMere{ display:none; }
+  #mereBaggrund{ position:fixed; inset:0; background:rgba(22,33,31,.45); z-index:1000; }
+  #mereArk{
+    position:fixed; left:0; right:0; bottom:0; margin:0 auto; max-width:480px;
+    background:var(--kort); border-radius:16px 16px 0 0;
+    padding:8px 16px calc(16px + env(safe-area-inset-bottom)) 16px;
+    z-index:1001; max-height:80vh; overflow-y:auto;
+    animation:mereOp .18s ease-out;
+  }
+  #mereArk[hidden], #mereBaggrund[hidden]{ display:none; }
+  @keyframes mereOp{ from{ transform:translateY(24px); opacity:0; } to{ transform:none; opacity:1; } }
+  @media (prefers-reduced-motion:reduce){ #mereArk{ animation:none; } }
+  .mereHoved{ display:flex; align-items:center; justify-content:space-between; padding:8px 0 6px; }
+  .mereHoved h3{ margin:0; font-size:20px; }
+  #mereLuk{ background:none; color:var(--mørk); min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; }
+  .mereRække{
+    display:flex; align-items:center; gap:14px; width:100%; min-height:56px;
+    background:none; color:var(--mørk); font-size:17px; font-weight:600; text-align:left;
+    padding:10px 12px; border-radius:10px;
+  }
+  .mereRække + .mereRække{ margin-top:2px; }
+  .mereRække.aktiv{ background:var(--blaek); color:var(--guld-lys); }   /* nu-block: ikon og tekst vendes om sammen */
+
+  @media (min-width:600px){ #mereArk{ max-width:560px; } }
+
+  @media (max-width:899px){
+    #bundNav button.mereFane{ display:none; }
+    #bundNav button#navMere{ display:flex; }
+
+    /* Brødtekst: mindst 16 px og god linjeafstand. Mange dybere formularer har faste 11–13 px-størrelser, som ikke er rørt. */
+    body{ font-size:16px; line-height:1.5; }
+    .knap{ font-size:14px; }
+    .knapLille{ font-size:13px; }
+    .beskedMeta{ font-size:12px; }
+    .formRække label{ font-size:13px; }
+  }
+
+  /* Liggende telefon: bundmenuen skal ikke æde skærmen — kun ikoner, lavere trykflade (44 px) */
+  @media (max-width:899px) and (max-height:500px) and (orientation:landscape){
+    #bundNav button{ font-size:0; gap:0; min-height:44px; padding:6px 2px; }
+    #app{ padding-bottom:calc(52px + env(safe-area-inset-bottom)); }
+  }
+  /* Bred, men lav skærm (fx iPhone i landskab): lad sidebaren fylde mindre */
+  @media (min-width:900px) and (max-height:600px){
+    #bundNav{ padding:8px 0; }
+    #bundNav button{ padding:8px 20px; }
+  }
+  @media (min-width:900px){ #mereArk, #mereBaggrund{ display:none !important; } }
 </style>
 </head>
 
@@ -577,11 +658,12 @@
 </script>
 
 <script src="supabase-js.min.js"></script>
+<script src="../shared/ikoner.js"></script>
 
 <div id="app">
 
   <div id="topbar">
-    <button id="tilbageKnap" onclick="visSide('forside')">←</button>
+    <button id="tilbageKnap" onclick="visSide('forside')" aria-label="Tilbage"><span data-ikon="tilbage"></span></button>
     <h1 id="topbarTitel">Møllebakken</h1>
   </div>
 
@@ -599,15 +681,35 @@
 
   <!-- ============ FORSIDE ============ -->
   <div id="forside" class="side">
-    <h2 style="margin-top:0;">Forside</h2>
-    <div class="kortGrid" id="forsideKort"></div>
+    <div class="fsHoved">
+      <div class="fsUgedag" id="fsUgedag"></div>
+      <h2 class="fsDato" id="fsDato"></h2>
+    </div>
+    <div class="fsGrid">
+      <section class="fsKort">
+        <h3 class="fsTitel">På vagt nu</h3>
+        <div id="fsVagtIndhold"><div class="fsTom">Henter …</div></div>
+      </section>
+      <section class="fsKort" id="fsKortIdag">
+        <h3 class="fsTitel">I dag</h3>
+        <div id="fsIdagIndhold"><div class="fsTom">Henter …</div></div>
+      </section>
+      <section class="fsKort bred" id="fsKortBeskeder">
+        <div class="fsTitelRække"><h3 class="fsTitel">Seneste beskeder</h3><span class="fsMaerke" id="fsBeskedMaerke" hidden></span></div>
+        <div id="fsBeskedIndhold"><div class="fsTom">Henter …</div></div>
+      </section>
+    </div>
+    <div class="fsGenveje" id="fsGenveje">
+      <button type="button" class="fsKnap primaer" onclick="åbnSkrivBesked()"><span data-ikon="besked"></span>Skriv besked</button>
+      <button type="button" class="fsKnap" onclick="åbnNyOpgave()"><span data-ikon="plus"></span>Ny opgave</button>
+    </div>
   </div>
 
   <!-- ============ OPGAVER (Besked & opgaver) ============ -->
   <div id="opgaver" class="side">
     <select class="modeVælger" id="opgaverMode" onchange="visOpgaverMode()">
-      <option value="besked">📝 Besked</option>
-      <option value="dagsplan">📋 Dagsplan</option>
+      <option value="besked">Besked</option>
+      <option value="dagsplan">Dagsplan</option>
       <!-- Afkrydsning og Overlap midlertidigt skjult — funktionen bruges
            ikke rigtigt endnu. Koden herunder er urørt, så det er nemt at
            slå til igen: tilføj options her og se visOpgaverMode(). -->
@@ -642,7 +744,7 @@
                  accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                  onchange="beskedFilValgt(this)">
           <div>
-            <button type="button" class="knap knapGuld" id="beskedFilKnap" onclick="document.getElementById('beskedFil').click()">📎 Vedhæft fil</button>
+            <button type="button" class="knap knapGuld" id="beskedFilKnap" onclick="document.getElementById('beskedFil').click()"><span data-ikon="vedhaeftning"></span>Vedhæft fil</button>
           </div>
           <div id="beskedFilValgt" class="beskedFilValgt" style="display:none;">
             <span id="beskedFilNavn"></span>
@@ -701,9 +803,9 @@
 
     <div id="opgaverOverlap" style="display:none;">
       <select class="modeVælger" id="overlapMode" onchange="visOverlapMode()">
-        <option value="farver">🚦 Farver</option>
-        <option value="journal">📓 Journal</option>
-        <option value="tjekliste">📋 Tjekliste</option>
+        <option value="farver">Farver</option>
+        <option value="journal">Journal</option>
+        <option value="tjekliste">Tjekliste</option>
       </select>
 
       <div id="overlapDøgnvagtVisning" class="kort" style="text-align:center; font-size:13px;"></div>
@@ -735,8 +837,8 @@
   <!-- ============ PROGRAM (Mad & aktivitet) ============ -->
   <div id="program" class="side">
     <select class="modeVælger" id="programMode" onchange="visProgramMode()">
-      <option value="madplan">🍽️ Madplan</option>
-      <option value="aktivitet">🎯 Aktivitet</option>
+      <option value="madplan">Madplan</option>
+      <option value="aktivitet">Aktivitet</option>
     </select>
 
     <div id="programMadplan">
@@ -759,7 +861,7 @@
   <!-- ============ LA2-PLANER ============ -->
   <div id="la2" class="side">
     <div class="kommerSnart">
-      <div class="ikon">📘</div>
+      <div class="ikon" data-ikon="la2" data-storrelse="40"></div>
       LA2-planer kommer i næste del af opbygningen.
     </div>
   </div>
@@ -787,8 +889,8 @@
   <!-- ============ §104 ============ -->
   <div id="paragraf104" class="side">
     <select class="modeVælger" id="p104Mode" onchange="visP104Mode()">
-      <option value="ny">➕ Ny idé</option>
-      <option value="liste">📋 Idéer</option>
+      <option value="ny">Ny idé</option>
+      <option value="liste">Idéer</option>
     </select>
 
     <div id="p104Ny">
@@ -828,9 +930,9 @@
   <!-- ============ PERSONALEMØDE ============ -->
   <div id="personalemoede" class="side">
     <select class="modeVælger" id="moedeMode" onchange="visMoedeMode()">
-      <option value="indsend">📝 Indsend punkt</option>
-      <option value="referater">📋 Referater</option>
-      <option value="leder">🔑 Leder</option>
+      <option value="indsend">Indsend punkt</option>
+      <option value="referater">Referater</option>
+      <option value="leder">Leder</option>
     </select>
 
     <div id="moedeIndsend">
@@ -923,15 +1025,26 @@
   </div>
 
   <div id="bundNav">
-    <button class="skjultPaaValg" id="navForside" onclick="visSide('forside')"><span class="ikon">🏠</span>Forside</button>
-    <button class="skjultPaaForside skjultPaaValg" id="navOpgaver" onclick="visSide('opgaver')"><span class="ikon">📝</span>Opgaver</button>
-    <button class="skjultPaaForside skjultPaaValg" id="navProgram" onclick="visSide('program')"><span class="ikon">🍽️</span>Mad/akt.</button>
-    <button class="skjultPaaForside skjultPaaValg" id="navLa2" onclick="visSide('la2')"><span class="ikon">📘</span>LA2</button>
-    <button class="skjultPaaForside skjultPaaValg" id="navSammenMed" onclick="visSide('sammenMed')"><span class="ikon">🤝</span>Med</button>
-    <button class="skjultPaaForside skjultPaaValg" id="navRengoring" onclick="visSide('rengoring')"><span class="ikon">🧹</span>Rengøring</button>
-    <button class="skjultPaaForside skjultPaaValg" id="navP104" onclick="visSide('paragraf104')"><span class="ikon">💡</span>§104</button>
-    <button class="skjultPaaForside skjultPaaValg" id="navPersonalemoede" onclick="visSide('personalemoede')"><span class="ikon">🗣️</span>P-møde</button>
-    <button class="skjultPaaForside skjultPaaValg" id="navSkaerm" onclick="visSide('skaerm')"><span class="ikon">📺</span>Skærm</button>
+    <button class="skjultPaaValg" id="navForside" onclick="visSide('forside')"><span class="ikon" data-ikon="forside" data-storrelse="20"></span>Forside</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navOpgaver" onclick="visSide('opgaver')"><span class="ikon" data-ikon="opgaver" data-storrelse="20"></span>Opgaver</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navProgram" onclick="visSide('program')"><span class="ikon" data-ikon="mad" data-storrelse="20"></span>Mad</button>
+    <button class="skjultPaaForside skjultPaaValg mereFane" id="navLa2" onclick="visSide('la2')"><span class="ikon" data-ikon="la2" data-storrelse="20"></span>LA2</button>
+    <button class="skjultPaaForside skjultPaaValg mereFane" id="navSammenMed" onclick="visSide('sammenMed')"><span class="ikon" data-ikon="med" data-storrelse="20"></span>Med</button>
+    <button class="skjultPaaForside skjultPaaValg" id="navRengoring" onclick="visSide('rengoring')"><span class="ikon" data-ikon="rengoering" data-storrelse="20"></span>Rengøring</button>
+    <button class="skjultPaaForside skjultPaaValg mereFane" id="navP104" onclick="visSide('paragraf104')"><span class="ikon" data-ikon="p104" data-storrelse="20"></span>§104</button>
+    <button class="skjultPaaForside skjultPaaValg mereFane" id="navPersonalemoede" onclick="visSide('personalemoede')"><span class="ikon" data-ikon="pmoede" data-storrelse="20"></span>P-møde</button>
+    <button class="skjultPaaForside skjultPaaValg mereFane" id="navSkaerm" onclick="visSide('skaerm')"><span class="ikon" data-ikon="skaerm" data-storrelse="20"></span>Skærm</button>
+    <button class="skjultPaaValg" id="navMere" onclick="åbnMereArk()" aria-haspopup="dialog" aria-expanded="false"><span class="ikon" data-ikon="mere" data-storrelse="20"></span>Mere</button>
+  </div>
+
+  <!-- "Mere"-ark (mobil): de faner der ikke er plads til i bundmenuen. Fyldes af tegnMereArk(). -->
+  <div id="mereBaggrund" onclick="lukMereArk(true)" hidden></div>
+  <div id="mereArk" role="dialog" aria-modal="true" aria-label="Flere faner" hidden>
+    <div class="mereHoved">
+      <h3>Flere faner</h3>
+      <button type="button" id="mereLuk" onclick="lukMereArk(true)" aria-label="Luk"><span data-ikon="luk" data-storrelse="24"></span></button>
+    </div>
+    <div id="mereListe"></div>
   </div>
 
 </div>
@@ -943,6 +1056,17 @@
 // ==================================================================
 // SUPABASE-KLIENT (defensiv init, se personaletavle-v2 for baggrund)
 // ==================================================================
+
+// Ikoner kommer fra ../shared/ikoner.js. Mangler filen (fx offline første gang), får
+// appen tomme ikoner i stedet for at gå i stå.
+if(typeof moelleIkon !== 'function'){
+  window.moelleIkon = function(){
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '20');
+    svg.setAttribute('height', '20');
+    return svg;
+  };
+}
 
 let sb = null;
 try {
@@ -971,6 +1095,31 @@ function escapeHtml(str){
   d.textContent = str == null ? '' : str;
   return d.innerHTML;
 }
+
+// Ikoner (shared/ikoner.js). HTML-strenge indeholder kun en tom pladsholder
+// <span data-ikon="navn"></span> — selve SVG'en bygges her med DOM-metoder.
+// Kaldes på en container efter at dens innerHTML er sat. Sikker at kalde flere gange.
+function indsætIkoner(rod){
+  (rod || document).querySelectorAll('[data-ikon]').forEach(function(el){
+    if(el.dataset.ikonSat) return;
+    el.dataset.ikonSat = '1';
+    el.appendChild(moelleIkon(el.dataset.ikon, { stoerrelse: Number(el.dataset.storrelse) || 20 }));
+    // Står ikonet alene i sin knap, får det ingen afstand til (ikke-eksisterende) tekst
+    if(el.tagName === 'SPAN' && el.parentNode && el.parentNode.textContent.trim() === '') el.classList.add('alene');
+  });
+}
+
+// Sætter en knap/etiket til ikon + tekst (bruges når teksten skifter i JS)
+function sætIkonOgTekst(el, ikonNavn, tekst){
+  el.textContent = '';
+  const pladsholder = document.createElement('span');
+  pladsholder.className = 'ikonSpan';
+  pladsholder.appendChild(moelleIkon(ikonNavn, { stoerrelse: 18 }));
+  el.appendChild(pladsholder);
+  el.appendChild(document.createTextNode(tekst));
+}
+
+indsætIkoner(document);
 
 const UGEDAGE = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
 
@@ -1049,6 +1198,8 @@ function visSide(side){
   document.querySelectorAll('#bundNav button').forEach(b => b.classList.remove('aktivFane'));
   const navId = navKnapPerSide[side];
   if(navId) document.getElementById(navId).classList.add('aktivFane');
+  opdaterMereAktiv(side);
+  lukMereArk(false);
 
   aktuelSide = side;
 
@@ -1071,6 +1222,67 @@ function gåTilForside(){
   visSide('forside');
 }
 
+// ---- "Mere"-ark (mobil) ----
+// Bundmenuen har plads til 5: Forside, Opgaver, Mad, Rengøring og Mere. Resten ligger her.
+// Faner der er slået fra i Admin, vises ikke (samme filter som resten af menuen).
+
+const MERE_FANER = [
+  { side: 'sammenMed',      fane: 'sammenMed',      ikon: 'med',    titel: 'Hvem er du med' },
+  { side: 'la2',            fane: 'la2',            ikon: 'la2',    titel: 'LA2-planer' },
+  { side: 'paragraf104',    fane: 'paragraf104',    ikon: 'p104',   titel: '§104' },
+  { side: 'personalemoede', fane: 'personalemoede', ikon: 'pmoede', titel: 'Personalemøde' },
+  { side: 'skaerm',         fane: 'skaerm',         ikon: 'skaerm', titel: 'Beboerskærm' }
+];
+let mereFokusFør = null;
+
+function tegnMereArk(aktivSide){
+  aktivSide = aktivSide || aktuelSide;
+  const liste = document.getElementById('mereListe');
+  liste.textContent = '';
+  let antal = 0;
+  MERE_FANER.forEach(f => {
+    if(!fsFaneTilladt(f.fane)) return;
+    antal++;
+    const knap = document.createElement('button');
+    knap.type = 'button';
+    knap.className = 'mereRække' + (aktivSide === f.side ? ' aktiv' : '');
+    knap.appendChild(moelleIkon(f.ikon, { stoerrelse: 24 }));
+    const tekst = document.createElement('span');
+    tekst.textContent = f.titel;
+    knap.appendChild(tekst);
+    knap.addEventListener('click', () => visSide(f.side));   // visSide lukker arket
+    liste.appendChild(knap);
+  });
+  // Er alle fanerne under Mere slået fra, skjules Mere-knappen helt
+  document.getElementById('navMere').style.display = antal === 0 ? 'none' : '';
+}
+
+function opdaterMereAktiv(side){
+  const iMere = MERE_FANER.some(f => f.side === side);
+  document.getElementById('navMere').classList.toggle('aktivFane', iMere);
+  tegnMereArk(side);
+}
+
+function åbnMereArk(){
+  mereFokusFør = document.activeElement;
+  document.getElementById('mereBaggrund').hidden = false;
+  document.getElementById('mereArk').hidden = false;
+  document.getElementById('navMere').setAttribute('aria-expanded', 'true');
+  document.getElementById('mereLuk').focus();
+}
+
+function lukMereArk(gendanFokus){
+  const ark = document.getElementById('mereArk');
+  if(!ark || ark.hidden) return;
+  ark.hidden = true;
+  document.getElementById('mereBaggrund').hidden = true;
+  document.getElementById('navMere').setAttribute('aria-expanded', 'false');
+  if(gendanFokus && mereFokusFør && mereFokusFør.focus) mereFokusFør.focus();
+  mereFokusFør = null;
+}
+
+document.addEventListener('keydown', e => { if(e.key === 'Escape') lukMereArk(true); });
+
 function visAdminKodeBoks(){
   document.getElementById('adminKodeBoks').style.display = 'block';
 }
@@ -1086,52 +1298,352 @@ function tjekAdminKode(){
 }
 
 // ==================================================================
-// FORSIDE — 6 feature-kort, filtreret af Indstillinger
+// FORSIDE — "i dag"-overblik
 // ==================================================================
+// Kortene genbruger appens egne hent-funktioner (hentBeskederData,
+// hentRengoringData, hentMadplanUge, hentAktiviteterUge, samlVagterPrNavn-
+// reglerne osv.) — ingen hentelogik er duplikeret. Hvert kort henter og
+// tegner sig selv, så ét kort der fejler ikke tager de andre med. Almindelig
+// 60-sekunders polling (kun mens forsiden er synlig), og et kort tegnes kun
+// om når dets data faktisk er ændret — så intet flimrer.
 
-const FEATURE_KORT = [
-  { fane: 'opgaver',     ikon: '📝', titel: 'Besked & opgaver', side: 'opgaver' },
-  { fane: 'program',     ikon: '🍽️', titel: 'Mad & aktivitet',  side: 'program' },
-  { fane: 'la2',         ikon: '📘', titel: 'LA2-planer',       side: 'la2' },
-  { fane: 'sammenMed',   ikon: '🤝', titel: 'Hvem er du med',   side: 'sammenMed' },
-  { fane: 'rengøring',   ikon: '🧹', titel: 'Rengøring',        side: 'rengoring' },
-  { fane: 'paragraf104', ikon: '💡', titel: '§104',             side: 'paragraf104' },
-  { fane: 'personalemoede', ikon: '🗣️', titel: 'Personalemøde', side: 'personalemoede' },
-  { fane: 'skaerm',      ikon: '📺', titel: 'Beboerskærm',      side: 'skaerm' }
-];
+const FS_MÅNEDER = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
+const FS_UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
 
 let indstillingerCache = {};
-
-async function tegnForside(){
-  if(!sb) return;
-  const { data, error } = await sb.from('indstillinger').select('*');
-  if(error){ console.error('Fejl indstillinger:', error); return; }
-
-  indstillingerCache = {};
-  (data || []).forEach(r => { indstillingerCache[r.fane] = r.aktiv; });
-
-  const container = document.getElementById('forsideKort');
-  container.innerHTML = FEATURE_KORT
-    .filter(k => indstillingerCache[k.fane] !== false)
-    .map(k => `
-      <div class="featureKort" onclick="visSide('${k.side}')">
-        <div class="ikon">${k.ikon}</div>
-        <div class="titel">${k.titel}</div>
-      </div>
-    `).join('');
-
-  opdaterBundNavSynlighed();
-}
+let fsSignaturer = {};   // kort-id -> signatur for det der står tegnet nu
+let fsInterval = null;
+let fsHenter = false;
 
 // Skjuler bundmenu-knapper for faner der er slået fra i Admin — samme
-// filtrering som forsidens kort, så en slukket fane ikke stadig kan
-// tilgås via bundmenuen.
+// filtrering som forsidens genveje og kort, så en slukket fane ikke stadig
+// kan tilgås via menuen.
+const FEATURE_KORT = [
+  { fane: 'opgaver',        side: 'opgaver' },
+  { fane: 'program',        side: 'program' },
+  { fane: 'la2',            side: 'la2' },
+  { fane: 'sammenMed',      side: 'sammenMed' },
+  { fane: 'rengøring',      side: 'rengoring' },
+  { fane: 'paragraf104',    side: 'paragraf104' },
+  { fane: 'personalemoede', side: 'personalemoede' },
+  { fane: 'skaerm',         side: 'skaerm' }
+];
+
+function fsFaneTilladt(fane){
+  return indstillingerCache[fane] !== false;
+}
+
 function opdaterBundNavSynlighed(){
   FEATURE_KORT.forEach(k => {
     const knapId = navKnapPerSide[k.side];
     const knap = knapId ? document.getElementById(knapId) : null;
-    if(knap) knap.style.display = indstillingerCache[k.fane] === false ? 'none' : '';
+    if(knap) knap.style.display = fsFaneTilladt(k.fane) ? '' : 'none';
   });
+  tegnMereArk();
+}
+
+function fsLav(tag, klasse, tekst){
+  const e = document.createElement(tag);
+  if(klasse) e.className = klasse;
+  if(tekst != null) e.textContent = tekst;
+  return e;
+}
+
+function opdaterForsideHoved(){
+  const nu = new Date();
+  document.getElementById('fsUgedag').textContent = FS_UGEDAGE[nu.getDay()];
+  document.getElementById('fsDato').textContent = nu.getDate() + '. ' + FS_MÅNEDER[nu.getMonth()];
+}
+
+// Tegner kortets indhold om — men kun hvis signaturen er ændret siden sidst.
+function fsTegn(id, signatur, bygIndhold){
+  if(fsSignaturer[id] === signatur) return;
+  fsSignaturer[id] = signatur;
+  const rod = document.getElementById(id);
+  rod.textContent = '';
+  rod.appendChild(bygIndhold());
+}
+
+// Fejl på ét kort: står der allerede indhold, beholdes det (næste opdatering
+// prøver igen). Er kortet endnu ikke tegnet, vises en almindelig fejltekst.
+function fsFejl(id, tekst, fejl){
+  console.error('Forside (' + id + '):', fejl);
+  if(fsSignaturer[id] !== undefined && fsSignaturer[id] !== 'fejl') return;
+  fsSignaturer[id] = 'fejl';
+  const rod = document.getElementById(id);
+  rod.textContent = '';
+  rod.appendChild(fsLav('div', 'fsFejl', tekst));
+}
+
+function fsRække(ikonNavn, label, værdi, ekstra){
+  const række = fsLav('div', 'fsRække');
+  const ikon = fsLav('span', 'fsIkon');
+  ikon.appendChild(moelleIkon(ikonNavn, { stoerrelse: 22 }));
+  const tekst = fsLav('div', 'fsTekst');
+  tekst.appendChild(fsLav('div', 'fsLabel', label));
+  tekst.appendChild(fsLav('div', 'fsVærdi', værdi));
+  if(ekstra) tekst.appendChild(fsLav('div', 'fsEkstra', ekstra));
+  række.appendChild(ikon);
+  række.appendChild(tekst);
+  return række;
+}
+
+// ---------- På vagt nu ----------
+// Workfeed splitter døgn-/nattevagter ved midnat i to rækker. Vi henter i går,
+// i dag og i morgen, sætter sammenhængende rækker for samme navn sammen til én
+// blok, og viser dem hvis blok indeholder "nu" (browserens lokale tid).
+// Visningsnavn via SK_ROLLE (Rådighedsvagt → Døgnvagt).
+
+const FS_ROLLE_RÆKKEFØLGE = ['Døgnvagt', 'Nattevagt', 'Medarbejder', 'Leder', 'Medicinvagt', 'Køkken'];
+
+function fsFindPåVagtNu(rækker, nu){
+  const perNavn = new Map();
+  rækker.forEach(r => {
+    if(!perNavn.has(r.navn)) perNavn.set(r.navn, []);
+    perNavn.get(r.navn).push({ rolle: r.rolle, start: new Date(r.start), slut: new Date(r.slut) });
+  });
+
+  const resultat = [];
+  perNavn.forEach((vagter, navn) => {
+    vagter.sort((a, b) => a.start - b.start);
+    let blok = null;
+    const blokke = [];
+    vagter.forEach(v => {
+      if(blok && v.start.getTime() <= blok.slut.getTime() + 60000){
+        if(v.slut > blok.slut) blok.slut = v.slut;
+      } else {
+        blok = { start: v.start, slut: v.slut, rolle: v.rolle };
+        blokke.push(blok);
+      }
+      if(v.start <= nu && nu < v.slut) blok.rolleNu = v.rolle;
+    });
+    blokke.forEach(b => {
+      if(b.start <= nu && nu < b.slut){
+        resultat.push({ navn: navn, rolle: SK_ROLLE[b.rolleNu || b.rolle] || b.rolleNu || b.rolle, slut: b.slut });
+      }
+    });
+  });
+
+  resultat.sort((a, b) => {
+    const ra = FS_ROLLE_RÆKKEFØLGE.indexOf(a.rolle);
+    const rb = FS_ROLLE_RÆKKEFØLGE.indexOf(b.rolle);
+    const forskel = (ra === -1 ? 99 : ra) - (rb === -1 ? 99 : rb);
+    return forskel !== 0 ? forskel : a.navn.localeCompare(b.navn, 'da');
+  });
+  return resultat;
+}
+
+async function fsVagtKort(){
+  try{
+    const { data, error } = await sb.from('personaleskaerm_vagter')
+      .select('navn,rolle,start,slut')
+      .in('dag', [skDagISO(-1), skDagISO(0), skDagISO(1)])
+      .order('start');
+    if(error) throw error;
+
+    const nu = new Date();
+    const påVagt = fsFindPåVagtNu(data || [], nu);
+    fsTegn('fsVagtIndhold', JSON.stringify(påVagt.map(p => [p.navn, p.rolle, p.slut.getTime()])), () => {
+      const boks = document.createElement('div');
+      if(påVagt.length === 0){
+        boks.appendChild(fsLav('div', 'fsTom', 'Ingen på vagt lige nu'));
+        return boks;
+      }
+      påVagt.forEach(p => {
+        const række = fsLav('div', 'fsPerson');
+        række.appendChild(fsLav('div', 'fsNavn', p.navn));
+        række.appendChild(fsLav('div', 'fsMeta', p.rolle + ' · ' + skUdloebTekst(p.slut)));
+        boks.appendChild(række);
+      });
+      return boks;
+    });
+  } catch(e){
+    fsFejl('fsVagtIndhold', 'Kunne ikke hente vagterne. Prøv igen om lidt.', e);
+  }
+}
+
+// ---------- I dag: mad, aktivitet, rengøring ----------
+
+async function fsIdagKort(){
+  const kort = document.getElementById('fsKortIdag');
+  const visMad = fsFaneTilladt('program');
+  const visRengoring = fsFaneTilladt('rengøring');
+  if(!visMad && !visRengoring){ kort.hidden = true; return; }
+  kort.hidden = false;
+
+  try{
+    const nu = new Date();
+    const dag = UGEDAGE[(nu.getDay() + 6) % 7];
+    const ugeStart = datoISO(effektivMandag(0));
+    const tomt = Promise.resolve(null);
+
+    const [madRes, aktRes, rengData] = await Promise.all([
+      visMad ? hentMadplanUge(ugeStart).catch(e => ({ error: e })) : tomt,
+      visMad ? hentAktiviteterUge(ugeStart).catch(e => ({ error: e })) : tomt,
+      visRengoring ? hentRengoringData().catch(e => ({ fejl: e })) : tomt
+    ]);
+
+    // Hvert felt får enten en værdi, en tom-tekst eller en fejltekst
+    function feltFra(res, felt){
+      if(res === null) return null;
+      if(res.error) return { fejl: true };
+      const række = (res.data || []).find(r => r.dag === dag);
+      return { tekst: række && række[felt] ? række[felt] : '' };
+    }
+    const mad = feltFra(madRes, 'ret');
+    const akt = feltFra(aktRes, 'aktivitet');
+
+    let rengøring = null;
+    if(rengData){
+      if(rengData.fejl){
+        rengøring = { fejl: true };
+      } else {
+        const opg = rengData.ugePerDag[rengData.aktuelUgedag];
+        rengøring = {
+          dagTekst: rengData.aktuelDatoISO === datoISO(nu) ? 'i dag' : 'i morgen',
+          navn: rengData.ansvarligPerDato[rengData.aktuelDatoISO] || '',
+          opgave: opg && opg.opgave ? opg.opgave : ''
+        };
+      }
+    }
+
+    fsTegn('fsIdagIndhold', JSON.stringify([dag, mad, akt, rengøring]), () => {
+      const boks = document.createElement('div');
+      function feltRække(ikon, label, felt, tomTekst){
+        if(felt === null) return;
+        if(felt.fejl){ boks.appendChild(fsRække(ikon, label, 'Kunne ikke hentes')); return; }
+        boks.appendChild(fsRække(ikon, label, felt.tekst || tomTekst));
+      }
+      feltRække('mad', 'Mad', mad, 'Ikke planlagt');
+      feltRække('aktivitet', 'Aktivitet', akt, 'Ikke planlagt');
+      if(rengøring){
+        if(rengøring.fejl){
+          boks.appendChild(fsRække('rengoering', 'Rengøring', 'Kunne ikke hentes'));
+        } else {
+          boks.appendChild(fsRække('rengoering', 'Rengøring ' + rengøring.dagTekst, rengøring.navn || 'Ikke fundet', rengøring.opgave));
+        }
+      }
+      return boks;
+    });
+  } catch(e){
+    fsFejl('fsIdagIndhold', 'Kunne ikke hente dagens oplysninger. Prøv igen om lidt.', e);
+  }
+}
+
+// ---------- Seneste beskeder ----------
+// Talmærket viser hvor mange aktive beskeder der er oprettet i dag (lokal dato).
+// En vedhæftning vises som en lille knap med papirclip og filnavn under beskeden.
+
+async function fsBeskedKort(){
+  const kort = document.getElementById('fsKortBeskeder');
+  if(!fsFaneTilladt('opgaver')){ kort.hidden = true; return; }
+  kort.hidden = false;
+
+  try{
+    const { data, error } = await hentBeskederData();
+    if(error) throw error;
+    const alle = data || [];
+    const idag = datoISO(new Date());
+    const nyeIdag = alle.filter(b => datoISO(new Date(b.created_at)) === idag).length;
+    const seneste = alle.slice(0, 5);
+
+    const maerke = document.getElementById('fsBeskedMaerke');
+    maerke.hidden = nyeIdag === 0;
+    maerke.textContent = nyeIdag + (nyeIdag === 1 ? ' ny i dag' : ' nye i dag');
+
+    fsTegn('fsBeskedIndhold', JSON.stringify(seneste.map(b => [b.id, b.beboer, b.prioritet, b.besked, b.dato, b.afsender, b.fil_sti, b.fil_navn, farveForBeboer(b.beboer)])), () => {
+      const boks = document.createElement('div');
+      if(seneste.length === 0){
+        boks.appendChild(fsLav('div', 'fsTom', 'Ingen aktive beskeder'));
+        return boks;
+      }
+      seneste.forEach(b => {
+        const række = fsLav('div', 'fsBesked' + (b.prioritet === 'Rød' ? ' rød' : (b.prioritet === 'Gul' ? ' gul' : '')));
+        const top = fsLav('div', 'fsBeskedTop');
+        const chip = fsLav('span', 'fsChip', b.beboer);
+        chip.style.background = farveForBeboer(b.beboer);
+        top.appendChild(chip);
+        top.appendChild(fsLav('span', 'fsMeta', skDagTekst(b.dato) + (b.afsender ? ' · ' + b.afsender : '')));
+        række.appendChild(top);
+        række.appendChild(fsLav('div', 'fsBeskedTekst', b.besked));
+        if(b.fil_sti){
+          const fil = fsLav('button', 'fsFil');
+          fil.type = 'button';
+          fil.appendChild(moelleIkon('vedhaeftning', { stoerrelse: 18 }));
+          fil.appendChild(fsLav('span', null, b.fil_navn || 'Vedhæftet fil'));
+          fil.addEventListener('click', () => åbnBeskedFil(b.id));
+          række.appendChild(fil);
+        }
+        boks.appendChild(række);
+      });
+      return boks;
+    });
+  } catch(e){
+    fsFejl('fsBeskedIndhold', 'Kunne ikke hente beskeder. Prøv igen om lidt.', e);
+  }
+}
+
+// ---------- Genveje ----------
+
+function åbnSkrivBesked(){
+  document.getElementById('opgaverMode').value = 'besked';
+  visSide('opgaver');
+  const felt = document.getElementById('beskedTekst');
+  if(felt){ felt.scrollIntoView({ block: 'center' }); felt.focus(); }
+}
+
+// Der findes ingen selvstændig "opgave"-formular; det nærmeste er en ny
+// dagsplan under Besked & opgaver, så genvejen åbner den.
+function åbnNyOpgave(){
+  document.getElementById('opgaverMode').value = 'dagsplan';
+  visSide('opgaver');
+  const felt = document.getElementById('dagsplanNyLinjer');
+  if(felt) felt.scrollIntoView({ block: 'center' });
+}
+
+function opdaterGenveje(){
+  document.getElementById('fsGenveje').hidden = !fsFaneTilladt('opgaver');
+}
+
+// ---------- Opdatering ----------
+
+async function opdaterForside(){
+  if(!sb || fsHenter) return;
+  fsHenter = true;
+  try{
+    opdaterForsideHoved();
+    await Promise.all([fsVagtKort(), fsIdagKort(), fsBeskedKort()]);
+  } finally {
+    fsHenter = false;
+  }
+}
+
+function startForsidePolling(){
+  if(fsInterval) return;
+  fsInterval = setInterval(() => {
+    if(aktuelSide === 'forside' && !document.hidden) opdaterForside();
+  }, 60000);
+  document.addEventListener('visibilitychange', () => {
+    if(!document.hidden && aktuelSide === 'forside') opdaterForside();
+  });
+}
+
+async function tegnForside(){
+  if(!sb) return;
+  opdaterForsideHoved();
+  startForsidePolling();
+
+  try{
+    const { data, error } = await sb.from('indstillinger').select('*');
+    if(error) throw error;
+    indstillingerCache = {};
+    (data || []).forEach(r => { indstillingerCache[r.fane] = r.aktiv; });
+    opdaterBundNavSynlighed();
+  } catch(e){
+    console.error('Fejl indstillinger:', e);
+  }
+  opdaterGenveje();
+  opdaterForside();
 }
 
 // ==================================================================
@@ -1202,9 +1714,10 @@ function visFilFejl(tekst){
 
 function opdaterFilVisning(){
   const navn = beskedFil.ny ? beskedFil.ny.name : (beskedFil.eksisterende ? beskedFil.eksisterende.navn : '');
-  document.getElementById('beskedFilNavn').textContent = navn ? '📎 ' + navn : '';
+  const navnEl = document.getElementById('beskedFilNavn');
+  if(navn) sætIkonOgTekst(navnEl, 'vedhaeftning', navn); else navnEl.textContent = '';
   document.getElementById('beskedFilValgt').style.display = navn ? 'flex' : 'none';
-  document.getElementById('beskedFilKnap').textContent = navn ? '📎 Skift fil' : '📎 Vedhæft fil';
+  sætIkonOgTekst(document.getElementById('beskedFilKnap'), 'vedhaeftning', navn ? 'Skift fil' : 'Vedhæft fil');
 }
 
 function beskedFilValgt(input){
@@ -1400,13 +1913,18 @@ function lavEl(tag, klasse, tekst){
   return e;
 }
 
-async function hentBeskeder(){
-  if(!sb) return;
-  const { data, error } = await sb
+// Fælles hentning af aktive beskeder (bruges af Besked-listen og forsiden)
+function hentBeskederData(){
+  return sb
     .from('beskeder')
     .select('*')
     .eq('aktiv', true)
     .order('created_at', { ascending: false });
+}
+
+async function hentBeskeder(){
+  if(!sb) return;
+  const { data, error } = await hentBeskederData();
 
   if(error){ console.error(error); return; }
 
@@ -1434,7 +1952,8 @@ async function hentBeskeder(){
 
     if(b.fil_sti){
       info.appendChild(document.createElement('br'));
-      const fil = lavEl('button', 'beskedFilLink', '📎 ' + (b.fil_navn || 'Vedhæftet fil'));
+      const fil = lavEl('button', 'beskedFilLink');
+      sætIkonOgTekst(fil, 'vedhaeftning', b.fil_navn || 'Vedhæftet fil');
       fil.type = 'button';
       fil.addEventListener('click', () => åbnBeskedFil(b.id));
       info.appendChild(fil);
@@ -1551,9 +2070,10 @@ function tegnDagsplanListe(){
   container.innerHTML = rækker.map(r => `
     <div class="dagsplanRække">
       <span><strong>${escapeHtml(r.tid)}</strong> ${escapeHtml(r.aktivitet)}</span>
-      <button class="knap knapLille knapFare" onclick="fjernDagsplanAktivitet('${r.id}')">✕</button>
+      <button class="knap knapLille knapFare" onclick="fjernDagsplanAktivitet('${r.id}')" aria-label="Fjern"><span data-ikon="luk" data-storrelse="16"></span></button>
     </div>
   `).join('');
+  indsætIkoner(container);
 }
 
 function parseDagsplanLinje(linje){
@@ -1664,6 +2184,15 @@ function visProgramMode(){
   if(mode === 'aktivitet') hentAktiviteter();
 }
 
+// Fælles hentning af en uges madplan/aktiviteter (bruges af Program-siden og forsiden)
+async function hentMadplanUge(ugeStart){
+  return await sb.from('madplan').select('*').eq('uge_start', ugeStart);
+}
+
+async function hentAktiviteterUge(ugeStart){
+  return await sb.from('aktiviteter').select('*').eq('uge_start', ugeStart);
+}
+
 async function hentMadplan(){
   if(!sb) return;
 
@@ -1673,7 +2202,7 @@ async function hentMadplan(){
     '<div style="margin-top:8px;"><button class="knap knapLille ' + (programUgeValg===0?'knapGuld':'') + '" onclick="skiftProgramUge(0)">Denne uge</button> ' +
     '<button class="knap knapLille ' + (programUgeValg===1?'knapGuld':'') + '" onclick="skiftProgramUge(1)">Næste uge</button></div>';
 
-  const { data, error } = await sb.from('madplan').select('*').eq('uge_start', ugeStart);
+  const { data, error } = await hentMadplanUge(ugeStart);
   if(error){ console.error(error); return; }
 
   const perDag = {};
@@ -1711,7 +2240,7 @@ async function hentAktiviteter(){
     '<div style="margin-top:8px;"><button class="knap knapLille ' + (programUgeValg===0?'knapGuld':'') + '" onclick="skiftProgramUge(0)">Denne uge</button> ' +
     '<button class="knap knapLille ' + (programUgeValg===1?'knapGuld':'') + '" onclick="skiftProgramUge(1)">Næste uge</button></div>';
 
-  const { data, error } = await sb.from('aktiviteter').select('*').eq('uge_start', ugeStart);
+  const { data, error } = await hentAktiviteterUge(ugeStart);
   if(error){ console.error(error); return; }
 
   const perDag = {};
@@ -1723,9 +2252,9 @@ async function hentAktiviteter(){
       <div>
         <input type="text" data-dag="${dag}" class="aktivitetInput" value="${escapeHtml(perDag[dag] || '')}">
         <div style="margin-top:4px;">
-          <button type="button" class="knap knapLille" onclick="sætIngenFællesAktivitet('${escapeHtml(dag)}')">∅ Ingen fælles aktivitet</button>
+          <button type="button" class="knap knapLille" onclick="sætIngenFællesAktivitet('${escapeHtml(dag)}')"><span data-ikon="forbudt" data-storrelse="16"></span>Ingen fælles aktivitet</button>
           ${perDag[dag] ? `
-            <button type="button" class="knap knapGuld knapLille" onclick="triggerBilledeUpload('${escapeHtml(dag)}')">📷 Tilføj billede</button>
+            <button type="button" class="knap knapGuld knapLille" onclick="triggerBilledeUpload('${escapeHtml(dag)}')"><span data-ikon="kamera" data-storrelse="16"></span>Tilføj billede</button>
             <input type="file" accept="image/*" style="display:none" id="billedeInput_${escapeHtml(dag)}" onchange="uploadAktivitetsBillede('${escapeHtml(dag)}')">
           ` : ''}
         </div>
@@ -1733,6 +2262,7 @@ async function hentAktiviteter(){
       </div>
     </div>
   `).join('');
+  indsætIkoner(document.getElementById('aktivitetListe'));
 
   // Billeder knyttes til aktivitetsNAVNET (ikke dagen) — gem opslaget så
   // upload-funktionerne ved hvilken tekst det aktuelle dag-felt har.
@@ -1877,10 +2407,11 @@ async function visBilledeGalleri(dag){
     return `
       <div style="display:inline-block; position:relative; margin:4px 4px 0 0;">
         <img src="${escapeHtml(pub.publicUrl)}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
-        <button class="knap knapFare knapLille" style="position:absolute;top:-6px;right:-6px;padding:1px 5px;" onclick="fjernAktivitetsBillede('${b.id}','${escapeHtml(b.storage_path)}','${escapeHtml(dag)}')">✕</button>
+        <button class="knap knapFare knapLille" style="position:absolute;top:-6px;right:-6px;padding:1px 5px;" onclick="fjernAktivitetsBillede('${b.id}','${escapeHtml(b.storage_path)}','${escapeHtml(dag)}')" aria-label="Fjern billede"><span data-ikon="luk" data-storrelse="14"></span></button>
       </div>
     `;
   }).join('');
+  indsætIkoner(container);
 }
 
 async function fjernAktivitetsBillede(id, sti, dag){
@@ -2077,15 +2608,16 @@ function tegnAfkrydsningsskema(){
           <div class="listeOpgave">
             <span>${escapeHtml(o.opgave)}</span>
             <span style="display:flex; gap:4px;">
-              <button class="knap knapLille ${status==='udført' ? 'knapGuld' : ''}" onclick="sætAfkrydsningStatus('${beboer}','${escapeHtml(o.opgave).replace(/'/g,"\\'")}','udført')">✓</button>
+              <button class="knap knapLille ${status==='udført' ? 'knapGuld' : ''}" onclick="sætAfkrydsningStatus('${beboer}','${escapeHtml(o.opgave).replace(/'/g,"\\'")}','udført')" aria-label="Udført"><span data-ikon="check" data-storrelse="16"></span></button>
               <button class="knap knapLille ${status==='ikkeRelevant' ? 'knapGuld' : ''}" onclick="sætAfkrydsningStatus('${beboer}','${escapeHtml(o.opgave).replace(/'/g,"\\'")}','ikkeRelevant')">–</button>
-              <button class="knap knapLille knapFare" onclick="fjernOpgave('${o.id}')" title="Fjern opgave">✕</button>
+              <button class="knap knapLille knapFare" onclick="fjernOpgave('${o.id}')" title="Fjern opgave" aria-label="Fjern opgave"><span data-ikon="luk" data-storrelse="16"></span></button>
             </span>
           </div>
         `;
       }).join('')}
     </div>
   `).join('');
+  indsætIkoner(container);
 }
 
 function sætAfkrydsningStatus(beboer, opgave, status){
@@ -2183,7 +2715,8 @@ async function hentOverlap(){
 
   const døgnvagt = dvRes.data && dvRes.data.length > 0 ? dvRes.data[0].navn : null;
   document.getElementById('overlapDøgnvagtVisning').innerHTML =
-    '🌙 Døgnvagt i dag: <strong>' + (døgnvagt ? escapeHtml(døgnvagt) : 'ikke fundet') + '</strong>';
+    '<span data-ikon="maane" data-storrelse="18"></span>Døgnvagt i dag: <strong>' + (døgnvagt ? escapeHtml(døgnvagt) : 'ikke fundet') + '</strong>';
+  indsætIkoner(document.getElementById('overlapDøgnvagtVisning'));
 
   tegnOverlapFarver();
   tegnOverlapJournal();
@@ -2192,7 +2725,7 @@ async function hentOverlap(){
 
 function tegnOverlapFarver(){
   const farver = [
-    { navn: 'rød', ikon: '🔴' }, { navn: 'gul', ikon: '🟡' }, { navn: 'grøn', ikon: '🟢' }
+    { navn: 'rød' }, { navn: 'gul' }, { navn: 'grøn' }
   ];
   document.getElementById('overlapFarverListe').innerHTML = beboereListe.map(b => `
     <div class="kort">
@@ -2200,7 +2733,7 @@ function tegnOverlapFarver(){
       <div style="display:flex; gap:6px;">
         ${farver.map(f => {
           const aktiv = !!overlapFarveBuffer[b.navn + '|' + f.navn];
-          return `<button class="knap ${aktiv ? 'knapGuld' : ''}" style="flex:1;" onclick="toggleOverlapFarve('${b.navn}','${f.navn}')">${f.ikon}</button>`;
+          return `<button class="knap ${aktiv ? 'knapGuld' : ''}" style="flex:1;" onclick="toggleOverlapFarve('${b.navn}','${f.navn}')" aria-label="${f.navn}"><span class="farvePrik ${f.navn}"></span></button>`;
         }).join('')}
       </div>
     </div>
@@ -2240,12 +2773,13 @@ function tegnOverlapJournal(){
         return `
           <div class="listeOpgave">
             <span>${t}</span>
-            <button class="knap knapLille ${skrevet ? 'knapGuld' : ''}" onclick="toggleOverlapJournal('${b.navn}','${t}')">${skrevet ? '✅' : '❌'}</button>
+            <button class="knap knapLille ${skrevet ? 'knapGuld' : ''}" onclick="toggleOverlapJournal('${b.navn}','${t}')"><span data-ikon="${skrevet ? 'check' : 'luk'}" data-storrelse="16"></span></button>
           </div>
         `;
       }).join('')}
     </div>
   `).join('');
+  indsætIkoner(document.getElementById('overlapJournalListe'));
 }
 
 function toggleOverlapJournal(beboer, tidspunkt){
@@ -2278,12 +2812,13 @@ function tegnOverlapTjekliste(){
         return `
           <div class="listeOpgave">
             <span>${escapeHtml(o.opgave)}</span>
-            <button class="knap knapLille ${udført ? 'knapGuld' : ''}" onclick="toggleOverlapTjekliste('${escapeHtml(o.opgave).replace(/'/g,"\\'")}')">${udført ? '✅' : '❌'}</button>
+            <button class="knap knapLille ${udført ? 'knapGuld' : ''}" onclick="toggleOverlapTjekliste('${escapeHtml(o.opgave).replace(/'/g,"\\'")}')"><span data-ikon="${udført ? 'check' : 'luk'}" data-storrelse="16"></span></button>
           </div>
         `;
       }).join('')}
     </div>
   `;
+  indsætIkoner(document.getElementById('overlapTjeklisteListe'));
 }
 
 function toggleOverlapTjekliste(opgave){
@@ -2337,9 +2872,9 @@ function rengoringAktueltDato(){
   return nu;
 }
 
-async function hentRengoring(){
-  if(!sb) return;
-
+// Fælles hentning af rengøringsdata (bruges af Rengøring-siden og forsiden).
+// Hvilken dag der er 'aktuel' afgøres af rengoringAktueltDato() (skift kl. 10:00).
+async function hentRengoringData(){
   const aktuelDato = rengoringAktueltDato();
   const aktuelDatoISO = datoISO(aktuelDato);
   const aktuelUgedag = UGEDAGE[aktuelDato.getDay() === 0 ? 6 : aktuelDato.getDay() - 1];
@@ -2351,18 +2886,29 @@ async function hentRengoring(){
     return { dag, datoISO: datoISO(d) };
   });
 
+  // Den aktuelle dag kan ligge uden for 'effektiv uge' (søndag efter kl. 10 → mandag), så den hentes altid med
+  const datoer = ugensDatoer.map(d => d.datoISO);
+  if(datoer.indexOf(aktuelDatoISO) === -1) datoer.push(aktuelDatoISO);
+
   const [ugeRes, ansvarligRes] = await Promise.all([
     sb.from('rengoring_uge').select('*'),
-    sb.from('rengoring_ansvarlig').select('*').in('dato', ugensDatoer.map(d => d.datoISO))
+    sb.from('rengoring_ansvarlig').select('*').in('dato', datoer)
   ]);
-
-  if(ugeRes.error){ console.error(ugeRes.error); return; }
 
   const ugePerDag = {};
   (ugeRes.data || []).forEach(r => { ugePerDag[r.dag] = r; });
 
   const ansvarligPerDato = {};
   (ansvarligRes.data || []).forEach(r => { ansvarligPerDato[r.dato] = r.navn; });
+
+  return { fejl: ugeRes.error || null, aktuelDatoISO, aktuelUgedag, ugensDatoer, ugePerDag, ansvarligPerDato };
+}
+
+async function hentRengoring(){
+  if(!sb) return;
+
+  const { fejl, aktuelDatoISO, aktuelUgedag, ugensDatoer, ugePerDag, ansvarligPerDato } = await hentRengoringData();
+  if(fejl){ console.error(fejl); return; }
 
   const aktuel = ugePerDag[aktuelUgedag];
   const aktuelAnsvarlig = ansvarligPerDato[aktuelDatoISO];
@@ -2383,11 +2929,12 @@ async function hentRengoring(){
           <span style="font-size:11px; color:var(--tekst-svag);">${række ? escapeHtml(række.opgave) : ''}</span>
         </span>
         <button class="knap knapLille ${række && række.afkrydset ? 'knapGuld' : ''}" onclick="toggleRengoringDag('${dag}')">
-          ${række && række.afkrydset ? '✅' : '❌'}
+          <span data-ikon="${række && række.afkrydset ? 'check' : 'luk'}" data-storrelse="16"></span>
         </button>
       </div>
     `;
   }).join('');
+  indsætIkoner(document.getElementById('rengoringUge'));
 }
 
 async function toggleRengoringDag(dag){
@@ -2581,11 +3128,12 @@ async function hentMoedeAfventer(){
         ${p.beskrivelse ? '<div style="font-size:13px; margin-bottom:8px;">' + escapeHtml(p.beskrivelse) + '</div>' : ''}
         <div class="pmMeta">Foreslået af ${escapeHtml(p.foreslaaet_af || 'ukendt')}</div>
         <div class="knapStorRække">
-          <button class="knap" onclick="moedeGodkendPunkt('${p.id}')">✓ Godkend</button>
-          <button class="knap knapFare" onclick="moedeAfvisPunkt('${p.id}')">✕ Afvis</button>
+          <button class="knap" onclick="moedeGodkendPunkt('${p.id}')"><span data-ikon="check" data-storrelse="18"></span>Godkend</button>
+          <button class="knap knapFare" onclick="moedeAfvisPunkt('${p.id}')"><span data-ikon="luk" data-storrelse="18"></span>Afvis</button>
         </div>
       </div>
     `).join('');
+  indsætIkoner(container);
   }
 
   hentMoedeGodkendte();
@@ -2631,7 +3179,7 @@ async function hentMoedeGodkendte(){
   emner.forEach(e => {
     const pts = grupperet[e.id] || [];
     if(pts.length === 0) return;
-    html += '<div class="kort" style="margin-bottom:8px;"><h4 style="margin:0 0 10px 0; font-size:13px;">📁 ' + escapeHtml(e.titel) + (e.varighed_minutter ? ' · ' + e.varighed_minutter + ' min' : '') + '</h4>';
+    html += '<div class="kort" style="margin-bottom:8px;"><h4 style="margin:0 0 10px 0; font-size:13px;"><span data-ikon="mappe" data-storrelse="16"></span>' + escapeHtml(e.titel) + (e.varighed_minutter ? ' · ' + e.varighed_minutter + ' min' : '') + '</h4>';
     pts.forEach(p => { html += moedeGodkendtPunktHtml(p); });
     html += '</div>';
   });
@@ -2643,6 +3191,7 @@ async function hentMoedeGodkendte(){
   }
 
   container.innerHTML = html;
+  indsætIkoner(container);
 }
 
 function moedeGodkendtPunktHtml(p){
@@ -2821,6 +3370,20 @@ const SK_ROLLE = {
   'Daglig leder': 'Leder', 'Køkkenpersonale': 'Køkken', 'SSA': 'Medicinvagt'
 };
 
+// Slår rækker for samme navn sammen til ét tidsrum (midnatssplit / flere vagter samme dag)
+function samlVagterPrNavn(rækker){
+  const pr = new Map();
+  rækker.forEach(r => {
+    const start = new Date(r.start);
+    const slut = new Date(r.slut);
+    const eks = pr.get(r.navn);
+    if(!eks){ pr.set(r.navn, { navn: r.navn, rolle: SK_ROLLE[r.rolle] || r.rolle, start, slut }); return; }
+    if(start < eks.start) eks.start = start;
+    if(slut > eks.slut) eks.slut = slut;
+  });
+  return [...pr.values()];
+}
+
 let skaermDagOffset = null; // 0 = i dag, 1 = i morgen (null = vælg ud fra klokken)
 let skaermPersoner = [];    // [{navn, rolle, start, slut}] for valgt dag, ét element pr. navn
 let skaermSkjulninger = []; // aktive (ikke-udløbne) rækker fra skjult_personale
@@ -2958,16 +3521,7 @@ async function hentSkaerm(){
 
   // Én række pr. navn (midnatssplit / flere vagter samme dag slås sammen
   // til ét tidsrum) — det er personen der skjules, ikke den enkelte vagt.
-  const pr = new Map();
-  (vagterRes.data || []).forEach(r => {
-    const start = new Date(r.start);
-    const slut = new Date(r.slut);
-    const eks = pr.get(r.navn);
-    if(!eks){ pr.set(r.navn, { navn: r.navn, rolle: SK_ROLLE[r.rolle] || r.rolle, start, slut }); return; }
-    if(start < eks.start) eks.start = start;
-    if(slut > eks.slut) eks.slut = slut;
-  });
-  skaermPersoner = [...pr.values()];
+  skaermPersoner = samlVagterPrNavn(vagterRes.data || []);
   tegnSkaermVagter();
 }
 
@@ -3240,6 +3794,10 @@ async function opdaterVisningstid(id, værdi){
 // ==================================================================
 
 hentBeboere();
+
+// Menuen: tilgængelige navne til skærmlæsere (ikonerne har ingen tekst) og "Mere"-arket
+document.querySelectorAll('#bundNav button').forEach(b => b.setAttribute('aria-label', b.textContent.trim()));
+tegnMereArk();
 
 // PWA: registrér service worker, så appen kan installeres på telefonen.
 if('serviceWorker' in navigator){
