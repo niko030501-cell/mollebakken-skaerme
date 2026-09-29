@@ -390,6 +390,11 @@
   .beskedRække:last-child{ border-bottom:none; }
   .beskedMeta{ color:var(--tekst-svag); font-size:11px; }
 
+  .beskedFilValgt{ display:flex; align-items:center; gap:10px; background:#eef2ef; border-radius:8px; padding:8px 10px; font-size:14px; }
+  .beskedFilValgt span{ flex:1; min-width:0; overflow-wrap:anywhere; }
+  .beskedFilFejl{ color:#b91c1c; font-size:13px; font-weight:600; }
+  .beskedRække .beskedHandlinger{ display:flex; flex-direction:column; gap:6px; }
+  .beskedFilLink{ background:none; color:var(--grøn); padding:4px 0; font-size:13px; font-weight:600; text-align:left; overflow-wrap:anywhere; }
   .formRække{ display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
   .formRække label{ font-size:12px; font-weight:600; color:var(--tekst-svag); }
 
@@ -610,7 +615,7 @@
 
     <div id="opgaverBesked">
       <div class="kort">
-        <h3 style="margin-top:0;">Ny besked</h3>
+        <h3 style="margin-top:0;" id="beskedOverskrift">Ny besked</h3>
         <div class="formRække">
           <label>Beboer</label>
           <select id="beskedBeboer"></select>
@@ -631,7 +636,23 @@
           <label>Dit navn (valgfrit)</label>
           <input id="beskedAfsender" type="text">
         </div>
-        <button class="knap" onclick="sendBesked()">Send besked</button>
+        <div class="formRække">
+          <label>Vedhæftning (valgfrit)</label>
+          <input id="beskedFil" type="file" style="display:none;"
+                 accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                 onchange="beskedFilValgt(this)">
+          <div>
+            <button type="button" class="knap knapGuld" id="beskedFilKnap" onclick="document.getElementById('beskedFil').click()">📎 Vedhæft fil</button>
+          </div>
+          <div id="beskedFilValgt" class="beskedFilValgt" style="display:none;">
+            <span id="beskedFilNavn"></span>
+            <button type="button" class="knap knapLille knapFare" onclick="fjernBeskedFil()">Fjern</button>
+          </div>
+          <div id="beskedFilFejl" class="beskedFilFejl" style="display:none;"></div>
+          <span class="beskedMeta">PDF, JPG, PNG eller Word (.docx) · maks. 10 MB</span>
+        </div>
+        <button class="knap" id="beskedGemKnap" onclick="sendBesked()">Send besked</button>
+        <button class="knap knapLille" id="beskedAnnullerKnap" style="display:none; background:#8a9895;" onclick="annullerRediger()">Annullér</button>
       </div>
 
       <div id="beskederListe"><div class="loading">Henter beskeder...</div></div>
@@ -1126,8 +1147,160 @@ function vælgPrioritet(p){
   });
 }
 
+// ---- Vedhæftning (fil på besked) ----
+// Filen ligger i den private bucket 'besked-filer'. Al adgang går via
+// edge-funktionen 'besked-fil'. Stien er et tilfældigt UUID — det originale
+// filnavn gemmes kun i beskeder.fil_navn til visning, så navnet aldrig
+// indgår i storage-stien (æøå/mellemrum/specialtegn giver derfor ikke problemer).
+
+const FIL_MAKS_BYTES = 10 * 1024 * 1024;
+const FIL_TYPER = {
+  'application/pdf': 'pdf',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx'
+};
+const FIL_MIME_FRA_ENDELSE = {
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+};
+
+// ny: en netop valgt File (endnu ikke uploadet). eksisterende: filen på den
+// besked der redigeres. redigerOrig: hvad der stod på beskeden da redigeringen startede.
+let beskedFil = { ny: null, nyMime: null, eksisterende: null };
+let redigerId = null;
+let redigerOrig = null;
+let gemmerBesked = false;
+
+function filMimeFra(fil){
+  if(FIL_TYPER[fil.type]) return fil.type;
+  // Nogle telefoner/browsere giver tom type for .docx — gå på endelsen.
+  const dele = fil.name.toLowerCase().split('.');
+  const endelse = dele.length > 1 ? dele[dele.length - 1] : '';
+  return FIL_MIME_FRA_ENDELSE[endelse] || null;
+}
+
+function renskFilnavn(navn){
+  // Kun til visning (aldrig til storage-sti): fjern kontroltegn og skråstreger, og kort af.
+  let ren = String(navn || 'fil').replace(/[\u0000-\u001f\u007f\\/]/g, '').trim();
+  if(ren.length > 120){
+    const punkt = ren.lastIndexOf('.');
+    const endelse = punkt > 0 ? ren.slice(punkt) : '';
+    ren = ren.slice(0, 110) + '…' + endelse;
+  }
+  return ren || 'fil';
+}
+
+function visFilFejl(tekst){
+  const boks = document.getElementById('beskedFilFejl');
+  boks.textContent = tekst || '';
+  boks.style.display = tekst ? 'block' : 'none';
+}
+
+function opdaterFilVisning(){
+  const navn = beskedFil.ny ? beskedFil.ny.name : (beskedFil.eksisterende ? beskedFil.eksisterende.navn : '');
+  document.getElementById('beskedFilNavn').textContent = navn ? '📎 ' + navn : '';
+  document.getElementById('beskedFilValgt').style.display = navn ? 'flex' : 'none';
+  document.getElementById('beskedFilKnap').textContent = navn ? '📎 Skift fil' : '📎 Vedhæft fil';
+}
+
+function beskedFilValgt(input){
+  const fil = input.files && input.files[0];
+  input.value = '';   // så samme fil kan vælges igen efter "Fjern"
+  if(!fil) return;
+  visFilFejl('');
+
+  const mime = filMimeFra(fil);
+  if(!mime){
+    visFilFejl('Filtypen er ikke tilladt. Vælg PDF, JPG, PNG eller Word (.docx).');
+    return;
+  }
+  if(fil.size > FIL_MAKS_BYTES){
+    visFilFejl('Filen er for stor (' + (fil.size / 1048576).toFixed(1).replace('.', ',') + ' MB). Maks. 10 MB.');
+    return;
+  }
+  if(fil.size === 0){
+    visFilFejl('Filen er tom. Vælg en anden fil.');
+    return;
+  }
+  beskedFil.ny = fil;
+  beskedFil.nyMime = mime;
+  opdaterFilVisning();
+}
+
+function fjernBeskedFil(){
+  beskedFil = { ny: null, nyMime: null, eksisterende: null };
+  visFilFejl('');
+  opdaterFilVisning();
+}
+
+async function kaldBeskedFil(body){
+  const { data, error } = await sb.functions.invoke('besked-fil', { body: body });
+  if(error) throw error;
+  if(data && data.fejl) throw new Error(data.fejl);
+  return data;
+}
+
+// Uploader den valgte fil og returnerer { sti, navn, type } til beskeden.
+async function uploadBeskedFil(){
+  const start = await kaldBeskedFil({ action: 'upload', type: beskedFil.nyMime });
+  const { error } = await sb.storage.from('besked-filer')
+    .uploadToSignedUrl(start.sti, start.token, beskedFil.ny, { contentType: beskedFil.nyMime });
+  if(error) throw error;
+  return { sti: start.sti, navn: renskFilnavn(beskedFil.ny.name), type: FIL_TYPER[beskedFil.nyMime] };
+}
+
+// Best effort: sletter en fil der ikke længere bruges. Fejl her er ikke kritiske —
+// den natlige oprydning tager forældreløse filer.
+async function sletBeskedFil(sti){
+  if(!sti) return;
+  try{ await kaldBeskedFil({ action: 'slet', sti: sti }); }
+  catch(e){ console.error('Kunne ikke slette fil:', e); }
+}
+
+function nulstilBeskedForm(){
+  redigerId = null;
+  redigerOrig = null;
+  beskedFil = { ny: null, nyMime: null, eksisterende: null };
+  document.getElementById('beskedTekst').value = '';
+  document.getElementById('beskedAfsender').value = '';
+  document.getElementById('beskedOverskrift').textContent = 'Ny besked';
+  document.getElementById('beskedGemKnap').textContent = 'Send besked';
+  document.getElementById('beskedAnnullerKnap').style.display = 'none';
+  vælgPrioritet('Grøn');
+  visFilFejl('');
+  opdaterFilVisning();
+}
+
+function startRedigerBesked(b){
+  redigerId = b.id;
+  redigerOrig = { sti: b.fil_sti || null };
+  beskedFil = {
+    ny: null,
+    nyMime: null,
+    eksisterende: b.fil_sti ? { sti: b.fil_sti, navn: b.fil_navn || 'fil', type: b.fil_type } : null
+  };
+  document.getElementById('beskedBeboer').value = b.beboer;
+  document.getElementById('beskedTekst').value = b.besked;
+  document.getElementById('beskedAfsender').value = b.afsender || '';
+  document.getElementById('beskedOverskrift').textContent = 'Redigér besked';
+  document.getElementById('beskedGemKnap').textContent = 'Gem ændringer';
+  document.getElementById('beskedAnnullerKnap').style.display = '';
+  vælgPrioritet(b.prioritet);
+  visFilFejl('');
+  opdaterFilVisning();
+  document.getElementById('beskedOverskrift').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function annullerRediger(){
+  nulstilBeskedForm();
+}
+
 async function sendBesked(){
-  if(!sb) return;
+  if(!sb || gemmerBesked) return;
 
   const beboer = document.getElementById('beskedBeboer').value;
   const besked = document.getElementById('beskedTekst').value.trim();
@@ -1135,20 +1308,96 @@ async function sendBesked(){
 
   if(!besked){ visToast('Skriv en besked først'); return; }
 
-  const { error } = await sb.from('beskeder').insert({
-    beboer, prioritet: valgtPrioritet, besked,
-    dato: new Date().toISOString().slice(0,10),
-    afsender: afsender || null,
-    aktiv: true,
-    oprettet_af: 'manuel'
-  });
+  gemmerBesked = true;
+  const gemKnap = document.getElementById('beskedGemKnap');
+  gemKnap.disabled = true;
+  gemKnap.textContent = beskedFil.ny ? 'Uploader fil…' : 'Gemmer…';
+  visFilFejl('');
 
-  if(error){ console.error(error); visToast('Fejl: kunne ikke sende besked'); return; }
+  try{
+    let nyFil = null;
+    if(beskedFil.ny){
+      try{
+        nyFil = await uploadBeskedFil();
+      } catch(e){
+        console.error('Upload fejlede:', e);
+        visFilFejl('Filen kunne ikke uploades. Tjek din forbindelse og prøv igen, eller fjern filen og send uden.');
+        visToast('Fejl: filen kunne ikke uploades');
+        return;
+      }
+    }
 
-  document.getElementById('beskedTekst').value = '';
-  document.getElementById('beskedAfsender').value = '';
-  visToast('Besked sendt');
-  hentBeskeder();
+    let fejl = null;
+    if(redigerId){
+      const opdater = { beboer, prioritet: valgtPrioritet, besked, afsender: afsender || null };
+      if(nyFil){
+        opdater.fil_sti = nyFil.sti; opdater.fil_navn = nyFil.navn; opdater.fil_type = nyFil.type;
+      } else if(!beskedFil.eksisterende){
+        opdater.fil_sti = null; opdater.fil_navn = null; opdater.fil_type = null;
+      }
+      const svar = await sb.from('beskeder').update(opdater).eq('id', redigerId);
+      fejl = svar.error;
+    } else {
+      const række = {
+        beboer, prioritet: valgtPrioritet, besked,
+        dato: new Date().toISOString().slice(0,10),
+        afsender: afsender || null,
+        aktiv: true,
+        oprettet_af: 'manuel'
+      };
+      if(nyFil){
+        række.fil_sti = nyFil.sti; række.fil_navn = nyFil.navn; række.fil_type = nyFil.type;
+      }
+      const svar = await sb.from('beskeder').insert(række);
+      fejl = svar.error;
+    }
+
+    if(fejl){
+      console.error(fejl);
+      if(nyFil) sletBeskedFil(nyFil.sti);   // beskeden blev ikke gemt — fjern den netop uploadede fil
+      visToast('Fejl: kunne ikke ' + (redigerId ? 'gemme ændringer' : 'sende besked'));
+      return;
+    }
+
+    // Beskeden er gemt. Den gamle fil slettes hvis den er skiftet eller fjernet.
+    if(redigerId && redigerOrig && redigerOrig.sti && (nyFil || !beskedFil.eksisterende)){
+      sletBeskedFil(redigerOrig.sti);
+    }
+
+    const varRedigering = !!redigerId;
+    nulstilBeskedForm();
+    visToast(varRedigering ? 'Ændringer gemt' : 'Besked sendt');
+    hentBeskeder();
+  } catch(e){
+    console.error(e);
+    visToast('Fejl: noget gik galt, prøv igen');
+  } finally {
+    gemmerBesked = false;
+    gemKnap.disabled = false;
+    gemKnap.textContent = redigerId ? 'Gem ændringer' : 'Send besked';
+  }
+}
+
+// Åbner vedhæftningen i en ny fane. Linket hentes ved klik (det udløber efter 60 sek.).
+async function åbnBeskedFil(besked_id){
+  const fane = window.open('', '_blank');
+  try{
+    const data = await kaldBeskedFil({ action: 'hent', besked_id: besked_id });
+    if(!data || !data.url) throw new Error('Intet link');
+    if(fane) fane.location.href = data.url;
+    else window.location.href = data.url;
+  } catch(e){
+    console.error('Kunne ikke åbne fil:', e);
+    if(fane) fane.close();
+    visToast('Filen kunne ikke åbnes. Prøv igen om lidt.');
+  }
+}
+
+function lavEl(tag, klasse, tekst){
+  const e = document.createElement(tag);
+  if(klasse) e.className = klasse;
+  if(tekst != null) e.textContent = tekst;
+  return e;
 }
 
 async function hentBeskeder(){
@@ -1162,23 +1411,50 @@ async function hentBeskeder(){
   if(error){ console.error(error); return; }
 
   const container = document.getElementById('beskederListe');
+  container.textContent = '';
   if(!data || data.length === 0){
-    container.innerHTML = '<div class="loading">Ingen aktive beskeder</div>';
+    container.appendChild(lavEl('div', 'loading', 'Ingen aktive beskeder'));
     return;
   }
 
-  container.innerHTML = data.map(b => `
-    <div class="kort">
-      <div class="beskedRække">
-        <div>
-          <strong>${escapeHtml(b.beboer)}</strong> · <span style="color:${prioritetFarve(b.prioritet)}">${b.prioritet}</span><br>
-          ${escapeHtml(b.besked)}<br>
-          <span class="beskedMeta">${b.dato}${b.afsender ? ' · ' + escapeHtml(b.afsender) : ''}</span>
-        </div>
-        <button class="knap knapLille knapFare" onclick="skjulBesked('${b.id}')">Skjul</button>
-      </div>
-    </div>
-  `).join('');
+  data.forEach(b => {
+    const kort = lavEl('div', 'kort');
+    const række = lavEl('div', 'beskedRække');
+
+    const info = document.createElement('div');
+    info.appendChild(lavEl('strong', null, b.beboer));
+    info.appendChild(document.createTextNode(' · '));
+    const prio = lavEl('span', null, b.prioritet);
+    prio.style.color = prioritetFarve(b.prioritet);
+    info.appendChild(prio);
+    info.appendChild(document.createElement('br'));
+    info.appendChild(document.createTextNode(b.besked));
+    info.appendChild(document.createElement('br'));
+    info.appendChild(lavEl('span', 'beskedMeta', b.dato + (b.afsender ? ' · ' + b.afsender : '')));
+
+    if(b.fil_sti){
+      info.appendChild(document.createElement('br'));
+      const fil = lavEl('button', 'beskedFilLink', '📎 ' + (b.fil_navn || 'Vedhæftet fil'));
+      fil.type = 'button';
+      fil.addEventListener('click', () => åbnBeskedFil(b.id));
+      info.appendChild(fil);
+    }
+
+    const handlinger = lavEl('div', 'beskedHandlinger');
+    const rediger = lavEl('button', 'knap knapLille', 'Redigér');
+    rediger.type = 'button';
+    rediger.addEventListener('click', () => startRedigerBesked(b));
+    const skjul = lavEl('button', 'knap knapLille knapFare', 'Skjul');
+    skjul.type = 'button';
+    skjul.addEventListener('click', () => skjulBesked(b.id, b.fil_sti));
+    handlinger.appendChild(rediger);
+    handlinger.appendChild(skjul);
+
+    række.appendChild(info);
+    række.appendChild(handlinger);
+    kort.appendChild(række);
+    container.appendChild(kort);
+  });
 }
 
 function prioritetFarve(p){
@@ -1187,10 +1463,12 @@ function prioritetFarve(p){
   return '#16a34a';
 }
 
-async function skjulBesked(id){
+async function skjulBesked(id, filSti){
   if(!sb) return;
   const { error } = await sb.from('beskeder').update({ aktiv: false }).eq('id', id);
   if(error){ console.error(error); visToast('Fejl: kunne ikke skjule besked'); return; }
+  if(filSti) sletBeskedFil(filSti);   // beskeden er skjult, så filen skal ikke ligge tilbage
+  if(redigerId === id) nulstilBeskedForm();
   visToast('Besked skjult');
   hentBeskeder();
 }
