@@ -403,6 +403,21 @@
   }
   .ugedagFaner button.aktivDag{ background:var(--mørk); color:white; }
 
+  .dageValg{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+  .dageValg label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:8px 10px;
+    background:#e2e8e6;
+    color:var(--mørk);
+    border-radius:8px;
+    font-size:12px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .dageValg input[type="checkbox"]{ width:16px; height:16px; }
+
   .dagsplanRække{
     display:flex;
     justify-content:space-between;
@@ -632,14 +647,16 @@
         <div id="dagsplanListe"></div>
         <hr style="border:none; border-top:1px solid #eef2ef; margin:12px 0;">
         <div class="formRække">
-          <label>Ny aktivitet — tid (fx 09:30)</label>
-          <input id="dagsplanNyTid" type="text" placeholder="09:30">
+          <label>Nye punkter (én pr. linje, tid først — fx "09:30 Gåtur")</label>
+          <textarea id="dagsplanNyLinjer" rows="6" placeholder="08:00 Morgenmad
+09:30 Gåtur
+12:00 Frokost"></textarea>
         </div>
         <div class="formRække">
-          <label>Aktivitet</label>
-          <input id="dagsplanNyAktivitet" type="text">
+          <label>Dage</label>
+          <div class="dageValg" id="dagsplanDageValg"></div>
         </div>
-        <button class="knap" onclick="tilføjDagsplanAktivitet()">Tilføj</button>
+        <button class="knap" onclick="tilføjDagsplanAktiviteter()">Tilføj</button>
       </div>
     </div>
 
@@ -1203,6 +1220,14 @@ function tegnDagsplanFaner(){
   container.innerHTML = UGEDAGE.map(d => `
     <button class="${d === valgtDagsplanUgedag ? 'aktivDag' : ''}" onclick="vælgDagsplanDag('${d}')">${d.slice(0,3)}</button>
   `).join('');
+  tegnDagsplanDageValg();
+}
+
+function tegnDagsplanDageValg(){
+  const container = document.getElementById('dagsplanDageValg');
+  container.innerHTML = UGEDAGE.map(d =>
+    '<label><input type="checkbox" value="' + d + '"' + (d === valgtDagsplanUgedag ? ' checked' : '') + '>' + d.slice(0,3) + '</label>'
+  ).join('');
 }
 
 function vælgDagsplanDag(dag){
@@ -1253,24 +1278,68 @@ function tegnDagsplanListe(){
   `).join('');
 }
 
-async function tilføjDagsplanAktivitet(){
+function parseDagsplanLinje(linje){
+  const m = linje.trim().match(/^(\d{1,2})[:.](\d{2})\s*(?:[-–:]\s*)?(.+)$/);
+  if(!m) return null;
+
+  const time = parseInt(m[1], 10);
+  const minut = parseInt(m[2], 10);
+  const aktivitet = m[3].trim();
+
+  if(time < 0 || time > 23 || minut < 0 || minut > 59 || !aktivitet) return null;
+
+  const tid = (time < 10 ? '0' + time : '' + time) + ':' + (minut < 10 ? '0' + minut : '' + minut);
+  return { tid, aktivitet };
+}
+
+async function tilføjDagsplanAktiviteter(){
   if(!sb) return;
 
   const beboer = document.getElementById('dagsplanBeboer').value;
-  const tid = document.getElementById('dagsplanNyTid').value.trim();
-  const aktivitet = document.getElementById('dagsplanNyAktivitet').value.trim();
+  if(!beboer) return;
 
-  if(!tid || !aktivitet){ visToast('Udfyld både tid og aktivitet'); return; }
+  const linjer = document.getElementById('dagsplanNyLinjer').value
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
 
-  const { error } = await sb.from('ugeplaner').insert({
-    beboer, ugedag: valgtDagsplanUgedag, tid, aktivitet
-  });
+  if(linjer.length === 0){ visToast('Skriv mindst ét punkt'); return; }
+
+  const punkter = [];
+  for(const linje of linjer){
+    const parset = parseDagsplanLinje(linje);
+    if(!parset){
+      visToast('Kan ikke læse: "' + linje + '" – skriv tid først, fx 09:30 Gåtur', 3500);
+      return;
+    }
+    punkter.push(parset);
+  }
+
+  const dage = Array.from(document.querySelectorAll('#dagsplanDageValg input:checked')).map(cb => cb.value);
+  if(dage.length === 0){ visToast('Vælg mindst én dag'); return; }
+
+  const nyeRækker = [];
+  for(const dag of dage){
+    for(const p of punkter){
+      const findesAllerede = sidsteDagsplanData.some(r =>
+        r.ugedag === dag && r.tid === p.tid && r.aktivitet === p.aktivitet
+      ) || nyeRækker.some(r =>
+        r.ugedag === dag && r.tid === p.tid && r.aktivitet === p.aktivitet
+      );
+      if(!findesAllerede){
+        nyeRækker.push({ beboer, ugedag: dag, tid: p.tid, aktivitet: p.aktivitet });
+      }
+    }
+  }
+
+  if(nyeRækker.length === 0){ visToast('Alle punkter findes allerede'); return; }
+
+  const { error } = await sb.from('ugeplaner').insert(nyeRækker);
 
   if(error){ console.error(error); visToast('Fejl: kunne ikke tilføje'); return; }
 
-  document.getElementById('dagsplanNyTid').value = '';
-  document.getElementById('dagsplanNyAktivitet').value = '';
-  visToast('Tilføjet');
+  document.getElementById('dagsplanNyLinjer').value = '';
+  visToast(nyeRækker.length + ' punkt' + (nyeRækker.length === 1 ? '' : 'er') + ' tilføjet');
   hentDagsplan();
 }
 
