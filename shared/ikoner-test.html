@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>Ikonsæt – test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  :root{
+    color-scheme: light;
+    --mørk:#1e3937;
+    --guld:#d89b2b;
+    --guld-lys:#f0b94a;
+    --baggrund:#eef2ef;
+    --kort:#ffffff;
+    --tekst-svag:#5b6b68;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Inter', sans-serif; background:var(--baggrund); color:var(--mørk); padding:32px 20px 60px; }
+  main{ max-width:1000px; margin:0 auto; }
+  h1,h2{ font-family:'Fraunces', serif; margin:0; }
+  h1{ font-size:34px; margin-bottom:6px; }
+  h2{ font-size:20px; margin:36px 0 12px; }
+  .intro{ color:var(--tekst-svag); margin:0 0 8px; line-height:1.5; }
+
+  /* Ét kort pr. ikon: navn + 4 tilstande (2 størrelser × inaktiv/aktiv) */
+  .gitter{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px; }
+  .celle{ background:var(--kort); border-radius:12px; padding:14px; }
+  .celle .navn{ font-size:13px; font-weight:600; margin-bottom:10px; }
+  .celle .tabler{ font-weight:400; color:var(--tekst-svag); }
+  .række{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .række:last-child{ margin-bottom:0; }
+
+  /* Inaktiv = ikon og tekst i mørk/dæmpet; aktiv = nu-block (kontrasten vendt om) */
+  .flise{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; font-size:14px; font-weight:600; color:#4a5b58; background:#e6ebe8; }
+  .flise.aktiv{ background:var(--mørk); color:var(--guld-lys); }
+  .flise.stor{ padding:10px 14px; font-size:16px; }
+
+  /* Bundmenu-forsmag: hvid tekst, gul aktiv */
+  .bundDemo{ display:flex; background:var(--mørk); border-radius:12px; overflow:hidden; max-width:420px; }
+  .bundDemo button{ flex:1 1 0; background:none; border:0; color:#c9d6d3; padding:10px 2px; font:600 11px 'Inter', sans-serif; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .bundDemo button.aktiv{ color:var(--guld-lys); }
+
+  /* Sidebar-forsmag */
+  .sideDemo{ background:var(--mørk); border-radius:12px; padding:12px 0; max-width:240px; }
+  .sideDemo button{ display:flex; align-items:center; gap:12px; width:100%; background:none; border:0; color:#c9d6d3; padding:12px 20px; font:600 14px 'Inter', sans-serif; text-align:left; }
+  .sideDemo button.aktiv{ background:var(--blaek, #16211f); color:var(--guld-lys); }
+  .demoRække{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .knapDemo{ display:inline-flex; align-items:center; gap:8px; border-radius:8px; padding:10px 14px; font:600 14px 'Inter', sans-serif; border:1px solid var(--mørk); background:transparent; color:var(--mørk); }
+  .knapDemo.primær{ background:var(--guld); border-color:var(--guld); color:var(--mørk); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ikonsæt</h1>
+  <p class="intro">Alle ikoner tegnes med <code>currentColor</code> fra <code>shared/ikoner.js</code>. Hvert kort viser 24 px og 40 px, inaktiv og aktiv (nu-block, hvor ikon og tekst vendes om sammen).</p>
+
+  <h2>Alle ikoner</h2>
+  <div class="gitter" id="gitter"></div>
+
+  <h2>Forsmag: bundmenu</h2>
+  <div class="bundDemo" id="bundDemo"></div>
+
+  <h2>Forsmag: sidebar</h2>
+  <div class="sideDemo" id="sideDemo"></div>
+
+  <h2>Forsmag: knapper</h2>
+  <div class="demoRække" id="knapDemo"></div>
+</main>
+
+<script src="ikoner.js"></script>
+<script>
+  function lav(tag, klasse, tekst){
+    const e = document.createElement(tag);
+    if(klasse) e.className = klasse;
+    if(tekst != null) e.textContent = tekst;
+    return e;
+  }
+
+  function flise(navn, stoerrelse, aktiv, tekst){
+    const f = lav('span', 'flise' + (aktiv ? ' aktiv' : '') + (stoerrelse > 24 ? ' stor' : ''));
+    f.appendChild(moelleIkon(navn, { stoerrelse: stoerrelse }));
+    f.appendChild(lav('span', null, tekst));
+    return f;
+  }
+
+  const gitter = document.getElementById('gitter');
+  Object.keys(MOELLE_IKONER).forEach(function(navn){
+    const celle = lav('div', 'celle');
+    celle.appendChild(lav('div', 'navn', navn));
+    [24, 40].forEach(function(s){
+      const r = lav('div', 'række');
+      r.appendChild(flise(navn, s, false, 'Inaktiv'));
+      r.appendChild(flise(navn, s, true, 'Aktiv'));
+      celle.appendChild(r);
+    });
+    gitter.appendChild(celle);
+  });
+
+  const bund = document.getElementById('bundDemo');
+  [['forside','Forside'], ['opgaver','Opgaver'], ['mad','Mad'], ['rengoering','Rengøring'], ['mere','Mere']].forEach(function(p, i){
+    const b = lav('button', i === 1 ? 'aktiv' : '');
+    b.type = 'button';
+    b.appendChild(moelleIkon(p[0], { stoerrelse: 24 }));
+    b.appendChild(lav('span', null, p[1]));
+    bund.appendChild(b);
+  });
+
+  const side = document.getElementById('sideDemo');
+  [['forside','Forside'], ['opgaver','Besked og opgaver'], ['mad','Mad og aktivitet'], ['med','Hvem er du med'], ['rengoering','Rengøring'], ['la2','LA2-planer'], ['p104','§104'], ['pmoede','Personalemøde'], ['skaerm','Beboerskærm']].forEach(function(p, i){
+    const b = lav('button', i === 2 ? 'aktiv' : '');
+    b.type = 'button';
+    b.appendChild(moelleIkon(p[0], { stoerrelse: 22 }));
+    b.appendChild(lav('span', null, p[1]));
+    side.appendChild(b);
+  });
+
+  const knapper = document.getElementById('knapDemo');
+  [['besked', 'Skriv besked', 'primær'], ['plus', 'Ny opgave', ''], ['vedhaeftning', 'Vedhæft fil', ''], ['rediger', 'Redigér', ''], ['slet', 'Slet', ''], ['advarsel', 'Advarsel', ''], ['kalender', 'Kalender', ''], ['ur', 'Ur', '']].forEach(function(p){
+    const b = lav('button', 'knapDemo' + (p[2] ? ' ' + p[2] : ''));
+    b.type = 'button';
+    b.appendChild(moelleIkon(p[0], { stoerrelse: 20 }));
+    b.appendChild(lav('span', null, p[1]));
+    knapper.appendChild(b);
+  });
+</script>
+</body>
+</html>
