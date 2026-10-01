@@ -170,15 +170,6 @@
       color: var(--tom);
     }
 
-    /* Instruktion under et dagsplan-punkt: egen linje, skaleres med kolonnen */
-    .listepunkt .tekst .instruktion{
-      display: block;
-      margin-top: calc(2px * var(--tekst-skala, 1));
-      font-size: .9em;
-      font-style: italic;
-      line-height: 1.2;
-    }
-
     .listepunkt.nu .afsender,
     .listepunkt.akut .afsender{ color: rgba(255,255,255,.65); }
 
@@ -915,7 +906,7 @@ function tegnUgeplaner(){
     if(r.ugedag !== dagensDag) return;
     const nøgle = r.beboer;
     if(!grupper[nøgle]) grupper[nøgle] = { beboer: r.beboer, aktiviteter: [] };
-    grupper[nøgle].aktiviteter.push({ tid: r.tid, aktivitet: r.aktivitet, instruktion: r.instruktion });
+    grupper[nøgle].aktiviteter.push({ tid: r.tid, aktivitet: r.aktivitet });
   });
 
   for(const nøgle in grupper){
@@ -955,9 +946,7 @@ function tegnUgeplaner(){
 
       return '<li class="' + klasse + '">' +
         '<span class="klokkeslæt">' + escapeHtml(item.tid) + '</span>' +
-        '<span class="tekst">' + escapeHtml(item.aktivitet) +
-          (item.instruktion ? '<span class="afsender instruktion">' + escapeHtml(item.instruktion) + '</span>' : '') +
-        '</span>' +
+        '<span class="tekst">' + escapeHtml(item.aktivitet) + '</span>' +
         flag +
         '</li>';
     }).join('');
