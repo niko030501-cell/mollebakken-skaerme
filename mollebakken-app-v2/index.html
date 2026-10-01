@@ -472,6 +472,7 @@
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
     margin-top:2px; font-size:.85em; font-weight:400; font-style:italic; color:var(--tekst-2);
   }
+  .instrFuld{ display:block; -webkit-line-clamp:unset; overflow:visible; font-size:14px; white-space:pre-line; }
   .listepunkt.nu .instrForhaand{ color:rgba(255,255,255,.75); }
   .dagsplanHandlinger{ display:flex; align-items:center; gap:2px; margin-left:auto; flex-shrink:0; }
   .instrKnap{
@@ -3064,11 +3065,12 @@ async function visSammenMed(){
     <div class="kort" style="border-left:6px solid var(--guld);">
       <div style="font-size:12px;color:var(--tekst-svag);">LIGE NU</div>
       <div style="font-size:16px;font-weight:600;">${nu ? escapeHtml(nu.tid) + ' — ' + escapeHtml(nu.aktivitet) : 'Ingen aktivitet fundet'}</div>
+      ${nu && nu.instruktion ? `<div class="instrForhaand instrFuld">${escapeHtml(nu.instruktion)}</div>` : ''}
     </div>
     <div class="kort">
       <div style="font-size:12px;color:var(--tekst-svag);margin-bottom:6px;">KOMMENDE</div>
       ${kommende.length === 0 ? '<div style="font-size:13px;">Intet planlagt resten af dagen</div>' :
-        kommende.map(r => `<div class="dagsplanRække"><span><strong>${escapeHtml(r.tid)}</strong> ${escapeHtml(r.aktivitet)}</span></div>`).join('')}
+        kommende.map(r => `<div class="dagsplanRække"><span><strong>${escapeHtml(r.tid)}</strong> ${escapeHtml(r.aktivitet)}${r.instruktion ? `<div class="instrForhaand instrFuld">${escapeHtml(r.instruktion)}</div>` : ''}</span></div>`).join('')}
     </div>
   `;
 }
