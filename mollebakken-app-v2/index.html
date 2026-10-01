@@ -667,7 +667,13 @@
   #topbar{ display:none; }   /* sidehovedet erstatter den mørke topbjælke på mobil */
   html{ scroll-padding-top:80px; }
 
-  .side{ padding:24px 20px 24px; }
+  /* #topbar (med sin egen safe-area-top-kompensation) blev erstattet af
+     sidehoved/fsVelkomst på mobil, men ingen af erstatningerne fik
+     kompensationen med — indholdet startede derfor bag statuslinjen på
+     alle faner. .side er den fælles wrapper for alle faner, så rettes her
+     ét sted. env() er 0 på skærme uden indhak/PWA-statuslinje, så det er
+     uskadeligt på PC, hvor #topMenu alligevel optager sin egen plads. */
+  .side{ padding:calc(24px + env(safe-area-inset-top)) 20px 24px; }
   @media (min-width:900px){ .side{ padding:40px 24px 48px; } }
 
   .sidehoved{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:0 0 28px; }
