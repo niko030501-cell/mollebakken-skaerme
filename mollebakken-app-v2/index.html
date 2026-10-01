@@ -480,9 +480,11 @@
     min-width:44px; min-height:44px; background:none; border-radius:10px;
     color:var(--tekst-2); opacity:.7;
   }
-  .instrKnap.harInstr{ color:var(--guld-moerk); opacity:1; }
+  .instrKnap.harInstr{ color:var(--mørk); background:var(--guld-lys); opacity:1; }
+  .instrMaerke{ display:inline-flex; vertical-align:-3px; margin-left:6px; color:var(--guld-moerk); }
+  .listepunkt.nu .instrMaerke{ color:var(--guld); }
   .listepunkt.nu .instrKnap{ color:#fff; }
-  .listepunkt.nu .instrKnap.harInstr{ color:var(--guld); }
+  .listepunkt.nu .instrKnap.harInstr{ color:var(--mørk); }
 
   /* Instruktions-bundark (samme udtryk som "Mere"-arket: Fraunces overskrift, lys flade, guld-knap) */
   #instrBaggrund{ position:fixed; inset:0; background:rgba(22,33,31,.45); z-index:1000; }
@@ -2572,7 +2574,7 @@ function tegnDagsplanListe(){
     return `
     <div class="${klasse}">
       <span class="klokkeslæt">${escapeHtml(r.tid)}</span>
-      <span class="tekst">${escapeHtml(r.aktivitet)}${instr}</span>
+      <span class="tekst">${escapeHtml(r.aktivitet)}${r.instruktion ? '<span class="instrMaerke" data-ikon="journal" data-storrelse="18" title="Har instruktion"></span>' : ''}${instr}</span>
       ${flag}
       <span class="dagsplanHandlinger">
         <button class="instrKnap${r.instruktion ? ' harInstr' : ''}" onclick="åbnInstruktion('${r.id}')" aria-label="${r.instruktion ? 'Se eller ret instruktion' : 'Tilføj instruktion'}"><span data-ikon="journal" data-storrelse="22"></span></button>
@@ -3064,15 +3066,16 @@ async function visSammenMed(){
   document.getElementById('sammenMedIndhold').innerHTML = `
     <div class="kort" style="border-left:6px solid var(--guld);">
       <div style="font-size:12px;color:var(--tekst-svag);">LIGE NU</div>
-      <div style="font-size:16px;font-weight:600;">${nu ? escapeHtml(nu.tid) + ' — ' + escapeHtml(nu.aktivitet) : 'Ingen aktivitet fundet'}</div>
+      <div style="font-size:16px;font-weight:600;">${nu ? escapeHtml(nu.tid) + ' — ' + escapeHtml(nu.aktivitet) + (nu.instruktion ? '<span class="instrMaerke" data-ikon="journal" data-storrelse="18"></span>' : '') : 'Ingen aktivitet fundet'}</div>
       ${nu && nu.instruktion ? `<div class="instrForhaand instrFuld">${escapeHtml(nu.instruktion)}</div>` : ''}
     </div>
     <div class="kort">
       <div style="font-size:12px;color:var(--tekst-svag);margin-bottom:6px;">KOMMENDE</div>
       ${kommende.length === 0 ? '<div style="font-size:13px;">Intet planlagt resten af dagen</div>' :
-        kommende.map(r => `<div class="dagsplanRække"><span><strong>${escapeHtml(r.tid)}</strong> ${escapeHtml(r.aktivitet)}${r.instruktion ? `<div class="instrForhaand instrFuld">${escapeHtml(r.instruktion)}</div>` : ''}</span></div>`).join('')}
+        kommende.map(r => `<div class="dagsplanRække"><span><strong>${escapeHtml(r.tid)}</strong> ${escapeHtml(r.aktivitet)}${r.instruktion ? '<span class="instrMaerke" data-ikon="journal" data-storrelse="18"></span>' : ''}${r.instruktion ? `<div class="instrForhaand instrFuld">${escapeHtml(r.instruktion)}</div>` : ''}</span></div>`).join('')}
     </div>
   `;
+  indsætIkoner(document.getElementById('sammenMedIndhold'));
 }
 
 // ==================================================================
