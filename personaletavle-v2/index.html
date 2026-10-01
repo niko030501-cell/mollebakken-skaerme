@@ -170,6 +170,14 @@
       color: var(--tom);
     }
 
+    /* Note-tegn til højre på et dagsplan-punkt der har en instruktion i appen */
+    .listepunkt .instruktionMaerke{
+      width: calc(16px * var(--tekst-skala, 1));
+      height: calc(16px * var(--tekst-skala, 1));
+      color: var(--guld-moerk);
+      align-self: center;
+    }
+
     .listepunkt.nu .afsender,
     .listepunkt.akut .afsender{ color: rgba(255,255,255,.65); }
 
@@ -880,6 +888,11 @@ async function hentUgeplaner(){
   tegnUgeplaner();
 }
 
+// Lille note-tegn: punktet har en instruktion i appen (selve teksten vises ikke på tavlen)
+const INSTRUKTION_MAERKE = '<svg class="moelle-ikon instruktionMaerke" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Se instruktion i appen">' +
+  '<path d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-11a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1m3 0v18"></path>' +
+  '<path d="M13 8l2 0"></path><path d="M13 12l2 0"></path></svg>';
+
 function tegnUgeplaner(){
   if(!sidsteUgeplanData) return;
 
@@ -906,7 +919,7 @@ function tegnUgeplaner(){
     if(r.ugedag !== dagensDag) return;
     const nøgle = r.beboer;
     if(!grupper[nøgle]) grupper[nøgle] = { beboer: r.beboer, aktiviteter: [] };
-    grupper[nøgle].aktiviteter.push({ tid: r.tid, aktivitet: r.aktivitet });
+    grupper[nøgle].aktiviteter.push({ tid: r.tid, aktivitet: r.aktivitet, harInstruktion: !!r.instruktion });
   });
 
   for(const nøgle in grupper){
@@ -948,6 +961,7 @@ function tegnUgeplaner(){
         '<span class="klokkeslæt">' + escapeHtml(item.tid) + '</span>' +
         '<span class="tekst">' + escapeHtml(item.aktivitet) + '</span>' +
         flag +
+        (item.harInstruktion ? INSTRUKTION_MAERKE : '') +
         '</li>';
     }).join('');
 
