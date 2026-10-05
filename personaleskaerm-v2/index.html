@@ -100,13 +100,17 @@
 
   /* ---- Niveau 1: I huset nu ---- */
 
+  /* Faste kort-bredder: ét kort må aldrig strække sig over hele rækken. */
   #gulv{
-    display:flex;
-    flex-wrap:nowrap;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, 170px);
+    justify-content:start;
     gap:18px;
   }
 
-  .personKort{ flex:1 1 0; min-width:0; }
+  #gulv .tom-tilstand{ grid-column:1 / -1; }
+
+  .personKort{ min-width:0; }
 
   .personKort .portræt{
     height:130px;
@@ -298,7 +302,7 @@
 
   <div id="venstre">
     <section class="niveau" id="niveau1">
-      <div class="eyebrow">I huset nu</div>
+      <div class="eyebrow" id="niveau1Titel">I huset nu</div>
       <div id="gulv"><div class="tom-tilstand">Henter personale...</div></div>
     </section>
 
@@ -308,7 +312,7 @@
     </section>
 
     <section class="niveau" id="niveau3">
-      <div class="eyebrow">Senere i dag</div>
+      <div class="eyebrow" id="niveau3Titel">Senere i dag</div>
       <div id="senereRække"></div>
     </section>
   </div>
@@ -483,58 +487,99 @@ async function hentPersonale(){
   const datoStr = datoISO(dato);
   document.getElementById('overskriftDag').textContent = UGEDAGE[dato.getDay()] + (visImorgen ? ' (i morgen)' : '');
 
+  // Sektionstitler følger visningen: "i huset nu" / "senere i dag" giver
+  // ikke mening i en morgendags-forhåndsvisning.
+  document.getElementById('niveau1Titel').textContent = visImorgen ? 'Dagvagt' : 'I huset nu';
+  document.getElementById('niveau3Titel').textContent = visImorgen ? 'Nattevagt' : 'Senere i dag';
+
+  const nu = new Date();
+
+  // Workfeed giver en vagt over midnat (døgn-/nattevagt) to rækker, og
+  // `dag` er vagtens STARTdag. Når vi viser dagens egen liste, skal vi
+  // derfor også hente i går, så en vagt der stadig løber efter midnat ikke
+  // mangler. I morgen-visning henter vi kun morgendagen.
+  const dage = [datoStr];
+  if(!visImorgen){
+    const iGår = new Date(nu);
+    iGår.setDate(iGår.getDate() - 1);
+    dage.unshift(datoISO(iGår));
+  }
+
   const [vagterRes, skjulninger] = await Promise.all([
-    sb.from('personaleskaerm_vagter').select('*').eq('dag', datoStr),
+    sb.from('personaleskaerm_vagter').select('*').in('dag', dage).order('start'),
     hentSkjulninger()
   ]);
   const { data, error } = vagterRes;
   if(error){ console.error('Fejl personale:', error); return; }
 
-  const nu = new Date();
-  const nuMinutter = nu.getHours() * 60 + nu.getMinutes();
+  const alle = flettVagter(data || [], visImorgen, nu, datoStr);
 
-  // Dedup på navn+rolle (midnatssplit kan give to rækker for samme
-  // døgnvagt/nattevagt-person samme dag).
-  const set = new Map();
+  // P-møde-tags skjuler ikke længere nogen: Workfeed giver P-møde-rækkerne
+  // hele vagtens tider, så mødets sluttid kan ikke udledes af data, og et
+  // gæt skjulte hele dagholdet.
 
-  (data || []).forEach(r => {
-    const rolle = visningsRolle(r.rolle, r.tag);
-    const nøgle = r.navn + '|' + rolle;
-    if(set.has(nøgle)) return;
+  // Nattevagt der allerede er startet (fx i nat efter midnat) er i huset nu.
+  const nattevagtStartet = p => p.rolle === 'Nattevagt' && !visImorgen && new Date(p.start) <= nu;
 
-    const slut = new Date(r.slut);
-    const slutMinutter = slut.getHours() * 60 + slut.getMinutes();
-
-    // Ikke-Døgnvagt/Nattevagt personale forsvinder når vagten er slut —
-    // men kun når vi viser DAGENS egen liste, ikke en morgendags-forhåndsvisning.
-    if(!visImorgen && rolle !== 'Døgnvagt' && rolle !== 'Nattevagt'){
-      if(nuMinutter > slutMinutter) return;
-    }
-
-    set.set(nøgle, { ...r, rolle });
-  });
-
-  const alle = [...set.values()];
-
-  // Personale tagget 'P-møde' eller 'P-møde m. vagt' sidder til mødet, ikke
-  // på gulvet — de skal IKKE tælles med i niveau 1/2 mens mødet står på
-  // (kun vikaren der dækker gulvet imens skal stå der). Se beregnPmødePersoner
-  // for hvornår mødet regnes for slut.
-  const iMødeNu = p => (p.tag === 'P-møde' || p.tag === 'P-møde m. vagt') && !mødeErSlut(alle, nu);
-
-  const gulv = alle.filter(p => !iMødeNu(p) && (p.rolle === 'Medarbejder' || p.rolle === 'Døgnvagt'));
-  const nattevagt = alle.filter(p => p.rolle === 'Nattevagt');
-  const funktioner = alle.filter(p => !iMødeNu(p) && p.rolle !== 'Medarbejder' && p.rolle !== 'Døgnvagt' && p.rolle !== 'Nattevagt');
+  const gulv = alle.filter(p => p.rolle === 'Medarbejder' || p.rolle === 'Døgnvagt' || nattevagtStartet(p));
+  const nattevagt = alle.filter(p => p.rolle === 'Nattevagt' && !nattevagtStartet(p));
+  const funktioner = alle.filter(p => p.rolle !== 'Medarbejder' && p.rolle !== 'Døgnvagt' && p.rolle !== 'Nattevagt');
 
   // Skjult personale (styres fra appens "Skærm"-fane) filtreres fra HELT
-  // til sidst — al beregning ovenfor (dedup, felter, P-møde-timing via
-  // `alle`) kører uændret, så en skjult person aldrig kan påvirke hvem
-  // andre der vises eller hvornår mødet regnes for slut.
+  // til sidst — al beregning ovenfor (fletning, fordeling) kører uændret,
+  // så en skjult person aldrig kan påvirke hvem andre der vises.
   const vises = p => !findSkjulning(skjulninger, p.navn, datoStr, nu);
 
-  tegnGulv(gulv.filter(vises));
+  tegnGulv(gulv.filter(vises), visImorgen);
   tegnFunktioner(funktioner.filter(vises));
-  tegnSenere(nattevagt.filter(vises), beregnPmødePersoner(alle, nu).filter(vises));
+  tegnSenere(nattevagt.filter(vises), visImorgen);
+}
+
+// Samler rå vagtrækker til ÉN post pr. person og rolle.
+//  - Rækker for samme person+rolle der støder op til hinanden (næste starter
+//    når forrige slutter, som ved Workfeeds midnatssplit) flettes til én
+//    vagt: tidligste start, seneste slut, og første tag der findes.
+//    Rækkefølgen i databasen er tilfældig og må aldrig afgøre resultatet.
+//  - Dagens egen liste: ikke-døgn/nat-personale skjules før vagten starter
+//    og efter den er slut. Vagter fra i går vises kun hvis de stadig løber
+//    (døgn-/nattevagt over midnat).
+//  - I morgen-visning vises hele morgendagens hold uanset klokkeslæt.
+function flettVagter(rækker, visImorgen, nu, datoStr){
+  const perNøgle = new Map();
+  rækker.forEach(r => {
+    const rolle = visningsRolle(r.rolle, r.tag);
+    const nøgle = r.navn + '|' + rolle;
+    if(!perNøgle.has(nøgle)) perNøgle.set(nøgle, []);
+    perNøgle.get(nøgle).push({ ...r, rolle });
+  });
+
+  const resultat = [];
+  perNøgle.forEach(liste => {
+    liste.sort((a, b) => new Date(a.start) - new Date(b.start));
+    const flettet = [];
+    liste.forEach(r => {
+      const sidste = flettet[flettet.length - 1];
+      if(sidste && Math.abs(new Date(r.start) - new Date(sidste.slut)) <= 60000){
+        if(new Date(r.slut) > new Date(sidste.slut)) sidste.slut = r.slut;
+        if(!sidste.tag && r.tag) sidste.tag = r.tag;
+      } else {
+        flettet.push({ ...r });
+      }
+    });
+
+    // Samme person to ikke-sammenhængende vagter (fx nattevagt der slutter
+    // i morges + ny vagt senere i dag): vis kun den der er i gang, ellers
+    // den første.
+    const iGang = flettet.find(p => new Date(p.start) <= nu && nu < new Date(p.slut));
+    resultat.push(iGang || flettet[0]);
+  });
+
+  return resultat.filter(p => {
+    const løberOverMidnat = p.rolle === 'Døgnvagt' || p.rolle === 'Nattevagt';
+    if(p.dag !== datoStr) return løberOverMidnat && new Date(p.slut) > nu;   // i går
+    if(visImorgen || p.rolle === 'Nattevagt') return true;   // nattevagt sorteres senere i gulv/"senere"
+    return new Date(p.start) <= nu && nu < new Date(p.slut);
+  });
 }
 
 // ==================================================================
@@ -617,10 +662,10 @@ function portrætHtmlStor(navn, url, erDøgnvagt){
   return '<div class="' + klasse + '"><span class="initialer">' + escapeHtml(initialer(navn)) + '</span></div>';
 }
 
-function tegnGulv(personer){
+function tegnGulv(personer, visImorgen){
   const container = document.getElementById('gulv');
   if(personer.length === 0){
-    container.innerHTML = '<div class="tom-tilstand">Ingen på arbejde lige nu</div>';
+    container.innerHTML = '<div class="tom-tilstand">' + (visImorgen ? 'Ingen dagvagt i morgen' : 'Ingen på arbejde lige nu') + '</div>';
     return;
   }
   container.innerHTML = personer.map(function(p){
@@ -654,37 +699,14 @@ function tegnFunktioner(personer){
   }).join('');
 }
 
-// Er dagens P-møde slut? Sluttidspunktet er det seneste 'slut' blandt de
-// rækker der er tagget 'P-møde m. vagt' — det ER mødeblokken (samme
-// tidsrum for alle), mens almindelige 'P-møde'-rækker er hele resten af
-// personens vagt (varierer per person, ubrugelig til at time mødet).
-// Ingen P-møde-rækker i dag = ikke noget møde at vente på.
-function mødeErSlut(alle, nu){
-  const pMødeSlutTider = alle.filter(p => p.tag === 'P-møde m. vagt').map(p => new Date(p.slut));
-  const senesteSlut = pMødeSlutTider.length > 0 ? new Date(Math.max(...pMødeSlutTider)) : null;
-  return !senesteSlut || nu >= senesteSlut;
-}
-
-// Personale tagget "P-møde" (uden "m. vagt") kommer op på gulvet når
-// mødet er slut — deres vagt fortsætter resten af dagen efter mødet.
-// "P-møde m. vagt" derimod har KUN mødet som vagt og tager hjem bagefter
-// (forsvinder af sig selv via den almindelige vagt-slut-filtrering ovenfor).
-// Ren beregning — ingen DOM-skrivning — så den kan genbruges af tegnSenere().
-function beregnPmødePersoner(alle, nu){
-  const pMødePersoner = alle.filter(p => p.tag === 'P-møde');
-  return mødeErSlut(alle, nu) ? [] : pMødePersoner;
-}
-
-// Niveau 3: nattevagt + folk der kommer efter p-møde. Grupperet i hver
-// sin mærkede "chip" i stedet for én blandet liste — nemmere at se med
-// et blik hvem der er hvad (personale har efterspurgt tydeligere adskillelse).
-function tegnSenere(nattevagt, pmødePersoner){
+// Niveau 3: nattevagt. Chippen med "Nattevagt" vises kun i dagens visning
+// ("Senere i dag"); i morgen-visning hedder sektionen selv "Nattevagt".
+function tegnSenere(nattevagt, visImorgen){
   const sektion = document.getElementById('niveau3');
   const container = document.getElementById('senereRække');
 
   const grupper = [
-    { label: 'Nattevagt', personer: nattevagt },
-    { label: 'Efter P-møde', personer: pmødePersoner }
+    { label: visImorgen ? '' : 'Nattevagt', personer: nattevagt }
   ].filter(function(g){ return g.personer.length > 0; });
 
   if(grupper.length === 0){
@@ -695,7 +717,7 @@ function tegnSenere(nattevagt, pmødePersoner){
 
   container.innerHTML = grupper.map(function(gruppe){
     return '<div class="senereGruppe">' +
-      '<div class="senereGruppeLabel">' + escapeHtml(gruppe.label) + '</div>' +
+      (gruppe.label ? '<div class="senereGruppeLabel">' + escapeHtml(gruppe.label) + '</div>' : '') +
       '<div class="senereGruppePersoner">' +
       gruppe.personer.map(function(p){
         return '<div class="senereItem">' +
