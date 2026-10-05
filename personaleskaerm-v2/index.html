@@ -100,15 +100,18 @@
 
   /* ---- Niveau 1: I huset nu ---- */
 
-  /* Faste kort-bredder: ét kort må aldrig strække sig over hele rækken. */
+  /* Altid ÉN række med lige store kort: hvert kort er højst 170 px bredt
+     (ét kort strækker sig aldrig over hele rækken), men de krymper
+     ligeligt sammen i stedet for at ombryde, når der er mange. */
   #gulv{
     display:grid;
-    grid-template-columns:repeat(auto-fill, 170px);
+    grid-auto-flow:column;
+    grid-auto-columns:minmax(0, 170px);
     justify-content:start;
     gap:18px;
   }
 
-  #gulv .tom-tilstand{ grid-column:1 / -1; }
+  #gulv .tom-tilstand{ white-space:nowrap; }
 
   .personKort{ min-width:0; }
 
