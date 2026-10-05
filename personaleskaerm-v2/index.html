@@ -904,6 +904,10 @@ function effektivMandag(){
 // diasshow her — matcher den gamle Apps Script-udgaves opførsel.
 let aktivitetBilledeInterval = null;
 
+// Samme navn som AKTIVITET_SENTINEL i mollebakken-app-v2 — skal være ens,
+// så billederne findes under samme aktivitet_navn.
+const AKTIVITET_INGEN = 'Ingen fælles aktivitet';
+
 async function hentAktivitet(){
   if(!sb) return;
   if(!beboerskaermAktiv.aktivitet) return;
@@ -915,17 +919,16 @@ async function hentAktivitet(){
   const { data, error } = await sb.from('aktiviteter').select('*').eq('uge_start', ugeStart).eq('dag', dagensDag);
   if(error){ console.error('Fejl aktivitet:', error); return; }
 
-  const aktivitet = data && data.length > 0 ? data[0].aktivitet : null;
-  document.getElementById('aktivitetNavn').textContent = aktivitet || 'Ingen aktivitet angivet';
+  // Er der ikke valgt en aktivitet for dagen (fx fordi ingen har haft tid
+  // til at tilføje den), falder skærmen tilbage til "Ingen fælles aktivitet"
+  // og viser stemningsbillederne som diasshow — præcis som hvis den var valgt.
+  const valgt = data && data.length > 0 ? data[0].aktivitet : null;
+  const aktivitet = valgt || AKTIVITET_INGEN;
+  document.getElementById('aktivitetNavn').textContent = aktivitet;
 
   if(aktivitetBilledeInterval){
     clearInterval(aktivitetBilledeInterval);
     aktivitetBilledeInterval = null;
-  }
-
-  if(!aktivitet){
-    document.getElementById('aktivitetBilledeBoks').innerHTML = '';
-    return;
   }
 
   const { data: billeder } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet);
