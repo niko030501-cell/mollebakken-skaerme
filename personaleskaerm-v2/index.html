@@ -903,6 +903,7 @@ function effektivMandag(){
 // ligger flere billeder til dagens aktivitet, skal de rotere som et
 // diasshow her — matcher den gamle Apps Script-udgaves opførsel.
 let aktivitetBilledeInterval = null;
+let aktivitetDiasNøgle = null;   // aktivitet + billed-URL'er der vises nu
 
 // Samme navn som AKTIVITET_SENTINEL i mollebakken-app-v2 — skal være ens,
 // så billederne findes under samme aktivitet_navn.
@@ -926,29 +927,49 @@ async function hentAktivitet(){
   const aktivitet = valgt || AKTIVITET_INGEN;
   document.getElementById('aktivitetNavn').textContent = aktivitet;
 
+  const { data: billeder, error: billedeFejl } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet);
+  // Kan billederne ikke hentes, beholdes det der kører (diasshowet røres ikke).
+  if(billedeFejl){ console.error('Fejl aktivitet_billeder:', billedeFejl); return; }
+
+  const boks = document.getElementById('aktivitetBilledeBoks');
+
+  if(!billeder || billeder.length === 0){
+    if(aktivitetBilledeInterval){ clearInterval(aktivitetBilledeInterval); aktivitetBilledeInterval = null; }
+    aktivitetDiasNøgle = null;
+    boks.textContent = '';
+    return;
+  }
+
+  // Billeder ligger i Supabase Storage — storage_path er en offentlig sti.
+  // Sorteret, så rækkefølgen er den samme ved hver hentning.
+  const urls = billeder
+    .map(b => sb.storage.from('aktivitet-billeder').getPublicUrl(b.storage_path).data.publicUrl)
+    .sort();
+
+  // Samme aktivitet og samme billeder som det der allerede vises = lad
+  // diasshowet køre videre. Det genstartes kun, når noget faktisk er ændret
+  // (ellers startede det forfra ved hver minut-opdatering).
+  const nøgle = aktivitet + '|' + urls.join(',');
+  if(nøgle === aktivitetDiasNøgle) return;
+  aktivitetDiasNøgle = nøgle;
+
   if(aktivitetBilledeInterval){
     clearInterval(aktivitetBilledeInterval);
     aktivitetBilledeInterval = null;
   }
 
-  const { data: billeder } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet);
-  if(!billeder || billeder.length === 0){
-    document.getElementById('aktivitetBilledeBoks').innerHTML = '';
-    return;
-  }
-
-  // Billeder ligger i Supabase Storage — storage_path er en offentlig sti.
-  const urls = billeder.map(b => sb.storage.from('aktivitet-billeder').getPublicUrl(b.storage_path).data.publicUrl);
-
-  document.getElementById('aktivitetBilledeBoks').innerHTML =
-    '<img id="aktivitetBillede" src="' + escapeHtml(urls[0]) + '" alt="">';
+  const billede = document.createElement('img');
+  billede.id = 'aktivitetBillede';
+  billede.alt = '';
+  billede.src = urls[0];
+  boks.textContent = '';
+  boks.appendChild(billede);
 
   if(urls.length > 1){
     let index = 0;
     aktivitetBilledeInterval = setInterval(function(){
       index = (index + 1) % urls.length;
-      const img = document.getElementById('aktivitetBillede');
-      if(img) img.src = urls[index];
+      billede.src = urls[index];
     }, 10000);
   }
 }
