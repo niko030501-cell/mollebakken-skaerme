@@ -40,6 +40,56 @@
     border-bottom:2px solid var(--blaek);
   }
 
+  /* ---- Overskrift: dagnavn vender, streg tegnes (kun transform/opacity) ---- */
+
+  #overskrift{ position:relative; line-height:1.3; }
+
+  /* Fast højde + overflow:hidden → layoutet hopper aldrig under vendingen. */
+  #dagVindue{
+    display:inline-block;
+    vertical-align:bottom;
+    overflow:hidden;
+    height:1.3em;
+    line-height:1.3;
+  }
+
+  #overskriftDag{ display:inline-block; line-height:inherit; will-change:transform, opacity; }
+
+  #overskriftDag.dagUd{ animation:dagUd .3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  #overskriftDag.dagInd{ animation:dagInd .4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+  @keyframes dagUd{
+    from{ transform:translateY(0);     opacity:1; }
+    to  { transform:translateY(-100%); opacity:0; }
+  }
+  @keyframes dagInd{
+    from{ transform:translateY(100%); opacity:0; }
+    to  { transform:translateY(0);    opacity:1; }
+  }
+
+  /* Stregen ligger i topbjælkens eksisterende polstring (påvirker ikke højden). */
+  #overskriftStreg{
+    position:absolute;
+    left:0; right:0; bottom:-8px;
+    height:3px;
+    background:var(--guld);
+    transform-origin:left center;
+    transform:scaleX(0);
+    will-change:transform;
+  }
+  #overskriftStreg.tegn{ animation:tegnStreg .6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+  @keyframes tegnStreg{
+    from{ transform:scaleX(0); }
+    to  { transform:scaleX(1); }
+  }
+
+  /* Reduceret bevægelse: ingen animation, stregen står færdigtegnet. */
+  @media (prefers-reduced-motion: reduce){
+    #overskriftDag.dagUd, #overskriftDag.dagInd, #overskriftStreg.tegn{ animation:none; }
+    #overskriftStreg{ transform:scaleX(1); }
+  }
+
   #topHøjreInfo{
     display:flex;
     align-items:baseline;
@@ -290,7 +340,10 @@
 <script src="../shared/icons.js"></script>
 
 <div id="topbjælke">
-  <div id="overskrift">Personale — <span id="overskriftDag"></span></div>
+  <div id="overskrift">
+    <span class="overskriftPrefix">Personale — </span><span id="dagVindue"><span id="overskriftDag"></span></span>
+    <span id="overskriftStreg"></span>
+  </div>
   <div id="topHøjreInfo">
     <div id="vejrMini">
       <span id="vejrIkon">–</span>
@@ -467,6 +520,76 @@ function datoISO(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
+// ==================================================================
+// OVERSKRIFT-ANIMATION — dagnavnet vender, derefter tegnes en streg.
+// Kører KUN når teksten faktisk ændrer sig (og ved første indlæsning);
+// det samme kald hvert minut gør ingenting. Kun transform/opacity.
+// ==================================================================
+
+let sidsteOverskrift = null;
+let overskriftSkift = 0;   // tæller: et nyt skift afbryder et igangværende
+
+function sætOverskrift(tekst){
+  if(tekst === sidsteOverskrift) return;
+  const forste = sidsteOverskrift === null;
+  sidsteOverskrift = tekst;
+
+  const dag = document.getElementById('overskriftDag');
+  const streg = document.getElementById('overskriftStreg');
+  const skift = ++overskriftSkift;
+
+  const reduceret = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduceret){
+    dag.textContent = tekst;
+    return;
+  }
+
+  // Tegn stregen forfra efter `forsinkelse` sek. (= når vendingen er færdig).
+  function tegnStreg(forsinkelse){
+    streg.classList.remove('tegn');
+    void streg.offsetWidth;   // tving reflow så animationen kan genstartes
+    streg.style.animationDelay = forsinkelse + 's';
+    streg.classList.add('tegn');
+  }
+
+  function kommInd(){
+    dag.textContent = tekst;
+    dag.classList.remove('dagUd');
+    dag.classList.remove('dagInd');
+    void dag.offsetWidth;
+    dag.classList.add('dagInd');
+    tegnStreg(0.4);   // starter når indvendingen (0,4 s) er færdig
+  }
+
+  if(forste){
+    kommInd();
+    return;
+  }
+
+  // Skift: gammelt dagnavn vipper op (0,3 s), så kommer det nye ind (0,4 s).
+  streg.classList.remove('tegn');
+  dag.classList.remove('dagInd');
+  void dag.offsetWidth;
+  dag.classList.add('dagUd');
+  setTimeout(function(){
+    if(skift !== overskriftSkift) return;   // afbrudt af et nyere skift
+    kommInd();
+  }, 300);
+}
+
+// Midlertidig test: ?testanimation=1 skifter dagnavnet hvert 8. sek.,
+// så animationen kan ses uden at vente på dagskiftet. Slået fra som standard.
+const TEST_ANIMATION = new URLSearchParams(window.location.search).get('testanimation') === '1';
+if(TEST_ANIMATION){
+  const testTekster = ['Mandag', 'Tirsdag (i morgen)', 'Tirsdag'];
+  let testIndex = 0;
+  sætOverskrift(testTekster[0]);
+  setInterval(function(){
+    testIndex = (testIndex + 1) % testTekster.length;
+    sætOverskrift(testTekster[testIndex]);
+  }, 8000);
+}
+
 function opdaterUr(){
   const nu = new Date();
   document.getElementById('ur').textContent =
@@ -488,7 +611,7 @@ async function hentPersonale(){
   const visImorgen = skalViseImorgen();
   const dato = måldato();
   const datoStr = datoISO(dato);
-  document.getElementById('overskriftDag').textContent = UGEDAGE[dato.getDay()] + (visImorgen ? ' (i morgen)' : '');
+  if(!TEST_ANIMATION) sætOverskrift(UGEDAGE[dato.getDay()] + (visImorgen ? ' (i morgen)' : ''));
 
   // Sektionstitler følger visningen: "i huset nu" / "senere i dag" giver
   // ikke mening i en morgendags-forhåndsvisning.
