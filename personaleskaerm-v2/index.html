@@ -718,6 +718,13 @@ function flettVagter(rækker, visImorgen, nu, datoStr){
       return;
     }
 
+    // Døgnvagt: kun vagten der starter den viste dag (se filteret nedenfor).
+    if(liste[0].rolle === 'Døgnvagt'){
+      const dagens = flettet.find(p => p.dag === datoStr);
+      if(dagens) resultat.push(dagens);
+      return;
+    }
+
     // Samme person to ikke-sammenhængende vagter (fx en vagt der slutter
     // i morges + ny vagt senere i dag): vis kun den der er i gang, ellers
     // den første.
@@ -730,17 +737,21 @@ function flettVagter(rækker, visImorgen, nu, datoStr){
     const slut = new Date(p.slut);
     // Nattevagt er allerede valgt til den rigtige nat ovenfor.
     if(p.rolle === 'Nattevagt') return true;
-    // Vagt fra i går (løber over midnat): vises så længe den er i gang
-    // (fx døgnvagten indtil ca. 09:15).
+    // Døgnvagt: kun den der STARTER den viste dag. Døgnvagten fra i går
+    // (hvis vagt løber til kl. ca. 09:15) står ikke på dagens liste. Dagens
+    // døgnvagt vises hele dagen — samme person som aftenen før på
+    // i-morgen-visningen, så skiftet kl. 19:30 holder efter midnat.
+    if(p.rolle === 'Døgnvagt') return p.dag === datoStr && nu < slut;
+    // Øvrige vagter fra i går (løber over midnat): vises så længe de er i gang.
     if(p.dag !== datoStr) return start <= nu && nu < slut;
     // Dagens liste: hele morgendagens hold.
     if(visImorgen) return true;
     // Øvrige vises når vagten nærmer sig og indtil den er slut — så holdet
     // der starter 09:00 allerede står der kl. 08:57, men tirsdagens
     // dagvagter ikke står der kl. 00:30.
-    // Døgnvagt vises først ved start (den foregående døgnvagt står der til
-    // kl. ca. 09:15), så der ikke står to døgnvagter hele morgenen.
-    const forud = p.rolle === 'Døgnvagt' ? 0 : VIS_FØR_START_MS;
+    // Vagter der starter kl. 12 eller senere vises først når de møder ind
+    // (de er allerede set på i-morgen-visningen aftenen før).
+    const forud = start.getHours() >= 12 ? 0 : VIS_FØR_START_MS;
     return nu < slut && start.getTime() - nu.getTime() <= forud;
   });
 }
