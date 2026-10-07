@@ -688,29 +688,50 @@ function flettVagter(rækker, visImorgen, nu, datoStr){
     return s.getHours() >= 20 && e.getDate() !== s.getDate();
   };
 
-  const perNøgle = new Map();
+  // 1) Flet først de RÅ rækker (samme person og samme Workfeed-rolle, hvor
+  //    næste starter når forrige slutter — Workfeeds midnatssplit) til én
+  //    vagt. Rollen afgøres først bagefter, så en vagts dagdel og dens
+  //    fortsættelse efter midnat får samme tag/rolle (fx begge "Admin" →
+  //    kontor) i stedet for to kort.
+  const rå = new Map();
   rækker.forEach(r => {
-    let rolle = visningsRolle(r.rolle, r.tag);
-    if(rolle === 'Medarbejder' && erNatvagt(r)) rolle = 'Nattevagt';
-    const nøgle = r.navn + '|' + rolle;
-    if(!perNøgle.has(nøgle)) perNøgle.set(nøgle, []);
-    perNøgle.get(nøgle).push({ ...r, rolle });
+    const nøgle = r.navn + '|' + r.rolle;
+    if(!rå.has(nøgle)) rå.set(nøgle, []);
+    rå.get(nøgle).push(r);
   });
 
-  const resultat = [];
-  perNøgle.forEach(liste => {
+  const vagter = [];
+  rå.forEach(liste => {
     liste.sort((a, b) => new Date(a.start) - new Date(b.start));
     const flettet = [];
     liste.forEach(r => {
       const sidste = flettet[flettet.length - 1];
       if(sidste && Math.abs(new Date(r.start) - new Date(sidste.slut)) <= 60000){
         if(new Date(r.slut) > new Date(sidste.slut)) sidste.slut = r.slut;
-        if(!sidste.tag && r.tag) sidste.tag = r.tag;
+        // Admin-tagget vinder; ellers første tag der findes.
+        if(r.tag === 'Admin' || (!sidste.tag && r.tag)) sidste.tag = r.tag;
       } else {
         flettet.push({ ...r });
       }
     });
+    flettet.forEach(v => {
+      let rolle = visningsRolle(v.rolle, v.tag);
+      if(rolle === 'Medarbejder' && erNatvagt(v)) rolle = 'Nattevagt';
+      vagter.push({ ...v, rolle });
+    });
+  });
 
+  // 2) Vælg hvilken vagt der vises pr. person og (vist) rolle.
+  const perNøgle = new Map();
+  vagter.forEach(v => {
+    const nøgle = v.navn + '|' + v.rolle;
+    if(!perNøgle.has(nøgle)) perNøgle.set(nøgle, []);
+    perNøgle.get(nøgle).push(v);
+  });
+
+  const resultat = [];
+  perNøgle.forEach(flettet => {
+    const liste = flettet;
     // Nattevagt: kun den vagt der hører til den nat, der skal vises.
     if(liste[0].rolle === 'Nattevagt'){
       const nat = flettet.find(p => p.dag === nattevagtDag);
@@ -742,8 +763,9 @@ function flettVagter(rækker, visImorgen, nu, datoStr){
     // døgnvagt vises hele dagen — samme person som aftenen før på
     // i-morgen-visningen, så skiftet kl. 19:30 holder efter midnat.
     if(p.rolle === 'Døgnvagt') return p.dag === datoStr && nu < slut;
-    // Øvrige vagter fra i går (løber over midnat): vises så længe de er i gang.
-    if(p.dag !== datoStr) return start <= nu && nu < slut;
+    // Øvrige vagter fra i går vises ikke (hverken døgnvagtens eller en
+    // vagt der løber over midnat): dagens liste er dagens hold.
+    if(p.dag !== datoStr) return false;
     // Dagens liste: hele morgendagens hold.
     if(visImorgen) return true;
     // Øvrige vises når vagten nærmer sig og indtil den er slut — så holdet
