@@ -746,11 +746,19 @@ function flettVagter(rækker, visImorgen, nu, datoStr){
       return;
     }
 
-    // Samme person to ikke-sammenhængende vagter (fx en vagt der slutter
-    // i morges + ny vagt senere i dag): vis kun den der er i gang, ellers
-    // den første.
-    const iGang = flettet.find(p => new Date(p.start) <= nu && nu < new Date(p.slut));
-    resultat.push(iGang || flettet[0]);
+    // Kun vagter der hører til den viste dag kan vises (se filteret
+    // nedenfor). Vi henter også i går, så en medarbejder der arbejdede i
+    // går OG i dag har to vagter her. Tidligere blev "den første" valgt —
+    // dvs. gårsdagens — som så blev filtreret væk, så personen først dukkede
+    // op når dagens vagt startede (fx kl. 09:00). Derfor vælges der KUN
+    // blandt den viste dags vagter.
+    // Flere vagter samme dag (fx en der slutter i morges + en ny senere):
+    // den der er i gang, ellers den næste der ikke er slut, ellers den sidste.
+    const dagens = flettet.filter(p => p.dag === datoStr);
+    if(!dagens.length) return;
+    const iGang = dagens.find(p => new Date(p.start) <= nu && nu < new Date(p.slut));
+    const næste = dagens.find(p => nu < new Date(p.slut));
+    resultat.push(iGang || næste || dagens[dagens.length - 1]);
   });
 
   return resultat.filter(p => {
