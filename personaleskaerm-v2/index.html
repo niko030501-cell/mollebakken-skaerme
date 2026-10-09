@@ -620,16 +620,10 @@ async function hentPersonale(){
 
   const nu = new Date();
 
-  // Workfeed giver en vagt over midnat (døgn-/nattevagt) to rækker, og
-  // `dag` er vagtens STARTdag. Når vi viser dagens egen liste, skal vi
-  // derfor også hente i går, så en vagt der stadig løber efter midnat ikke
-  // mangler. I morgen-visning henter vi kun morgendagen.
+  // Kun den viste dags vagter hentes — hele dagens hold vises fra 19:30
+  // aftenen før til 19:30 samme dag (se REGEL i flettVagter). En døgn-/
+  // nattevagts del efter midnat har samme `dag` som vagtens start.
   const dage = [datoStr];
-  if(!visImorgen){
-    const iGår = new Date(nu);
-    iGår.setDate(iGår.getDate() - 1);
-    dage.unshift(datoISO(iGår));
-  }
 
   const [vagterRes, skjulninger] = await Promise.all([
     sb.from('personaleskaerm_vagter').select('*').in('dag', dage).order('start'),
@@ -665,20 +659,14 @@ async function hentPersonale(){
 //    når forrige slutter, som ved Workfeeds midnatssplit) flettes til én
 //    vagt: tidligste start, seneste slut, og første tag der findes.
 //    Rækkefølgen i databasen er tilfældig og må aldrig afgøre resultatet.
-//  - Dagens egen liste: ikke-døgn/nat-personale skjules før vagten starter
-//    og efter den er slut. Vagter fra i går vises kun hvis de stadig løber
-//    (døgn-/nattevagt over midnat).
-//  - I morgen-visning vises hele morgendagens hold uanset klokkeslæt.
+//  - Kun den viste dags hold vises — hele holdet, uanset klokkeslæt
+//    (fra 19:30 aftenen før til 19:30 samme dag).
 function flettVagter(rækker, visImorgen, nu, datoStr){
-  // Hvilken nats nattevagt der vises: i morgen-visning morgendagens nat;
-  // ellers i går nats nattevagt til kl. 12:00 (så beboerne kan se hvem der
-  // var/er der i nat) og derefter i nats (dagens) nattevagt.
-  let nattevagtDag = datoStr;
-  if(!visImorgen && nu.getHours() < 12){
-    const iGår = new Date(nu);
-    iGår.setDate(iGår.getDate() - 1);
-    nattevagtDag = datoISO(iGår);
-  }
+  // REGEL: kl. 19:30 skifter skærmen til morgendagens hold, og præcis det
+  // hold står der uændret til kl. 19:30 dagen efter. Ingen skift ved
+  // midnat, ved kl. 12 eller når en vagt starter/slutter. Nattevagten er
+  // den der hører til den viste dag (aftenen den dag).
+  const nattevagtDag = datoStr;
 
   // En vagt der starter om aftenen/natten og slutter næste dag er en
   // nattevagt, også selvom Workfeed kalder rollen "Socialfaglig medarbejder".
@@ -761,33 +749,10 @@ function flettVagter(rækker, visImorgen, nu, datoStr){
     resultat.push(iGang || næste || dagens[dagens.length - 1]);
   });
 
-  return resultat.filter(p => {
-    const start = new Date(p.start);
-    const slut = new Date(p.slut);
-    // Nattevagt er allerede valgt til den rigtige nat ovenfor.
-    if(p.rolle === 'Nattevagt') return true;
-    // Døgnvagt: kun den der STARTER den viste dag. Døgnvagten fra i går
-    // (hvis vagt løber til kl. ca. 09:15) står ikke på dagens liste. Dagens
-    // døgnvagt vises hele dagen — samme person som aftenen før på
-    // i-morgen-visningen, så skiftet kl. 19:30 holder efter midnat.
-    if(p.rolle === 'Døgnvagt') return p.dag === datoStr && nu < slut;
-    // Øvrige vagter fra i går vises ikke (hverken døgnvagtens eller en
-    // vagt der løber over midnat): dagens liste er dagens hold.
-    if(p.dag !== datoStr) return false;
-    // Dagens liste: hele morgendagens hold.
-    if(visImorgen) return true;
-    // Øvrige vises når vagten nærmer sig og indtil den er slut — så holdet
-    // der starter 09:00 allerede står der kl. 08:57, men tirsdagens
-    // dagvagter ikke står der kl. 00:30.
-    // Vagter der starter kl. 12 eller senere vises først når de møder ind
-    // (de er allerede set på i-morgen-visningen aftenen før).
-    const forud = start.getHours() >= 12 ? 0 : VIS_FØR_START_MS;
-    return nu < slut && start.getTime() - nu.getTime() <= forud;
-  });
+  // Hele den viste dags hold vises hele tiden (se REGEL øverst).
+  // Nattevagt er allerede valgt til den viste dags nat ovenfor.
+  return resultat.filter(p => p.rolle === 'Nattevagt' || p.dag === datoStr);
 }
-
-// Hvor længe FØR deres vagt starter personale vises på dagens skærm.
-const VIS_FØR_START_MS = 2 * 60 * 60 * 1000;
 
 // ==================================================================
 // SKJULT PERSONALE — rent visningsfilter, se shared/skjult-personale-schema.sql.
