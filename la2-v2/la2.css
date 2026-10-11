@@ -1,0 +1,297 @@
+/* ==================================================================
+   LA2 — lyst "Tavle"-tema. Bygger på ../shared/tokens.css.
+   Mobil først (personalet bruger mest telefonen), PC skalerer op.
+   ================================================================== */
+
+:root{
+  color-scheme: light;
+}
+
+*{ box-sizing:border-box; }
+
+html{ -webkit-text-size-adjust:100%; }
+
+body{
+  margin:0;
+  font-family:'Archivo', sans-serif;
+  background:var(--papir);
+  color:var(--blaek);
+  min-height:100vh;
+  font-size:16px;
+  line-height:1.4;
+}
+
+[hidden]{ display:none !important; }
+
+button, input, select, textarea{ font-family:inherit; font-size:16px; } /* 16px: iOS zoomer ellers ved fokus */
+
+/* ---------- Topbar ---------- */
+
+.topbar{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:10px 16px;
+  background:#fff;
+  border-bottom:1px solid var(--streg);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+.topbar-hjem{
+  display:flex;
+  flex-direction:column;
+  text-decoration:none;
+  color:var(--blaek);
+  min-height:44px;
+  justify-content:center;
+}
+
+.topbar-titel{ font-size:22px; font-weight:800; line-height:1; }
+
+.topbar-midt{ flex:1 1 200px; min-width:0; }
+
+.bruger-tekst{ font-size:14px; font-weight:600; color:var(--tekst-2); }
+.bruger-tekst strong{ color:var(--blaek); font-weight:800; }
+
+.topbar-hoejre{ display:flex; gap:8px; }
+
+/* ---------- Layout ---------- */
+
+.rod{
+  max-width:1100px;
+  margin:0 auto;
+  padding:20px 16px 48px;
+}
+
+.indlaeser{ color:var(--tom); padding:24px 0; }
+
+h1.side-titel{
+  font-size:26px;
+  font-weight:800;
+  margin:4px 0 4px;
+}
+
+.side-under{ color:var(--tekst-2); margin:0 0 20px; }
+
+/* ---------- Knapper (min. 48px trykflade) ---------- */
+
+.knap{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:48px;
+  padding:0 18px;
+  border:none;
+  border-radius:6px;
+  background:var(--brand);
+  color:#fff;
+  font-weight:700;
+  letter-spacing:.02em;
+  cursor:pointer;
+  text-decoration:none;
+}
+
+.knap:disabled{ opacity:.55; cursor:default; }
+
+.knap-sekundaer{
+  background:var(--flade);
+  color:var(--blaek);
+}
+
+.topbar .knap{ min-height:44px; padding:0 14px; font-size:14px; }
+
+/* ---------- Login / Hvem er du ---------- */
+
+.centreret{
+  max-width:420px;
+  margin:6vh auto 0;
+  background:#fff;
+  border:1px solid var(--streg);
+  border-radius:8px;
+  padding:24px 20px;
+}
+
+.centreret.bred{ max-width:640px; }
+
+.felt{ display:block; margin:0 0 14px; }
+
+.felt > span{
+  display:block;
+  margin-bottom:4px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--label);
+}
+
+.felt input,
+.felt select,
+.felt textarea{
+  width:100%;
+  min-height:48px;
+  padding:10px 12px;
+  border:1px solid var(--streg);
+  border-radius:6px;
+  background:#fff;
+  color:var(--blaek);
+}
+
+.felt textarea{ min-height:96px; resize:vertical; }
+
+.besked{
+  margin:0 0 14px;
+  padding:10px 12px;
+  border-radius:6px;
+  background:var(--flade);
+  color:var(--blaek);
+  font-weight:600;
+}
+
+.besked.fejl{ border-left:4px solid var(--kritisk); }
+.besked.ok{ border-left:4px solid var(--status-ok); }
+
+/* ---------- Hvem er du: navnevalg ---------- */
+
+.navne-gitter{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+  gap:10px;
+  margin:16px 0;
+}
+
+.navne-gitter .knap{ justify-content:flex-start; background:var(--flade); color:var(--blaek); }
+.navne-gitter .knap:hover,
+.navne-gitter .knap:focus-visible{ background:var(--blaek); color:#fff; }
+
+.tilfoej{ border-top:1px solid var(--streg); margin-top:16px; padding-top:16px; }
+.tilfoej-raekke{ display:flex; gap:8px; }
+.tilfoej-raekke input{ flex:1; min-height:48px; padding:0 12px; border:1px solid var(--streg); border-radius:6px; }
+
+/* ---------- Overblik: beboerkort ---------- */
+
+.kort-gitter{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+}
+
+@media (min-width:700px){  .kort-gitter{ grid-template-columns:repeat(2, 1fr); } }
+@media (min-width:1050px){ .kort-gitter{ grid-template-columns:repeat(3, 1fr); } }
+
+.beboer-kort{
+  display:flex;
+  flex-direction:column;
+  background:#fff;
+  border:1px solid var(--streg);
+  border-radius:8px;
+  padding:14px 14px 6px;
+  text-decoration:none;
+  color:var(--blaek);
+}
+
+.beboer-kort:hover,
+.beboer-kort:focus-visible{ border-color:var(--brand); outline:none; box-shadow:0 0 0 2px var(--brand); }
+
+.kort-hoved{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:6px;
+}
+
+.variant-maerke{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.12em;
+  color:var(--label);
+}
+
+/* beboer-tag fra tokens.css: farven sættes pr. beboer via style.background */
+.beboer-tag.stor{ font-size:18px; padding:5px 10px; }
+
+.fase{
+  padding:10px 0;
+  border-top:1px solid var(--streg-svag);
+}
+
+.fase:first-of-type{ border-top:none; }
+
+.fase-navn{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--label);
+}
+
+.fase-hoved{ font-size:15px; font-weight:700; margin-top:2px; }
+.fase-under{ font-size:13px; color:var(--tekst-2); margin-top:1px; }
+.fase-tom{ color:var(--tom); font-weight:500; }
+
+/* Nu-block: omvendt kontrast = "kræver opmærksomhed" */
+.nu-block{
+  display:inline-block;
+  margin-top:6px;
+  padding:4px 8px;
+  border-radius:4px;
+  background:var(--blaek);
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.advarsel-bjaelke{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0 0 16px;
+  padding:12px 14px;
+  border-radius:6px;
+  background:var(--blaek);
+  color:#fff;
+  font-weight:700;
+}
+
+.advarsel-bjaelke .guld{ color:var(--guld); }
+
+/* ---------- Beboerside ---------- */
+
+.tilbage{
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  color:var(--brand);
+  font-weight:700;
+  text-decoration:none;
+}
+
+.boks{
+  background:#fff;
+  border:1px solid var(--streg);
+  border-radius:8px;
+  padding:16px;
+  margin:0 0 16px;
+}
+
+.boks h2{
+  margin:0 0 12px;
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--label);
+}
+
+.hoved-raekke{ display:flex; align-items:center; gap:12px; margin:8px 0 16px; flex-wrap:wrap; }
+
+@media (min-width:700px){
+  .rod{ padding:28px 24px 64px; }
+  .centreret{ padding:32px 28px; }
+}

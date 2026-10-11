@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex, nofollow">
+<title>LA2 — Møllebakken</title>
+<link rel="icon" href="../mollebakken-app-v2/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="la2.css">
+</head>
+<body>
+
+<header id="topbar" class="topbar" hidden>
+  <div class="topbar-venstre">
+    <a class="topbar-hjem" href="#/">
+      <span class="eyebrow">Møllebakken</span>
+      <span class="topbar-titel">LA2</span>
+    </a>
+  </div>
+  <div class="topbar-midt">
+    <span id="brugerTekst" class="bruger-tekst"></span>
+  </div>
+  <div class="topbar-hoejre">
+    <button type="button" class="knap knap-sekundaer" id="skiftNavnKnap">Skift navn</button>
+    <button type="button" class="knap knap-sekundaer" id="logUdKnap">Log ud</button>
+  </div>
+</header>
+
+<main id="rod" class="rod">
+  <div class="indlaeser">Henter&hellip;</div>
+</main>
+
+<noscript><p style="padding:24px">LA2 kræver JavaScript.</p></noscript>
+
+<script src="supabase-js.min.js"></script>
+<script src="la2-data.js"></script>
+<script src="la2-app.js"></script>
+</body>
+</html>
