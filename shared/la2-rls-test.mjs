@@ -50,6 +50,8 @@ async function login(email, pw) {
 const blokeret = (r) => r.status >= 400 || (Array.isArray(r.json) && r.json.length === 0);
 
 const TABELLER = ['la2_plans', 'la2_plan_versions', 'la2_residents', 'la2_staff'];
+// Sammenlign (mødedata)
+const SAMMENLIGN = ['la2_compare_notes', 'la2_compare_common'];
 
 // ---------- editor (først, så der er data at forsøge at læse) ----------
 const editor = await login('la2@mollebakken.dk', EDITOR_PW);
@@ -95,11 +97,112 @@ tjek('editor kan IKKE slette plan', del.status >= 400 || (Array.isArray(del.json
 const feedE = await api('/rest/v1/rpc/la2_screen_feed', { token: editor, method: 'POST', body: {} });
 tjek('editor kan kalde la2_screen_feed', feedE.status === 200 && feedE.json.some((r) => r.plan_id === planId), feedE.status);
 
+
+// ---- Sammenlign: noter (læse/oprette/opdatere, ikke slette) og fælles punkter (læse/oprette/slette) ----
+console.log('\n== editor: Sammenlign ==');
+const nyNote = await api('/rest/v1/la2_compare_notes', {
+  token: editor, method: 'POST', headers: { Prefer: 'return=representation' },
+  body: {
+    resident_id: resident.resident_id, plan_type: 'laering',
+    left_plan_id: planId, left_version_no: 1, right_plan_id: planId, right_version_no: 2,
+    row_key: '__rls_test__', marking: 'forskel', note: 'hemmelig-note',
+    created_by_name: 'RLS-test', updated_by_name: 'RLS-test',
+  },
+});
+tjek('editor kan oprette note', nyNote.status === 201 && nyNote.json && nyNote.json[0], nyNote.status);
+const noteId = nyNote.json && nyNote.json[0] && nyNote.json[0].id;
+tjek('botilbud_id sat automatisk på note', !!(nyNote.json && nyNote.json[0] && nyNote.json[0].botilbud_id), '');
+
+const dubNote = await api('/rest/v1/la2_compare_notes', {
+  token: editor, method: 'POST',
+  body: {
+    resident_id: resident.resident_id, plan_type: 'laering',
+    left_plan_id: planId, left_version_no: 1, right_plan_id: planId, right_version_no: 2,
+    row_key: '__rls_test__', note: 'dublet', created_by_name: 'RLS-test', updated_by_name: 'RLS-test',
+  },
+});
+tjek('samme felt i samme sammenligning kan IKKE oprettes to gange', dubNote.status >= 400, dubNote.status);
+
+const forkertType = await api('/rest/v1/la2_compare_notes', {
+  token: editor, method: 'POST',
+  body: {
+    resident_id: resident.resident_id, plan_type: 'trivsel',
+    left_plan_id: planId, left_version_no: 1, right_plan_id: planId, right_version_no: 2,
+    row_key: '__rls_test2__', note: 'x', created_by_name: 'RLS-test', updated_by_name: 'RLS-test',
+  },
+});
+tjek('note med plantype der ikke passer til planen afvises', forkertType.status >= 400, forkertType.status);
+
+const opdNote = await api('/rest/v1/la2_compare_notes?id=eq.' + noteId, {
+  token: editor, method: 'PATCH', headers: { Prefer: 'return=representation' },
+  body: { note: 'ændret', marking: 'enige', updated_by_name: 'RLS-test' },
+});
+tjek('editor kan opdatere note', opdNote.status === 200 && opdNote.json.length === 1 && opdNote.json[0].note === 'ændret', opdNote.status);
+
+const flytNote = await api('/rest/v1/la2_compare_notes?id=eq.' + noteId, {
+  token: editor, method: 'PATCH', headers: { Prefer: 'return=representation' },
+  body: { row_key: 'andet', left_version_no: 2, updated_by_name: 'RLS-test' },
+});
+tjek('note-identiteten (felt/version) kan IKKE ændres',
+  flytNote.status === 200 && flytNote.json.length === 1 && flytNote.json[0].row_key === '__rls_test__' && flytNote.json[0].left_version_no === 1,
+  JSON.stringify(flytNote.json));
+
+const sletNote = await api('/rest/v1/la2_compare_notes?id=eq.' + noteId, { token: editor, method: 'DELETE', headers: { Prefer: 'return=representation' } });
+tjek('editor kan IKKE slette note', sletNote.status >= 400 || (Array.isArray(sletNote.json) && sletNote.json.length === 0), sletNote.status);
+
+const nyFaelles = await api('/rest/v1/la2_compare_common', {
+  token: editor, method: 'POST', headers: { Prefer: 'return=representation' },
+  body: {
+    resident_id: resident.resident_id, plan_type: 'laering',
+    left_plan_id: planId, right_plan_id: planId, row_key: '__rls_test__',
+    left_item_id: 'a', right_item_id: null, created_by_name: 'RLS-test',
+  },
+});
+tjek('editor kan oprette fælles punkt', nyFaelles.status === 201 && nyFaelles.json && nyFaelles.json[0], nyFaelles.status);
+const faellesId = nyFaelles.json && nyFaelles.json[0] && nyFaelles.json[0].id;
+
+const dubFaelles = await api('/rest/v1/la2_compare_common', {
+  token: editor, method: 'POST',
+  body: {
+    resident_id: resident.resident_id, plan_type: 'laering',
+    left_plan_id: planId, right_plan_id: planId, row_key: '__rls_test__',
+    left_item_id: 'a', right_item_id: 'b', created_by_name: 'RLS-test',
+  },
+});
+tjek('samme punkt kan IKKE ligge i midten to gange', dubFaelles.status >= 400, dubFaelles.status);
+
+const tomFaelles = await api('/rest/v1/la2_compare_common', {
+  token: editor, method: 'POST',
+  body: {
+    resident_id: resident.resident_id, plan_type: 'laering',
+    left_plan_id: planId, right_plan_id: planId, row_key: '__rls_test3__',
+    left_item_id: null, right_item_id: null, created_by_name: 'RLS-test',
+  },
+});
+tjek('fælles punkt uden punkt-id afvises', tomFaelles.status >= 400, tomFaelles.status);
+
+const opdFaelles = await api('/rest/v1/la2_compare_common?id=eq.' + faellesId, {
+  token: editor, method: 'PATCH', headers: { Prefer: 'return=representation' }, body: { right_item_id: 'z' },
+});
+tjek('editor kan IKKE opdatere fælles punkt (slet og opret i stedet)',
+  opdFaelles.status >= 400 || (Array.isArray(opdFaelles.json) && opdFaelles.json.length === 0), opdFaelles.status);
+
+const sletFaelles = await api('/rest/v1/la2_compare_common?id=eq.' + faellesId, {
+  token: editor, method: 'DELETE', headers: { Prefer: 'return=representation' },
+});
+tjek('editor kan slette fælles punkt', sletFaelles.status === 200 && sletFaelles.json.length === 1, sletFaelles.status);
+
 // ---------- anon ----------
 console.log('\n== anon ==');
 for (const t of TABELLER) {
   const r = await api('/rest/v1/' + t + '?select=*&limit=1');
   tjek('anon kan IKKE læse ' + t, blokeret(r), r.status);
+}
+for (const t of SAMMENLIGN) {
+  const r = await api('/rest/v1/' + t + '?select=*&limit=1');
+  tjek('anon kan IKKE læse ' + t, blokeret(r), r.status);
+  const w = await api('/rest/v1/' + t, { method: 'POST', body: { row_key: 'x' } });
+  tjek('anon kan IKKE skrive ' + t, w.status >= 400, w.status);
 }
 const aIns = await api('/rest/v1/la2_plans', { method: 'POST', body: { title: 'x' } });
 tjek('anon kan IKKE skrive la2_plans', aIns.status >= 400, aIns.status);
@@ -119,6 +222,12 @@ for (const t of TABELLER) {
   const r = await api('/rest/v1/' + t + '?select=*&limit=1', { token: screen });
   tjek('screen kan IKKE læse ' + t, blokeret(r), r.status);
 }
+for (const t of SAMMENLIGN) {
+  const r = await api('/rest/v1/' + t + '?select=*&limit=1', { token: screen });
+  tjek('screen kan IKKE læse ' + t, blokeret(r), r.status);
+  const w = await api('/rest/v1/' + t, { token: screen, method: 'POST', body: { row_key: 'x' } });
+  tjek('screen kan IKKE skrive ' + t, w.status >= 400, w.status);
+}
 const sIns = await api('/rest/v1/la2_plans', { token: screen, method: 'POST', body: { title: 'x' } });
 tjek('screen kan IKKE skrive la2_plans', sIns.status >= 400, sIns.status);
 const sUpd = await api('/rest/v1/la2_plans?id=eq.' + planId, {
@@ -133,6 +242,7 @@ await api('/rest/v1/la2_plans?id=eq.' + planId, {
 
 console.log('\n' + (fejl === 0 ? 'ALLE TESTS BESTÅET' : fejl + ' TEST(S) FEJLEDE'));
 console.log('\nOpryd testplanen i SQL editor (planer kan ikke slettes via API):');
+console.log('  (noter og fælles punkter følger med, når versioner/planer slettes)');
 console.log("  delete from la2_plan_versions where plan_id in (select id from la2_plans where title = '__RLS_TEST__');");
 console.log("  delete from la2_plans where title = '__RLS_TEST__';");
 process.exit(fejl === 0 ? 0 : 1);

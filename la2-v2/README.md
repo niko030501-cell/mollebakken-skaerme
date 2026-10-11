@@ -49,6 +49,65 @@ Alle plantyper og spørgsmål ligger i **én fil**: `la2-v2/la2-templates.js`. R
 - **Punkter i lister har et fast id** (`{ id, t }`). Det bruges til at genkende et punkt på tværs af versioner.
   Ældre planer med ren tekst får id'erne `l0`, `l1`, … ved næste gem. Ret aldrig id'erne i hånden.
 
+## Sammenlign og mødedata
+
+Knappen **Sammenlign** (ved Print/Historik på en beboers plan) lægger to planer eller to versioner
+side om side til et møde om *indefra* (beboerens Min/Din) og *udefra* (fagprofessionelle).
+Systemet **vurderer aldrig**, om to tekster betyder det samme. Det markerer kun det, der kan måles:
+en tom side, og tal på kurverne. Sammenligningen ændrer aldrig selve planerne.
+
+| Visning | Hvad |
+|---|---|
+| **Tabel** | En række pr. felt: indefra, udefra og noter/markeringer (Enige / Forskel / Spørgsmål). |
+| **Tre bunker** | Punkterne flyttes (træk eller pil) mellem "Kun [Navn]", "Begge er enige" og "Kun personalet". Slip et punkt oven på et punkt i midten for at parre dem. |
+| **Kurver** | Læringsplanens kurver oven på hinanden, med største forskel i trin. Kun for læringsplaner. |
+| **Mødevisning** | Fuldskærm, stor skrift, piletaster/fjernbetjening. Kun visning. |
+| **Print** | Den viste visning som liggende A4 (kan skelnes i sort-hvid). |
+
+### Hvor mødedata ligger
+
+Alt, der skrives eller flyttes på et møde, ligger i to tabeller (kun `editor` har adgang):
+
+| Tabel | Indhold | Må slettes via appen? |
+|---|---|---|
+| `la2_compare_notes` | Noter og markeringer pr. felt og sammenligning (`row_key`, fx `roed.tegn`, `forloeb.q1.foer` eller `kurve`) | Nej (kun rettes) |
+| `la2_compare_common` | Punkter i "Begge er enige": venstre/højre punkt-id, evt. parret | Ja ("Flyt tilbage") |
+
+- Noter hører til et bestemt par af versioner. Ændres en plan, vises noter fra en tidligere version
+  mærket *"Fra et tidligere møde"*, og en ændring gemmes for den nuværende sammenligning.
+- Bunkerne gemmer kun punkt-id'er (ingen versioner), så de følger med til nye versioner. Et punkt,
+  der er slettet fra planen, vises ikke; i stedet står der *"1 punkt fra et tidligere møde findes ikke længere i planen."*
+- Mødedata vises **ikke** på infoskærmen.
+
+### Ryd mødedata for én beboer
+
+Kør i Supabase → **SQL Editor** (udskift navnet). Planerne røres ikke.
+
+```sql
+-- se hvad der ligger
+select 'noter' as hvad, count(*) from la2_compare_notes
+ where resident_id = (select id from beboere where navn = 'NAVN')
+union all
+select 'fælles', count(*) from la2_compare_common
+ where resident_id = (select id from beboere where navn = 'NAVN');
+
+-- slet (kun mødedata)
+delete from la2_compare_common
+ where resident_id = (select id from beboere where navn = 'NAVN');
+delete from la2_compare_notes
+ where resident_id = (select id from beboere where navn = 'NAVN');
+```
+
+Vil du kun rydde **én plantype**, så tilføj `and plan_type = 'laering'` (eller `tryghed` osv.) til begge `delete`.
+Noter og fælles punkter slettes også automatisk, hvis en plan eller version fjernes (fx ved oprydning af testdata).
+
+### Ret teksterne
+
+Felter og rækkefølge i Sammenlign kommer fra `la2-templates.js`, så ret spørgsmål dér.
+Ret aldrig eksisterende `id`'er: noter og bunker bruger dem som nøgler.
+
+---
+
 ## Ret teksterne på "Om LA2" (`om-la2.js`)
 
 Alle teksterne ligger i `la2-v2/om-la2.js` som data. Ret kun teksten mellem citationstegnene.
@@ -116,8 +175,10 @@ la2-v2/
   la2-data.js         alle Supabase-kald
   la2-overblik.js     overblik, Episoder, Revision
   la2-plans.js        plansider, formularer, udkast, historik
+  la2-punkter.js      punkter med fast id, kurver med 7 tidspunkter
+  la2-sammenlign.js   Sammenlign: Tabel, Tre bunker, Kurver, Mødevisning, Print
   la2-templates.js    SPØRGSMÅL (ret her)
-  la2-print.js/.css   udskrift (A4)
+  la2-print.js/.css   udskrift (A4; også Sammenlign)
   la2-om.js           "Om LA2"-siden (layout)
   om-la2.js           "Om LA2"-teksterne (ret her)
   la2-ikoner.js       ikoner og fasedata
@@ -130,20 +191,24 @@ shared/
   la2-schema.sql        tabeller, RLS, triggere, feed
   la2-skaerm-fane.sql   feed med seneste aktive gemning + række i skaerm_indstillinger
   la2-haerdning.sql     hærdning af funktioner (kør efter godkendelse)
-  la2-rls-test.mjs      test af adgangsregler (se nedenfor)
+  la2-sammenlign-schema.sql  mødedata: noter og fælles punkter
+  la2-sammenlign-test.sql    SQL-test af mødedata-tabellerne (rulles tilbage)
+  la2-rls-test.mjs      test af adgangsregler, inkl. Sammenlign (se nedenfor)
 ```
 
 ## Test af adgangsreglerne
 
 `shared/la2-rls-test.mjs` kontrollerer, at anon ikke kan læse noget, at `screen` kun kan læse feedet,
-og at `editor` kan læse og skrive. Kør i PowerShell, med adgangskoder fra miljøvariabler
+og at `editor` kan læse og skrive (også mødedata i `la2_compare_*`: noter kan ikke slettes, fælles punkter kan ikke opdateres). Kør i PowerShell, med adgangskoder fra miljøvariabler
 (aldrig i filen):
 
 ```powershell
 $env:LA2_ANON_KEY="..."; $env:LA2_EDITOR_PW="..."; $env:LA2_SCREEN_PW="..."; node shared/la2-rls-test.mjs
 ```
 
-Testen efterlader én arkiveret testplan (`__RLS_TEST__`). Oprydnings-SQL printes til sidst.
+Testen efterlader én arkiveret testplan (`__RLS_TEST__`) og en test-note (`__rls_test__`). Oprydnings-SQL printes til sidst; noterne følger med, når testplanens versioner slettes.
+
+`shared/la2-sammenlign-test.sql` tester de samme regler direkte i databasen (uden adgangskoder) og ruller alt tilbage.
 
 ---
 
