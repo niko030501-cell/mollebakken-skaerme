@@ -192,7 +192,7 @@ window.LA2Sammenlign = (function(){
     return Promise.all([hentIndhold(S.leftValg), hentIndhold(S.rightValg)]).then(function(r){
       S.left = r[0];
       S.right = r[1];
-      return indlaesNoter();
+      return indlaesNoter().then(indlaesFaelles);
     });
   }
 
@@ -579,14 +579,650 @@ window.LA2Sammenlign = (function(){
   }
 
   // ---------------------------------------------------------------
+  // Tre bunker: "Kun [Navn]" · "Begge er enige" · "Kun personalet"
+  //
+  // Et punkt flyttes til midten med træk eller pil. Det gemmes straks i
+  // la2_compare_common (kun punkt-id'er, ingen versioner). Systemet vurderer
+  // aldrig, om to punkter betyder det samme: det gør personalet ved at
+  // slippe ét punkt oven på et andet.
+  // ---------------------------------------------------------------
+
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function svgNode(tag, attrs){
+    var n = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs || {}).forEach(function(k){ n.setAttribute(k, attrs[k]); });
+    return n;
+  }
+
+  function gribIkon(){
+    var s = svgNode('svg', { width: '16', height: '24', viewBox: '0 0 16 24', 'aria-hidden': 'true', focusable: 'false' });
+    [5, 12, 19].forEach(function(y){
+      [4, 12].forEach(function(x){
+        s.appendChild(svgNode('circle', { cx: String(x), cy: String(y), r: '2', fill: 'currentColor' }));
+      });
+    });
+    return s;
+  }
+
+  function flueben(){
+    var s = svgNode('svg', { width: '22', height: '22', viewBox: '0 0 24 24', 'aria-hidden': 'true', focusable: 'false' });
+    s.appendChild(svgNode('path', { d: 'M4 12.5l5 5L20 6.5', fill: 'none', stroke: 'currentColor',
+      'stroke-width': '3.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+    return s;
+  }
+
+  // Kort navn for en side: borgerens navn, "personalet" eller "version N"
+  function sideNavn(valg){
+    if(!valg) return '';
+    if(S.leftValg && S.rightValg && S.leftValg.planId === S.rightValg.planId) return 'version ' + valg.versionNo;
+    var plan = planMedId(valg.planId);
+    if(!plan) return '';
+    return erFag(plan) ? 'personalet' : S.navn;
+  }
+
+  function findPunkt(liste, id){
+    for(var i = 0; i < liste.length; i++){ if(liste[i].id === id) return liste[i]; }
+    return null;
+  }
+
+  // Rækkerne i skabelonens rækkefølge (samme som Tabel)
+  function bunkeRaekker(){
+    return byggRaekker(T.plans[S.tab], borgerKey());
+  }
+
+  function raekkeMedKey(key){
+    return bunkeRaekker().filter(function(r){ return r.key === key; })[0] || null;
+  }
+
+  // Delene "Kun venstre / Begge / Kun højre" for ét felt
+  function bunkerFor(r){
+    var L = punkter(S.left, r);
+    var R = punkter(S.right, r);
+    var brugtL = {}, brugtR = {};
+    var midt = [];
+    var mangler = 0;
+    S.faelles.filter(function(k){ return k.key === r.key; }).forEach(function(k){
+      var li = k.l ? findPunkt(L, k.l) : null;
+      var ri = k.r ? findPunkt(R, k.r) : null;
+      if(k.l && !li) mangler++;
+      if(k.r && !ri) mangler++;
+      if(!li && !ri) return;
+      if(li) brugtL[li.id] = true;
+      if(ri) brugtR[ri.id] = true;
+      midt.push({ k: k, li: li, ri: ri });
+    });
+    return {
+      midt: midt,
+      kunL: L.filter(function(p){ return !brugtL[p.id]; }),
+      kunR: R.filter(function(p){ return !brugtR[p.id]; }),
+      mangler: mangler
+    };
+  }
+
+  // Række fra databasen -> { id, key, l, r } set fra den nuværende venstre/højre side
+  function normFaelles(c){
+    var vendt = c.left_plan_id !== S.left.planId && c.left_plan_id === S.right.planId;
+    return {
+      id: c.id, key: c.row_key,
+      l: vendt ? c.right_item_id : c.left_item_id,
+      r: vendt ? c.left_item_id : c.right_item_id,
+      at: c.created_at
+    };
+  }
+
+  function indlaesFaelles(){
+    S.faelles = [];
+    if(!S.left || !S.right) return Promise.resolve();
+    return D.compareCommon(S.left.planId, S.right.planId).then(function(rows){
+      S.faelles = rows.map(normFaelles);
+    });
+  }
+
+  // ---- Gem (køres efter hinanden, så hurtige flytninger ikke blander sig) ----
+
+  function bunkeOp(fn){
+    var mit = S;
+    setStatus('Gemmer…');
+    S.opKaede = S.opKaede.then(function(){
+      if(S !== mit) return null;
+      return fn();
+    }).then(function(){
+      if(S !== mit) return;
+      setStatus('Gemt kl. ' + klokken(new Date()));
+      tegnIndhold();
+      tegnBund();
+    }).catch(function(e){
+      if(S !== mit) return;
+      if(kast(e)) return;
+      // noget gik galt (fx ændret fra en anden fane): hent bunkerne på ny
+      indlaesFaelles().then(function(){
+        if(S !== mit) return;
+        setStatus('Kunne ikke gemme flytningen. Bunkerne er hentet igen.', true);
+        tegnIndhold();
+        tegnBund();
+      }).catch(function(e2){ kast(e2); });
+    });
+  }
+
+  function opretFaelles(key, l, r){
+    return D.commonInsert({
+      resident_id: S.resident.resident_id,
+      plan_type: S.tab,
+      left_plan_id: S.left.planId,
+      right_plan_id: S.right.planId,
+      row_key: key,
+      left_item_id: l || null,
+      right_item_id: r || null,
+      created_by_name: S.ctx.name
+    }).then(function(rows){
+      if(rows[0]) S.faelles.push(normFaelles(rows[0]));
+    });
+  }
+
+  function fjernFaelles(post){
+    return D.commonDelete(post.id).then(function(){
+      S.faelles = S.faelles.filter(function(k){ return k.id !== post.id; });
+    });
+  }
+
+  // Ét punkt fra en side lægges i midten
+  function tilMidten(key, side, id){
+    S.fokus = side + ':' + id;
+    bunkeOp(function(){
+      return opretFaelles(key, side === 'l' ? id : null, side === 'r' ? id : null);
+    });
+  }
+
+  // Midt-punktet flyttes tilbage (rækken slettes; begge punkter vender hjem)
+  function tilbage(post, fokusNoegle){
+    S.fokus = fokusNoegle;
+    bunkeOp(function(){ return fjernFaelles(post); });
+  }
+
+  // Et punkt fra den anden side parres med et punkt i midten
+  function parMed(key, e, side, id){
+    var l = e.li ? e.li.id : (side === 'l' ? id : null);
+    var r = e.ri ? e.ri.id : (side === 'r' ? id : null);
+    if(!l || !r) return;
+    S.fokus = 'p:' + l + '|' + r;
+    bunkeOp(function(){
+      return fjernFaelles(e.k).then(function(){ return opretFaelles(key, l, r); });
+    });
+  }
+
+  // ---- Træk (Pointer Events: mus og touch, ingen biblioteker) ----
+
+  function maalAccepterer(kilde, maal){
+    if(!maal || !maal._slip) return false;
+    var t = maal._slip;
+    if(kilde.type === 'l' || kilde.type === 'r'){
+      if(t.type === 'midt') return true;
+      if(t.type === 'par'){
+        var e = t.entry;
+        return kilde.type === 'l' ? (!!e.ri && !e.li) : (!!e.li && !e.ri);
+      }
+      return false;
+    }
+    // et punkt i midten kan kun flyttes tilbage
+    var m = kilde.entry;
+    if(t.type === 'venstre') return !!m.li;
+    if(t.type === 'hoejre') return !!m.ri;
+    return false;
+  }
+
+  function udfoerSlip(kilde, maal, key){
+    var t = maal._slip;
+    if(kilde.type === 'l' || kilde.type === 'r'){
+      if(t.type === 'midt') tilMidten(key, kilde.type, kilde.id);
+      else if(t.type === 'par') parMed(key, t.entry, kilde.type, kilde.id);
+    }else{
+      tilbage(kilde.entry.k, noegleTilbage(kilde.entry, t.type));
+    }
+  }
+
+  // Fokus efter "tilbage": det punkt, der nu ligger i en side-bunke
+  function noegleTilbage(e, mod){
+    if(e.li && (mod === 'venstre' || !e.ri)) return 'l:' + e.li.id;
+    if(e.ri) return 'r:' + e.ri.id;
+    return null;
+  }
+
+  function startTraek(ev, kilde, kortNode, key){
+    if(ev.pointerType === 'mouse' && ev.button !== 0) return;
+    ev.preventDefault();
+    var grib = ev.currentTarget;
+    var rect = kortNode.getBoundingClientRect();
+    var dx = ev.clientX - rect.left;
+    var dy = ev.clientY - rect.top;
+    var spoegelse = kortNode.cloneNode(true);
+    spoegelse.className += ' sam-spoegelse';
+    spoegelse.style.width = rect.width + 'px';
+    spoegelse.style.left = rect.left + 'px';
+    spoegelse.style.top = rect.top + 'px';
+    document.body.appendChild(spoegelse);
+    kortNode.classList.add('sam-traekkes');
+    try{ grib.setPointerCapture(ev.pointerId); }catch(e){ /* ikke afgørende */ }
+
+    var maal = null;
+    var sidste = { x: ev.clientX, y: ev.clientY };
+    var flyttet = false;
+
+    function ryd(){
+      if(maal) maal.classList.remove('sam-maal-aktiv');
+      clearInterval(rulle);
+      grib.removeEventListener('pointermove', bevaeg);
+      grib.removeEventListener('pointerup', slip);
+      grib.removeEventListener('pointercancel', annuller);
+      document.removeEventListener('keydown', taster);
+      if(spoegelse.parentNode) spoegelse.parentNode.removeChild(spoegelse);
+      kortNode.classList.remove('sam-traekkes');
+      try{ grib.releasePointerCapture(ev.pointerId); }catch(e){ /* allerede frigivet */ }
+    }
+
+    function find(x, y){
+      var n = document.elementFromPoint(x, y);
+      while(n && !n._slip) n = n.parentNode;
+      return n || null;
+    }
+
+    function opdaterMaal(){
+      var ny = find(sidste.x, sidste.y);
+      if(ny && !maalAccepterer(kilde, ny)) ny = null;
+      if(ny === maal) return;
+      if(maal) maal.classList.remove('sam-maal-aktiv');
+      maal = ny;
+      if(maal) maal.classList.add('sam-maal-aktiv');
+    }
+
+    function bevaeg(e){
+      sidste = { x: e.clientX, y: e.clientY };
+      if(Math.abs(e.clientX - ev.clientX) + Math.abs(e.clientY - ev.clientY) > 4) flyttet = true;
+      spoegelse.style.left = (e.clientX - dx) + 'px';
+      spoegelse.style.top = (e.clientY - dy) + 'px';
+      opdaterMaal();
+    }
+
+    // rul siden, når kortet holdes nær skærmens top eller bund
+    var rulle = setInterval(function(){
+      var h = window.innerHeight;
+      if(sidste.y < 70) window.scrollBy(0, -14);
+      else if(sidste.y > h - 70) window.scrollBy(0, 14);
+      else return;
+      opdaterMaal();
+    }, 30);
+
+    function slip(){
+      var valgt = maal;
+      ryd();
+      if(flyttet && valgt) udfoerSlip(kilde, valgt, key);
+    }
+    function annuller(){ ryd(); }
+    function taster(e){ if(e.key === 'Escape') ryd(); }
+
+    grib.addEventListener('pointermove', bevaeg);
+    grib.addEventListener('pointerup', slip);
+    grib.addEventListener('pointercancel', annuller);
+    document.addEventListener('keydown', taster);
+  }
+
+  // ---- Tegning ----
+
+  // dele: [{ label, t }]; pil: { retning:'hoejre'|'venstre', label, tekst, onClick }
+  function bunkeKort(o){
+    var kort = el('div', { class: 'sam-kort ' + (o.klasse || '') });
+    if(o.nogle) kort.setAttribute('data-nogle', o.nogle);
+    if(o.stribe && U().erFarve(o.stribe)) kort.style.borderLeftColor = o.stribe;
+
+    var greb = el('span', { class: 'sam-greb', title: 'Træk for at flytte' });
+    greb.appendChild(gribIkon());
+    greb.addEventListener('pointerdown', function(ev){ startTraek(ev, o.kilde, kort, o.key); });
+
+    var tekst = el('div', { class: 'sam-kort-tekst' });
+    if(o.overskrift) tekst.appendChild(el('div', { class: 'sam-kort-fra', text: o.overskrift }));
+    o.dele.forEach(function(d){
+      if(d.label) tekst.appendChild(el('div', { class: 'sam-kort-label', text: d.label }));
+      tekst.appendChild(el('div', { class: 'sam-kort-t', text: d.t }));
+    });
+
+    var pil = el('button', {
+      type: 'button',
+      class: 'sam-pil' + (o.pil.tekst.length > 2 ? ' sam-pil-tekst' : ''),
+      'aria-label': o.pil.label,
+      title: o.pil.label,
+      text: o.pil.tekst
+    });
+    pil.addEventListener('click', o.pil.onClick);
+
+    kort.appendChild(greb);
+    kort.appendChild(tekst);
+    kort.appendChild(pil);
+    return kort;
+  }
+
+  function markerMaal(node, slip){
+    node._slip = slip;
+    return node;
+  }
+
+  function bunkeTal(n){
+    return String(n);
+  }
+
+  function tegnBunker(maal){
+    tom(maal);
+    if(!S.left || !S.right){
+      maal.appendChild(el('p', { class: 'tom-tilstand',
+        text: 'Tre bunker kræver to planer at sammenligne. Vælg en plan i begge felter ovenfor.' }));
+      return;
+    }
+
+    var raekker = bunkeRaekker();
+    if(!raekker.length) return;
+    if(!S.felt || !raekkeMedKey(S.felt)) S.felt = raekker[0].key;
+    var r = raekkeMedKey(S.felt);
+    var data = bunkerFor(r);
+
+    var venstreNavn = sideNavn(S.leftValg);
+    var hoejreNavn = sideNavn(S.rightValg);
+    var venstreOrd = venstreNavn || 'indefra';
+    var hoejreOrd = hoejreNavn || 'udefra';
+    var venstreStribe = (S.leftValg && planMedId(S.leftValg.planId) && !erFag(planMedId(S.leftValg.planId))) ? S.farve : '';
+    var hoejreStribe = (S.rightValg && planMedId(S.rightValg.planId) && !erFag(planMedId(S.rightValg.planId))) ? S.farve : '';
+
+    maal.appendChild(el('div', { class: 'sam-forklaring' }, [
+      el('strong', { text: 'Sådan bruger I de tre bunker. ' }),
+      el('span', { text: 'Træk et punkt over i midten, eller tryk på pilen, når I er enige om det. ' +
+        'Slip et punkt fra den anden side oven på et punkt i midten, når I mener, at de to hører sammen. ' +
+        'Det er jer, der afgør det, ikke systemet.' })
+    ]));
+
+    maal.appendChild(feltVaelger(raekker, r));
+
+    var kolonner = el('div', { class: 'sam-bunker' });
+
+    // --- venstre: kun [Navn] ---
+    var kv = markerMaal(el('section', { class: 'sam-bunke sam-bunke-venstre', 'aria-label': 'Kun ' + venstreOrd }), { type: 'venstre' });
+    kv.appendChild(el('h3', { class: 'sam-bunke-titel' }, [
+      el('span', { text: 'Kun ' + venstreOrd }),
+      el('span', { class: 'sam-bunke-antal', text: bunkeTal(data.kunL.length) })
+    ]));
+    if(!data.kunL.length) kv.appendChild(el('div', { class: 'sam-tom', text: S.left && punkter(S.left, r).length ? 'Alle punkter er flyttet til midten.' : 'Intet skrevet her · forskel' }));
+    data.kunL.forEach(function(p){
+      kv.appendChild(bunkeKort({
+        klasse: 'sam-kort-venstre', stribe: venstreStribe, nogle: 'l:' + p.id, key: r.key,
+        dele: [{ t: p.t }], kilde: { type: 'l', id: p.id },
+        pil: { tekst: '→', label: 'Flyt til Begge er enige: ' + p.t, onClick: function(){ tilMidten(r.key, 'l', p.id); } }
+      }));
+    });
+
+    // --- midten: begge er enige ---
+    var km = markerMaal(el('section', { class: 'sam-bunke sam-bunke-midt', 'aria-label': 'Begge er enige' }), { type: 'midt' });
+    var mh = el('h3', { class: 'sam-bunke-titel' }, [
+      el('span', { class: 'sam-flueben', 'aria-hidden': 'true' }, [flueben()]),
+      el('span', { text: 'Begge er enige' }),
+      el('span', { class: 'sam-bunke-antal', text: bunkeTal(data.midt.length) })
+    ]);
+    km.appendChild(mh);
+    data.midt.forEach(function(e){
+      km.appendChild(midtKort(r, e, data, venstreOrd, hoejreOrd, venstreStribe, hoejreStribe));
+    });
+    km.appendChild(el('div', { class: 'sam-slip', text: 'Slip et punkt her' }));
+    km.appendChild(noteFelt(r));
+
+    // --- højre: kun personalet ---
+    var kh = markerMaal(el('section', { class: 'sam-bunke sam-bunke-hoejre', 'aria-label': 'Kun ' + hoejreOrd }), { type: 'hoejre' });
+    kh.appendChild(el('h3', { class: 'sam-bunke-titel' }, [
+      el('span', { text: 'Kun ' + hoejreOrd }),
+      el('span', { class: 'sam-bunke-antal', text: bunkeTal(data.kunR.length) })
+    ]));
+    if(!data.kunR.length) kh.appendChild(el('div', { class: 'sam-tom', text: S.right && punkter(S.right, r).length ? 'Alle punkter er flyttet til midten.' : 'Intet skrevet her · forskel' }));
+    data.kunR.forEach(function(p){
+      kh.appendChild(bunkeKort({
+        klasse: 'sam-kort-hoejre', stribe: hoejreStribe, nogle: 'r:' + p.id, key: r.key,
+        dele: [{ t: p.t }], kilde: { type: 'r', id: p.id },
+        pil: { tekst: '←', label: 'Flyt til Begge er enige: ' + p.t, onClick: function(){ tilMidten(r.key, 'r', p.id); } }
+      }));
+    });
+
+    kolonner.appendChild(kv);
+    kolonner.appendChild(km);
+    kolonner.appendChild(kh);
+    maal.appendChild(kolonner);
+
+    if(data.mangler > 0){
+      maal.appendChild(el('p', { class: 'sam-mangler',
+        text: data.mangler === 1
+          ? '1 punkt fra et tidligere møde findes ikke længere i planen.'
+          : data.mangler + ' punkter fra et tidligere møde findes ikke længere i planen.' }));
+    }
+
+    maal.appendChild(helePlanen(raekker, r));
+
+    // fokus tilbage på det flyttede punkts pil
+    if(S.fokus){
+      var kort = maal.querySelector('[data-nogle="' + S.fokus.replace(/"/g, '') + '"]');
+      var knap = kort ? kort.querySelector('.sam-pil') : null;
+      if(knap) knap.focus();
+      S.fokus = null;
+    }
+  }
+
+  // Et punkt (eller par) i midten
+  function midtKort(r, e, data, venstreOrd, hoejreOrd, venstreStribe, hoejreStribe){
+    var erPar = !!(e.li && e.ri);
+    var kilde = { type: 'm', entry: e };
+    var klasse = 'sam-kort-midt';
+    var dele, overskrift, stribe, nogle, pil;
+
+    if(erPar){
+      dele = [
+        { label: venstreOrd, t: e.li.t },
+        { label: hoejreOrd, t: e.ri.t }
+      ];
+      overskrift = 'Fra begge';
+      stribe = '';
+      nogle = 'p:' + e.li.id + '|' + e.ri.id;
+      pil = { tekst: 'Flyt tilbage', label: 'Flyt tilbage til de to sider: ' + e.li.t,
+        onClick: function(){ tilbage(e.k, 'l:' + e.li.id); } };
+    }else if(e.li){
+      dele = [{ t: e.li.t }];
+      overskrift = 'Fra ' + venstreOrd;
+      stribe = venstreStribe;
+      nogle = 'l:' + e.li.id;
+      pil = { tekst: '←', label: 'Flyt tilbage til Kun ' + venstreOrd + ': ' + e.li.t,
+        onClick: function(){ tilbage(e.k, 'l:' + e.li.id); } };
+    }else{
+      dele = [{ t: e.ri.t }];
+      overskrift = 'Fra ' + hoejreOrd;
+      stribe = hoejreStribe;
+      nogle = 'r:' + e.ri.id;
+      pil = { tekst: '→', label: 'Flyt tilbage til Kun ' + hoejreOrd + ': ' + e.ri.t,
+        onClick: function(){ tilbage(e.k, 'r:' + e.ri.id); } };
+    }
+
+    var kort = bunkeKort({ klasse: klasse, stribe: stribe, nogle: nogle, key: r.key,
+      dele: dele, overskrift: overskrift, kilde: kilde, pil: pil });
+
+    // Et enkelt punkt i midten kan parres (oven på med træk, eller med dette valg)
+    if(!erPar){
+      var modsat = e.li ? data.kunR : data.kunL;
+      var modsatSide = e.li ? 'r' : 'l';
+      if(modsat.length){
+        var sel = el('select', { class: 'sam-par', 'aria-label': 'Par med et punkt fra ' + (e.li ? hoejreOrd : venstreOrd) });
+        sel.appendChild(el('option', { value: '', text: 'Par med et punkt fra ' + (e.li ? hoejreOrd : venstreOrd) + '…' }));
+        modsat.forEach(function(p){ sel.appendChild(el('option', { value: p.id, text: p.t })); });
+        sel.addEventListener('change', function(){
+          if(sel.value) parMed(r.key, e, modsatSide, sel.value);
+        });
+        kort.appendChild(sel);
+      }
+    }
+    return markerMaal(kort, { type: 'par', entry: e });
+  }
+
+  // Note til feltet (samme note som i Tabel: la2_compare_notes, row_key = feltet)
+  function noteFelt(r){
+    var n = noteFor(r.key);
+    var fraDetaljer = el('div', { class: 'sam-fra', text: n.fra ? 'Fra et tidligere møde (' + n.fra + ')' : '', hidden: !n.fra });
+    var ta = el('textarea', {
+      rows: '2', maxlength: '4000', class: 'sam-note',
+      'aria-label': 'Note til ' + r.sektion + ' · ' + r.felt,
+      placeholder: 'Note til det, I er enige om…'
+    });
+    ta.value = n.note || '';
+    ta.addEventListener('input', function(){
+      n.note = ta.value;
+      if(n.fra){ n.id = null; n.fra = null; fraDetaljer.hidden = true; }
+      S.dirty[r.key] = true;
+      planlaeg();
+    });
+    return el('div', { class: 'sam-midt-note' }, [ta, fraDetaljer]);
+  }
+
+  // Vælg del og felt (Tryghed: 1 Grøn / 2 Gul / 3 Rød + Tegn / Hvad gør vi)
+  function feltVaelger(raekker, valgt){
+    var dele = [];
+    raekker.forEach(function(r){
+      var d = dele.filter(function(x){ return x.navn === r.sektion; })[0];
+      if(!d){ d = { navn: r.sektion, niveau: r.niveau, raekker: [] }; dele.push(d); }
+      d.raekker.push(r);
+    });
+    var aktivDel = dele.filter(function(d){ return d.navn === valgt.sektion; })[0];
+
+    function vaelg(key){
+      S.felt = key;
+      tegnIndhold();
+    }
+
+    var boks = el('div', { class: 'sam-vaelger' });
+    var delGruppe = el('div', { class: 'sam-chips', role: 'group', 'aria-label': 'Del af planen' });
+    dele.forEach(function(d){
+      var erAktiv = d === aktivDel;
+      var b = el('button', {
+        type: 'button',
+        class: 'sam-chip' + (erAktiv ? ' valgt' : '') + (d.niveau ? ' sam-chip-' + d.niveau.level : ''),
+        'aria-pressed': erAktiv ? 'true' : 'false',
+        text: (d.niveau ? d.niveau.nr + ' ' : '') + d.navn
+      });
+      b.addEventListener('click', function(){ vaelg(d.raekker[0].key); });
+      delGruppe.appendChild(b);
+    });
+    boks.appendChild(delGruppe);
+
+    if(aktivDel && aktivDel.raekker.length > 1){
+      var feltGruppe = el('div', { class: 'sam-chips sam-chips-felt', role: 'group', 'aria-label': 'Felt' });
+      aktivDel.raekker.forEach(function(r){
+        var erAktiv = r.key === valgt.key;
+        var b = el('button', {
+          type: 'button',
+          class: 'sam-chip' + (erAktiv ? ' valgt' : ''),
+          'aria-pressed': erAktiv ? 'true' : 'false',
+          text: r.felt
+        });
+        b.addEventListener('click', function(){ vaelg(r.key); });
+        feltGruppe.appendChild(b);
+      });
+      boks.appendChild(feltGruppe);
+    }
+
+    boks.appendChild(el('div', { class: 'sam-feltspoergsmaal' }, [
+      el('span', { class: 'sam-sektion', text: valgt.sektion }),
+      el('div', { class: 'sam-feltnavn', text: valgt.felt })
+    ]));
+    return boks;
+  }
+
+  // "Hele planen på én gang": en bjælke pr. del
+  function helePlanen(raekker, valgt){
+    var venstreOrd = sideNavn(S.leftValg) || 'indefra';
+    var hoejreOrd = sideNavn(S.rightValg) || 'udefra';
+    var dele = [];
+    raekker.forEach(function(r){
+      var d = dele.filter(function(x){ return x.navn === r.sektion; })[0];
+      if(!d){ d = { navn: r.sektion, niveau: r.niveau, forste: r.key, v: 0, m: 0, h: 0 }; dele.push(d); }
+      var b = bunkerFor(r);
+      d.v += b.kunL.length;
+      d.m += b.midt.length;
+      d.h += b.kunR.length;
+    });
+
+    var boks = el('section', { class: 'sam-hele', 'aria-label': 'Hele planen på én gang' });
+    boks.appendChild(el('h3', { class: 'sam-hele-titel', text: 'Hele planen på én gang' }));
+    boks.appendChild(el('p', { class: 'sam-hele-tekst',
+      text: 'Hver bjælke er én del af planen. Den viser, hvor mange punkter der kun står hos ' + venstreOrd +
+            ', hvor mange I er enige om, og hvor mange der kun står hos ' + hoejreOrd + '. Tryk på en bjælke for at gå til delen.' }));
+
+    var liste = el('div', { class: 'sam-hele-liste' });
+    dele.forEach(function(d){
+      var total = d.v + d.m + d.h;
+      var aktiv = d.navn === valgt.sektion;
+      var knap = el('button', {
+        type: 'button',
+        class: 'sam-del' + (aktiv ? ' aktiv' : ''),
+        'aria-pressed': aktiv ? 'true' : 'false',
+        'aria-label': d.navn + ': kun ' + venstreOrd + ' ' + d.v + ', begge ' + d.m + ', kun ' + hoejreOrd + ' ' + d.h
+      });
+      knap.appendChild(el('span', { class: 'sam-del-navn', text: (d.niveau ? d.niveau.nr + ' ' : '') + d.navn }));
+
+      var bar = el('span', { class: 'sam-bar', 'aria-hidden': 'true' });
+      if(total === 0){
+        bar.appendChild(el('span', { class: 'sam-seg sam-seg-tom', style: 'flex:1 1 0' }));
+      }else{
+        [['v', d.v], ['m', d.m], ['h', d.h]].forEach(function(s){
+          if(!s[1]) return;
+          var seg = el('span', { class: 'sam-seg sam-seg-' + s[0], style: 'flex:' + s[1] + ' 1 0' });
+          if(s[0] === 'v' && U().erFarve(S.farve)) seg.style.background = S.farve;
+          bar.appendChild(seg);
+        });
+      }
+      knap.appendChild(bar);
+      knap.appendChild(el('span', { class: 'sam-del-tal', 'aria-hidden': 'true' }, [
+        el('span', { text: String(d.v) }), el('span', { text: String(d.m) }), el('span', { text: String(d.h) })
+      ]));
+      knap.addEventListener('click', function(){ S.felt = d.forste; tegnIndhold(); });
+      liste.appendChild(knap);
+    });
+    boks.appendChild(liste);
+
+    function tegn(klasse, tekst, farve){
+      var s = el('span', { class: 'sam-seg ' + klasse, 'aria-hidden': 'true' });
+      if(farve && U().erFarve(farve)) s.style.background = farve;
+      return el('span', { class: 'sam-tegn' }, [s, el('span', { text: tekst })]);
+    }
+    boks.appendChild(el('div', { class: 'sam-tegnforklaring' }, [
+      tegn('sam-seg-v', 'Kun ' + venstreOrd, S.farve),
+      tegn('sam-seg-m', 'Begge er enige'),
+      tegn('sam-seg-h', 'Kun ' + hoejreOrd)
+    ]));
+    return boks;
+  }
+
+  // ---------------------------------------------------------------
   // Siden
   // ---------------------------------------------------------------
+
+  function tegnIndhold(){
+    var maal = S.rod.querySelector('.sam-indhold');
+    if(!maal) return;
+    if(S.visning === 'bunker') tegnBunker(maal);
+    else tegnTabel(maal);
+  }
+
+  function skiftVisning(ny){
+    if(S.visning === ny) return;
+    gemAlt().then(function(){
+      if(!S) return;
+      S.visning = ny;
+      tegnAlt();
+    });
+  }
 
   function tegnAlt(){
     var rod = S.rod;
     tom(rod);
     var tpl = T.plans[S.tab];
-    var visningNavn = 'Tabel';
+    var visningNavn = S.visning === 'bunker' ? 'Tre bunker' : 'Tabel';
 
     // Top
     rod.appendChild(el('a', { class: 'tilbage', href: planHref(false), text: '← ' + genitiv(S.navn) + ' planer' }));
@@ -601,8 +1237,12 @@ window.LA2Sammenlign = (function(){
     // Vælg visning
     rod.appendChild(el('div', { class: 'sam-visninger' }, [
       el('div', { class: 'segmenter', role: 'group', 'aria-label': 'Visning' }, [
-        el('button', { type: 'button', class: 'segment aktiv', 'aria-pressed': 'true', text: 'Tabel' }),
-        el('button', { type: 'button', class: 'segment', disabled: true, text: 'Tre bunker', title: 'Kommer i en senere del' }),
+        el('button', { type: 'button', class: 'segment' + (S.visning === 'tabel' ? ' aktiv' : ''),
+          'aria-pressed': S.visning === 'tabel' ? 'true' : 'false', text: 'Tabel',
+          onclick: function(){ skiftVisning('tabel'); } }),
+        el('button', { type: 'button', class: 'segment' + (S.visning === 'bunker' ? ' aktiv' : ''),
+          'aria-pressed': S.visning === 'bunker' ? 'true' : 'false', text: 'Tre bunker',
+          onclick: function(){ skiftVisning('bunker'); } }),
         el('button', { type: 'button', class: 'segment', disabled: true,
           text: 'Kurver', title: S.tab === 'laering' ? 'Kommer i en senere del' : 'Kun for læringsplaner' })
       ]),
@@ -615,7 +1255,7 @@ window.LA2Sammenlign = (function(){
     // Indhold
     var maal = el('div', { class: 'sam-indhold' });
     rod.appendChild(maal);
-    tegnTabel(maal);
+    tegnIndhold();
 
     // Bund
     S.bundNode = el('footer', { class: 'sam-bund' });
@@ -691,6 +1331,8 @@ window.LA2Sammenlign = (function(){
     bjaelke.appendChild(el('span', { class: 'sam-mod', 'aria-hidden': 'true', text: 'mod' }));
     bjaelke.appendChild(lavSelect('Højre', 'right'));
 
+    if(S.visning === 'bunker') return bjaelke;
+
     var cb = el('input', { type: 'checkbox', id: 'samKunForskelle' });
     cb.checked = !!S.kunForskelle;
     cb.addEventListener('change', function(){
@@ -729,6 +1371,7 @@ window.LA2Sammenlign = (function(){
       planer: [], versioner: {}, episoder: [],
       leftValg: null, rightValg: null, left: null, right: null,
       noter: {}, dirty: {}, timer: null, gemmer: null,
+      visning: 'tabel', felt: null, faelles: [], opKaede: Promise.resolve(), fokus: null,
       kunForskelle: false, bundNode: null, statusNode: null, statusTekst: '', statusFejl: false
     };
     var mit = S;

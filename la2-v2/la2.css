@@ -2167,3 +2167,265 @@ details.boks summary{ cursor:pointer; font-weight:700; min-height:32px; }
 .moede-enige{ background:var(--niveau-groen-lys); color:var(--niveau-groen); }
 .moede-forskel{ background:var(--blaek); color:#fff; }
 .moede-spoergsmaal{ background:var(--niveau-gul-lys); color:var(--fase-tryghed); }
+
+/* ==================================================================
+   Sammenlign (Tre bunker)
+   ================================================================== */
+
+.sam-forklaring{
+  margin:0 0 14px;
+  padding:12px 14px;
+  background:var(--guld);
+  color:var(--brand);
+  border-radius:12px;
+  font-size:14px;
+  line-height:1.45;
+}
+
+/* ---------- Vælg del og felt ---------- */
+
+.sam-vaelger{
+  margin:0 0 14px;
+  padding:12px 14px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:12px;
+}
+
+.sam-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.sam-chips-felt{ margin-top:8px; }
+
+.sam-chip{
+  min-height:44px;
+  padding:0 14px;
+  border:1px solid var(--streg);
+  border-radius:10px;
+  background:#fff;
+  color:var(--blaek);
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+  text-align:left;
+}
+
+.sam-chip.valgt{ background:var(--blaek); border-color:var(--blaek); color:#fff; }
+.sam-chip-groen:not(.valgt){ border-left:6px solid var(--niveau-groen); }
+.sam-chip-gul:not(.valgt){ border-left:6px solid var(--niveau-gul); }
+.sam-chip-roed:not(.valgt){ border-left:6px solid var(--niveau-roed); }
+
+.sam-feltspoergsmaal{ margin-top:12px; }
+
+/* ---------- De tre bunker ---------- */
+
+.sam-bunker{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr);
+  gap:12px;
+  align-items:start;
+}
+
+@media (min-width:900px){
+  .sam-bunker{ grid-template-columns:minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr); }
+}
+
+.sam-bunke{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:140px;
+  padding:12px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.sam-bunke-midt{ background:var(--blaek); border-color:var(--blaek); color:#fff; }
+
+.sam-bunke-titel{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 4px;
+  font-size:16px;
+  font-weight:800;
+}
+
+.sam-bunke-antal{
+  margin-left:auto;
+  min-width:28px;
+  padding:2px 8px;
+  border-radius:999px;
+  background:rgba(0,0,0,.08);
+  font-size:13px;
+  text-align:center;
+}
+
+.sam-bunke-midt .sam-bunke-antal{ background:rgba(255,255,255,.16); }
+.sam-flueben{ display:inline-flex; color:var(--guld); }
+
+.sam-slip{
+  padding:14px 12px;
+  border:2px dashed var(--guld);
+  border-radius:12px;
+  color:var(--guld);
+  font-size:14px;
+  font-weight:800;
+  text-align:center;
+}
+
+/* det sted et punkt kan slippes lige nu */
+.sam-maal-aktiv{ outline:3px solid var(--guld); outline-offset:2px; }
+
+.sam-mangler{ margin:10px 0 0; font-size:13px; color:var(--tekst-2); }
+
+/* ---------- Punktkort ---------- */
+
+.sam-kort{
+  display:flex;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:6px;
+  background:#fff;
+  color:var(--blaek);
+  border:1px solid var(--streg);
+  border-left:6px solid var(--streg);
+  border-radius:12px;
+}
+
+.sam-kort-midt{ border-left-color:var(--guld); }
+.sam-kort-hoejre{ border-left-style:dashed; }
+
+.sam-greb{
+  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  min-height:44px;
+  color:var(--tekst-2);
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.sam-kort-tekst{ flex:1 1 120px; min-width:0; padding:10px 0; }
+.sam-kort-t{ font-size:15px; line-height:1.35; overflow-wrap:anywhere; }
+.sam-kort-t + .sam-kort-label{ margin-top:8px; }
+
+.sam-kort-fra, .sam-kort-label{
+  margin-bottom:2px;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--label);
+}
+
+.sam-pil{
+  flex:none;
+  min-width:44px;
+  min-height:44px;
+  padding:0 10px;
+  border:1px solid var(--streg);
+  border-radius:10px;
+  background:var(--la2-kort);
+  color:var(--blaek);
+  font-size:20px;
+  font-weight:800;
+  line-height:1;
+  cursor:pointer;
+}
+
+.sam-pil-tekst{ font-size:13px; }
+
+.sam-par{
+  flex:1 0 100%;
+  min-height:44px;
+  padding:0 10px;
+  border:1px solid var(--streg);
+  border-radius:10px;
+  background:#fff;
+  font-size:13px;
+}
+
+/* kortet, der trækkes, og dets plads */
+.sam-traekkes{ opacity:.35; }
+
+.sam-spoegelse{
+  position:fixed;
+  z-index:1000;
+  margin:0;
+  pointer-events:none;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+}
+
+.sam-midt-note{ margin-top:4px; }
+.sam-bunke-midt .sam-fra{ color:rgba(255,255,255,.75); }
+
+/* ---------- Hele planen på én gang ---------- */
+
+.sam-hele{
+  margin-top:20px;
+  padding:14px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.sam-hele-titel{ margin:0 0 4px; font-size:16px; font-weight:800; }
+.sam-hele-tekst{ margin:0 0 12px; font-size:13px; color:var(--tekst-2); }
+
+.sam-hele-liste{ display:grid; grid-template-columns:minmax(0, 1fr); gap:8px; }
+
+@media (min-width:700px){
+  .sam-hele-liste{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+
+.sam-del{
+  display:block;
+  width:100%;
+  min-height:44px;
+  padding:10px 12px;
+  background:#fff;
+  color:var(--blaek);
+  border:2px solid var(--streg);
+  border-radius:12px;
+  text-align:left;
+  cursor:pointer;
+}
+
+.sam-del.aktiv{ border-color:var(--guld); background:var(--fase-tryghed-lys); }
+
+.sam-del-navn{ display:block; margin-bottom:6px; font-size:14px; font-weight:800; }
+
+.sam-bar{
+  display:flex;
+  height:18px;
+  border-radius:6px;
+  overflow:hidden;
+  border:1px solid var(--blaek);
+}
+
+/* skal kunne skelnes i gråtone: beboerens farve · sort · lys grå */
+.sam-seg{ display:block; min-width:6px; }
+.sam-seg-v{ background:#374151; }
+.sam-seg-m{ background:var(--blaek); }
+.sam-seg-h{ background:#e3e6ea; }
+.sam-seg-tom{ background:transparent; }
+.sam-bar .sam-seg-m{ border-left:2px solid #fff; border-right:2px solid #fff; }
+
+.sam-del-tal{
+  display:flex;
+  justify-content:space-between;
+  margin-top:4px;
+  font-size:13px;
+  font-weight:800;
+}
+
+.sam-tegnforklaring{ display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:12px; font-size:13px; }
+.sam-tegn{ display:inline-flex; align-items:center; gap:6px; }
+.sam-tegn .sam-seg{ width:22px; height:14px; border:1px solid var(--blaek); border-radius:3px; }
+
+@media print{ .sam-spoegelse{ display:none; } }

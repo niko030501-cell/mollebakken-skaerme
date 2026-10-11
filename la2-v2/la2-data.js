@@ -160,6 +160,25 @@ window.LA2Data = (function(){
       return client.from('la2_compare_notes').update(fields).eq('id', id).select('*').then(unwrap);
     },
 
+    // ---- Sammenlign: "Begge er enige" (tre bunker). Ingen versioner, ingen update:
+    // et par oprettes ved at slette rækken og oprette en ny ----
+    compareCommon: function(planA, planB){
+      return client.from('la2_compare_common')
+        .select('*')
+        .in('left_plan_id', [planA, planB])
+        .in('right_plan_id', [planA, planB])
+        .order('created_at', { ascending: true })
+        .then(unwrap);
+    },
+
+    commonInsert: function(fields){
+      return client.from('la2_compare_common').insert(fields).select('*').then(unwrap);
+    },
+
+    commonDelete: function(id){
+      return client.from('la2_compare_common').delete().eq('id', id).select('id').then(unwrap);
+    },
+
     // ---- Feedet (samme som infoskærmen): metadata for AKTIVE planer ----
     screenFeed: function(){
       return client.rpc('la2_screen_feed').then(unwrap);
