@@ -84,17 +84,21 @@ window.LA2Print = (function(){
   function tryghedIndhold(tpl, key, a){
     var wrap = el('div', { class: 'print-krop' });
     tpl.sections.forEach(function(sec){
-      var boks = el('section', { class: 'print-niveau print-niveau-' + sec.level });
-      boks.appendChild(el('h2', { class: 'print-niveau-titel' }, [
+      // Farvestribe som eget element (ikke border-left), så rammen er ens hele vejen rundt
+      var indhold = el('div', { class: 'print-niveau-indhold' });
+      indhold.appendChild(el('h2', { class: 'print-niveau-titel' }, [
         el('span', { class: 'print-niveau-maerke', text: (NIVEAU_SYMBOL[sec.level] || '') + ' ' + sec.levelLabel.toUpperCase() }),
         ' ' + (T.tekst(sec.heading, key) || '')
       ]));
       sec.questions.forEach(function(q){
         var label = T.tekst(q.text, key);
         if(!label) return;
-        boks.appendChild(spoergsmaal(label, a[sec.id + '.' + q.id], 3));
+        indhold.appendChild(spoergsmaal(label, a[sec.id + '.' + q.id], 3));
       });
-      wrap.appendChild(boks);
+      wrap.appendChild(el('section', { class: 'print-niveau print-niveau-' + sec.level }, [
+        el('div', { class: 'print-niveau-streg', 'aria-hidden': 'true' }),
+        indhold
+      ]));
     });
     return wrap;
   }

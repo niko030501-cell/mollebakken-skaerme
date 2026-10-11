@@ -105,13 +105,23 @@ body.print-mode .print-rod{ display:block; }
    Farve + tekstmærke + former og kantstil, så de kan skelnes i sort-hvid. */
 
 .print-niveau{
+  display:flex;
+  align-items:stretch;
   margin:0 0 5mm;
-  padding:3mm 4mm 1mm;
-  border:1.5pt solid #000;
+  border:1.5pt solid #000;      /* ens ramme på alle fire sider */
   break-inside:avoid;
   -webkit-print-color-adjust:exact;
   print-color-adjust:exact;
 }
+
+/* Farvestribe i venstre side — eget element, så hjørnerne ikke skæres på skrå */
+.print-niveau-streg{
+  flex:0 0 5mm;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+
+.print-niveau-indhold{ flex:1; min-width:0; padding:3mm 4mm 1mm; }
 
 .print-niveau-titel{ margin:0 0 3mm; font-size:12pt; font-weight:800; }
 
@@ -125,13 +135,17 @@ body.print-mode .print-rod{ display:block; }
   print-color-adjust:exact;
 }
 
-.print-niveau-groen{ border-left:5mm solid #2f7d4f; border-style:solid; }
+/* Kantstil adskiller niveauerne i sort-hvid: hel, stiplet, tyk */
+.print-niveau-groen{ border-style:solid; }
+.print-niveau-groen .print-niveau-streg{ background:#2f7d4f; }
 .print-niveau-groen .print-niveau-maerke{ background:#2f7d4f; color:#fff; }
 
-.print-niveau-gul{ border-left:5mm solid #d89b2b; border-style:dashed; border-left-style:solid; }
+.print-niveau-gul{ border-style:dashed; }
+.print-niveau-gul .print-niveau-streg{ background:#d89b2b; }
 .print-niveau-gul .print-niveau-maerke{ background:#d89b2b; color:#000; }
 
-.print-niveau-roed{ border-left:5mm solid #b3413c; border-width:3pt 3pt 3pt 5mm; }
+.print-niveau-roed{ border-style:solid; border-width:3pt; }
+.print-niveau-roed .print-niveau-streg{ background:#b3413c; }
 .print-niveau-roed .print-niveau-maerke{ background:#b3413c; color:#fff; }
 
 /* ---------- Læringsplan: kolonner og rækker som på skærmen ---------- */
