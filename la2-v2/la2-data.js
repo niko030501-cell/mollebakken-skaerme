@@ -26,6 +26,9 @@ window.LA2Data = (function(){
     }
   });
 
+  var PLAN_META = 'id,resident_id,botilbud_id,plan_type,perspective,title,episode_date,episode_group_id,filled_with,status,review_months,review_due,created_by_name,updated_by_name,created_at,updated_at';
+  var PLAN_FULL = PLAN_META + ',content,draft_content';
+
   function unwrap(res){
     if(res.error) throw res.error;
     return res.data;
@@ -84,6 +87,54 @@ window.LA2Data = (function(){
 
     updateResident: function(id, fields){
       return client.from('la2_residents').update(fields).eq('id', id).select('id').then(unwrap);
+    },
+
+    // ---- Planer: fuld række (inkl. indhold) for én beboer og plantype ----
+    // Bruges kun af beboerens plansider; indholdet holdes kun i hukommelsen.
+    plansForResident: function(residentId, planType, medIndhold){
+      return client.from('la2_plans')
+        .select(medIndhold === false ? PLAN_META : PLAN_FULL)
+        .eq('resident_id', residentId)
+        .eq('plan_type', planType)
+        .order('updated_at', { ascending: false })
+        .then(unwrap);
+    },
+
+    planGroup: function(groupId){
+      return client.from('la2_plans')
+        .select(PLAN_FULL)
+        .eq('episode_group_id', groupId)
+        .then(unwrap);
+    },
+
+    createPlan: function(fields){
+      return client.from('la2_plans').insert(fields).select(PLAN_FULL).then(unwrap);
+    },
+
+    // Optimistisk lås: opdaterer kun hvis rækken ikke er ændret siden den blev hentet.
+    // Returnerer [] hvis en anden har ændret planen imens.
+    updatePlan: function(id, fields, forventetUpdatedAt){
+      return client.from('la2_plans')
+        .update(fields)
+        .eq('id', id)
+        .eq('updated_at', forventetUpdatedAt)
+        .select(PLAN_FULL)
+        .then(unwrap);
+    },
+
+    versions: function(planId){
+      return client.from('la2_plan_versions')
+        .select('id,version_no,status,is_draft,edited_by_name,edited_at')
+        .eq('plan_id', planId)
+        .order('version_no', { ascending: false })
+        .then(unwrap);
+    },
+
+    version: function(versionId){
+      return client.from('la2_plan_versions')
+        .select('id,version_no,title,content,filled_with,status,is_draft,edited_by_name,edited_at')
+        .eq('id', versionId)
+        .then(unwrap);
     },
 
     // ---- Planer: KUN metadata til overblikket (aldrig content) ----

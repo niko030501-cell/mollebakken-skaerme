@@ -114,6 +114,19 @@
     return /jwt|PGRST30|not authenticated|invalid token/i.test(t);
   }
 
+  window.LA2Util = {
+    el: el,
+    lokalDatoISO: lokalDatoISO,
+    lokalDato: lokalDato,
+    kortDato: kortDato,
+    erSessionFejl: erSessionFejl,
+    fejlTekst: fejlTekst
+  };
+
+  function harUgemt(){
+    return !!(window.LA2Plans && window.LA2Plans.isDirty());
+  }
+
   // ---------------------------------------------------------------
   // Aktivitet og automatisk log ud
   // ---------------------------------------------------------------
@@ -164,6 +177,7 @@
 
   function logUd(besked){
     stopPoll();
+    if(window.LA2Plans) window.LA2Plans.clearDirty();
     state.name = '';
     state.residents = null;
     state.plans = null;
@@ -335,21 +349,57 @@
     route();
   }
 
+  var TABS = ['trivsel', 'tryghed', 'laering', 'mestring', 'haab_droem'];
+  var aktuelHash = location.hash || '#/';
+  var gendanner = false;
+
   function route(){
     if(!state.name) return;
     var h = location.hash || '#/';
-    var m = h.match(/^#\/beboer\/([0-9a-fA-F-]{36})$/);
+    var m = h.match(/^#\/beboer\/([0-9a-fA-F-]{36})(?:\/([a-z_]+))?(?:\/([0-9a-fA-F-]{36}))?$/);
     stopPoll();
-    if(m) visBeboer(m[1]);
-    else visOverblik();
+    if(m){
+      var tab = TABS.indexOf(m[2]) !== -1 ? m[2] : 'trivsel';
+      visBeboer(m[1], tab, m[3] || null);
+    }else{
+      visOverblik();
+    }
   }
 
-  window.addEventListener('hashchange', route);
+  function gaaTil(hash){
+    if(location.hash === hash) route();
+    else location.hash = hash;
+  }
+
+  window.addEventListener('hashchange', function(){
+    if(gendanner){ gendanner = false; return; }
+    if(harUgemt() && location.hash !== aktuelHash){
+      if(!window.confirm('Du har ændringer, der ikke er gemt. Vil du forlade siden?')){
+        gendanner = true;
+        location.hash = aktuelHash;
+        return;
+      }
+      window.LA2Plans.clearDirty();
+    }
+    aktuelHash = location.hash || '#/';
+    route();
+  });
+
+  window.addEventListener('beforeunload', function(ev){
+    if(harUgemt()){
+      ev.preventDefault();
+      ev.returnValue = '';
+    }
+  });
 
   document.getElementById('skiftNavnKnap').addEventListener('click', function(){
+    if(harUgemt() && !window.confirm('Du har ændringer, der ikke er gemt. Vil du forlade siden?')) return;
+    if(window.LA2Plans) window.LA2Plans.clearDirty();
     visHvemErDu(true);
   });
   document.getElementById('logUdKnap').addEventListener('click', function(){
+    if(harUgemt() && !window.confirm('Du har ændringer, der ikke er gemt. Vil du logge ud alligevel?')) return;
+    if(window.LA2Plans) window.LA2Plans.clearDirty();
     logUd('Du er logget ud.');
   });
 
@@ -504,10 +554,18 @@
   }
 
   // ---------------------------------------------------------------
-  // Beboerside (Fase 2: indstillinger. Selve planerne kommer i Fase 3)
+  // Beboerside: faner + plansider (Fase 3) + indstillinger
   // ---------------------------------------------------------------
 
-  function visBeboer(residentId){
+  var FANE_LABELS = [
+    { id: 'trivsel', label: 'Trivsel' },
+    { id: 'tryghed', label: 'Tryghed' },
+    { id: 'laering', label: 'Læring' },
+    { id: 'mestring', label: 'Mestring' },
+    { id: 'haab_droem', label: 'Håb og drømme' }
+  ];
+
+  function visBeboer(residentId, tab, groupId){
     var side = el('div', null, [
       el('a', { class: 'tilbage', href: '#/', text: '← Alle beboere' }),
       el('div', { id: 'beboerIndhold', class: 'indlaeser', text: 'Henter…' })
@@ -523,7 +581,7 @@
         mål.textContent = 'Beboeren blev ikke fundet.';
         return;
       }
-      tegnBeboer(mål, r);
+      tegnBeboer(mål, r, tab, groupId);
     }).catch(function(e){
       if(erSessionFejl(e)) return logUd('Din session er udløbet — log ind igen.');
       console.error('beboer:', fejlTekst(e));
@@ -532,12 +590,26 @@
     });
   }
 
-  function tegnBeboer(mål, r){
+  function tegnBeboer(mål, r, tab, groupId){
     var navn = r.beboere ? r.beboere.navn : 'Ukendt';
     var farve = r.beboere && erFarve(r.beboere.farve) ? r.beboere.farve : '#374151';
     var tag = el('span', { class: 'beboer-tag stor', text: navn });
     tag.style.background = farve;
 
+    // ---- Faner ----
+    var faner = el('nav', { class: 'faner', 'aria-label': 'Planer' });
+    FANE_LABELS.forEach(function(f){
+      faner.appendChild(el('a', {
+        class: 'fane' + (f.id === tab ? ' aktiv' : ''),
+        href: '#/beboer/' + r.resident_id + '/' + f.id,
+        text: f.label,
+        'aria-current': f.id === tab ? 'page' : null
+      }));
+    });
+
+    var planer = el('div', { class: 'planer' });
+
+    // ---- Indstillinger ----
     var variant = el('select', { id: 'variantValg' }, [
       el('option', { value: 'LA2', text: 'LA2 — borgerens eget perspektiv ("Min")' }),
       el('option', { value: 'LA2u', text: 'LA2u — tilstræbt perspektiv ("Din")' })
@@ -558,10 +630,15 @@
         contact_persons: kontakt.value.trim()
       }).then(function(rows){
         if(!rows.length) throw new Error('Ikke gemt');
-        status.className = 'besked ok';
-        status.textContent = 'Gemt.';
-        status.hidden = false;
+        var variantÆndret = r.variant !== variant.value;
         r.variant = variant.value;
+        r.contact_persons = kontakt.value.trim();
+        status.className = 'besked ok';
+        status.textContent = variantÆndret && harUgemt()
+          ? 'Gemt. Gem eller forkast dine ændringer i planen, så skifter teksterne.'
+          : 'Gemt.';
+        status.hidden = false;
+        if(variantÆndret && !harUgemt()) route();
       }).catch(function(e){
         if(erSessionFejl(e)) return logUd('Din session er udløbet — log ind igen.');
         console.error('updateResident:', fejlTekst(e));
@@ -573,21 +650,31 @@
       });
     });
 
+    while(mål.firstChild) mål.removeChild(mål.firstChild);
     mål.className = '';
     mål.removeAttribute('id');
-    while(mål.firstChild) mål.removeChild(mål.firstChild);
-    mål.appendChild(el('div', { class: 'hoved-raekke' }, [tag]));
-    mål.appendChild(el('div', { class: 'boks' }, [
-      el('h2', { text: 'Planer' }),
-      el('p', { class: 'tom-tilstand', text: 'Trivsel, Tryghed, Læring, Mestring og Håb og drømme kommer i næste del af opbygningen.' })
-    ]));
-    mål.appendChild(el('div', { class: 'boks' }, [
-      el('h2', { text: 'Indstillinger' }),
+
+    var hoved = [tag, el('span', { class: 'variant-maerke', text: r.variant })];
+    mål.appendChild(el('div', { class: 'hoved-raekke' }, hoved));
+    if(r.contact_persons){
+      mål.appendChild(el('p', { class: 'meta', text: 'Kontaktpersoner: ' + r.contact_persons }));
+    }
+    mål.appendChild(faner);
+    mål.appendChild(planer);
+    mål.appendChild(el('details', { class: 'boks indstillinger' }, [
+      el('summary', { text: 'Indstillinger for ' + navn }),
       el('label', { class: 'felt' }, [el('span', { text: 'Variant' }), variant]),
       el('label', { class: 'felt' }, [el('span', { text: 'Kontaktpersoner' }), kontakt]),
       status,
       gem
     ]));
+
+    window.LA2Plans.renderTab(planer, {
+      resident: r,
+      name: state.name,
+      go: gaaTil,
+      onSessionError: function(){ logUd('Din session er udløbet — log ind igen.'); }
+    }, tab, groupId);
   }
 
   // ---------------------------------------------------------------

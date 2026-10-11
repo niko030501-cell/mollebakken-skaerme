@@ -295,3 +295,270 @@ h1.side-titel{
   .rod{ padding:28px 24px 64px; }
   .centreret{ padding:32px 28px; }
 }
+
+/* ==================================================================
+   Fase 3: faner, plansider, læringsplan, kurve, historik
+   ================================================================== */
+
+.meta{ color:var(--tekst-2); font-size:14px; margin:0 0 12px; }
+
+/* ---------- Faner ---------- */
+
+.faner{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  margin:0 0 16px;
+  padding-bottom:4px;
+  -webkit-overflow-scrolling:touch;
+}
+
+.fane{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  min-height:48px;
+  padding:0 16px;
+  border-radius:4px;
+  background:#e0e5e1;
+  color:#4a5b58;
+  font-weight:700;
+  font-size:14px;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  text-decoration:none;
+  white-space:nowrap;
+}
+
+.fane.aktiv{ background:var(--brand); color:#fff; }
+
+/* ---------- Perspektivvælger ---------- */
+
+.segmenter{
+  display:inline-flex;
+  border:1px solid var(--streg);
+  border-radius:6px;
+  overflow:hidden;
+  margin:0 0 16px;
+  background:#fff;
+}
+
+.segment{
+  min-height:48px;
+  padding:0 18px;
+  border:none;
+  background:#fff;
+  color:var(--blaek);
+  font-weight:700;
+  cursor:pointer;
+}
+
+.segment + .segment{ border-left:1px solid var(--streg); }
+.segment.aktiv{ background:var(--blaek); color:#fff; }
+
+/* ---------- Plan ---------- */
+
+.plan-hoved{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:0 0 8px;
+}
+
+.plan-titel{ margin:0; font-size:22px; font-weight:800; }
+
+.chip{
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:3px;
+  background:var(--flade);
+  color:var(--blaek);
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.chip-aktiv{ background:var(--status-ok); color:#fff; }
+.chip-udkast{ background:var(--guld); color:var(--blaek); }
+.chip-arkiv, .chip-arkiveret{ background:var(--flade); color:var(--tekst-2); }
+
+.chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+
+.plan-form{ display:block; }
+
+.plan-sektion{
+  background:#fff;
+  border:1px solid var(--streg);
+  border-radius:8px;
+  padding:14px 16px 4px;
+  margin:0 0 14px;
+}
+
+.sektion-titel{
+  margin:0 0 12px;
+  font-size:16px;
+  font-weight:800;
+}
+
+.felt-label{
+  display:block;
+  margin-bottom:4px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--label);
+}
+
+.felt.liste-felt{ margin-bottom:14px; }
+
+.liste-raekke{ display:flex; gap:6px; margin-bottom:6px; }
+
+.liste-raekke input{
+  flex:1;
+  min-width:0;
+  min-height:48px;
+  padding:0 12px;
+  border:1px solid var(--streg);
+  border-radius:6px;
+  background:#fff;
+}
+
+.knap-lille{ min-width:48px; padding:0 12px; }
+
+/* ---------- Tryghedsplan: grøn / gul / rød ---------- */
+
+.niveau{ border-left-width:10px; }
+.niveau-groen{ border-left-color:#2f7d4f; }
+.niveau-gul{ border-left-color:#d89b2b; }
+.niveau-roed{ border-left-color:#b3413c; }
+
+.niveau-maerke{
+  display:inline-block;
+  margin-right:10px;
+  padding:3px 8px;
+  border-radius:3px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:#fff;
+  vertical-align:middle;
+}
+
+.niveau-groen .niveau-maerke{ background:#2f7d4f; }
+.niveau-gul .niveau-maerke{ background:#d89b2b; color:var(--blaek); }
+.niveau-roed .niveau-maerke{ background:#b3413c; }
+
+/* ---------- Læringsplan ---------- */
+
+.laering-celler{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0 16px;
+}
+
+@media (min-width:800px){
+  .laering-celler{ grid-template-columns:1fr 1fr; }
+  .laering-celler.en-kolonne{ grid-template-columns:1fr; }
+}
+
+.celle-kolonne{
+  margin:0 0 8px;
+  padding:4px 8px;
+  border-radius:3px;
+  background:var(--flade);
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--blaek);
+}
+
+/* ---------- Kurve ---------- */
+
+.kurve-hint{ margin:0 0 12px; color:var(--tekst-2); font-size:14px; }
+
+.kurve-valg{
+  display:grid;
+  grid-template-columns:repeat(6, 1fr);
+  gap:6px;
+  margin-bottom:8px;
+}
+
+.kurve-kolonne{ display:flex; flex-direction:column; align-items:stretch; min-width:0; }
+
+.kurve-knapper{ display:flex; flex-direction:column; gap:4px; }
+
+.kurve-knapper button{
+  min-height:48px;
+  border:1px solid var(--streg);
+  border-radius:4px;
+  background:#fff;
+  color:var(--blaek);
+  font-weight:800;
+  cursor:pointer;
+}
+
+.kurve-knapper button.valgt{ background:var(--blaek); border-color:var(--blaek); color:#fff; }
+.kurve-knapper button:disabled{ opacity:.6; cursor:default; }
+
+.kurve-etiket{
+  margin-top:4px;
+  font-size:11px;
+  line-height:1.2;
+  text-align:center;
+  color:var(--tekst-2);
+}
+
+.kurve-svg{ width:100%; height:auto; display:block; margin:8px 0 12px; }
+
+/* ---------- Handlinger, historik, episoder ---------- */
+
+.handlinger{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 16px; }
+
+.kilde{ margin:16px 0 0; font-size:12px; color:var(--tekst-2); }
+.kilde a{ color:inherit; }
+
+.historik-liste{ display:flex; flex-direction:column; gap:8px; }
+
+.historik-raekke{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  background:#fff;
+  border:1px solid var(--streg);
+  border-radius:6px;
+}
+
+.historik-tekst{ font-weight:600; margin-bottom:4px; }
+
+.episode-kort{
+  display:block;
+  margin:0 0 10px;
+  padding:14px 16px;
+  background:#fff;
+  border:1px solid var(--streg);
+  border-radius:8px;
+  color:var(--blaek);
+  text-decoration:none;
+}
+
+.episode-kort:hover, .episode-kort:focus-visible{ border-color:var(--brand); box-shadow:0 0 0 2px var(--brand); outline:none; }
+.episode-kort.arkiveret{ opacity:.65; }
+.episode-titel{ font-size:17px; font-weight:800; }
+.episode-meta{ color:var(--tekst-2); font-size:14px; }
+
+details.boks summary{ cursor:pointer; font-weight:700; min-height:32px; }
+
+.hoved-raekke .variant-maerke{ font-size:13px; }
+
+@media (max-width:520px){
+  .kurve-knapper button{ min-height:44px; }
+  .kurve-etiket{ font-size:10px; }
+}
