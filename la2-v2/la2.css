@@ -1361,3 +1361,268 @@ details.boks summary{ cursor:pointer; font-weight:700; min-height:32px; }
   min-height:0;
   display:block;
 }
+
+/* ==================================================================
+   Mobil (design fase 4): hero, "Kræver opmærksomhed", beboerliste, bundmenu
+   ================================================================== */
+
+/* PC/tablet viser desktop-oversigten, mobil viser mobiloversigten */
+.overblik-mobil{ display:none; }
+.bundmenu{ display:none; }
+
+.la2-tag{
+  display:inline-block;
+  flex:0 0 auto;
+  padding:2px 8px;
+  border-radius:3px;
+  background:#374151;
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+@media (max-width:759px){
+  .overblik-desktop{ display:none; }
+  .overblik-mobil{ display:block; }
+
+  /* Overblikket har sin egen hero i stedet for den slanke topbjælke */
+  body.side-overblik #topbar{ display:none; }
+  body.side-overblik .rod{ padding:0 0 calc(74px + 28px + env(safe-area-inset-bottom)); max-width:none; }
+
+  /* Plads i bunden, så bundmenuen ikke dækker indhold */
+  .rod{ padding-bottom:calc(74px + 28px + env(safe-area-inset-bottom)); }
+
+  /* ---------- Hero ---------- */
+  .mobil-hero{
+    padding:16px 16px 76px;
+    background:var(--brand);
+    color:#fff;
+    border-radius:0 0 28px 28px;
+  }
+
+  .mobil-hero-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+
+  .mobil-brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .mobil-brand .brand-titel{ font-size:12px; }
+
+  .mobil-bruger{ position:relative; }
+
+  .hero-avatar{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:48px;
+    min-height:48px;
+    padding:0;
+    border:none;
+    border-radius:50%;
+    background:transparent;
+    cursor:pointer;
+  }
+
+  .bruger-menu{
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    z-index:20;
+    min-width:180px;
+    padding:6px;
+    background:#fff;
+    border:1px solid var(--streg);
+    border-radius:12px;
+  }
+
+  .bruger-menu-knap{
+    display:block;
+    width:100%;
+    min-height:48px;
+    padding:0 14px;
+    border:none;
+    border-radius:8px;
+    background:transparent;
+    color:var(--blaek);
+    font-size:15px;
+    font-weight:700;
+    text-align:left;
+    cursor:pointer;
+  }
+
+  .bruger-menu-knap:hover{ background:var(--la2-raekke); }
+
+  .mobil-dato{
+    margin-top:22px;
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.16em;
+    color:var(--la2-dimmet);
+  }
+
+  .mobil-hej{ margin:4px 0 0; font-size:34px; font-weight:800; line-height:1.1; color:#fff; }
+
+  /* ---------- Kræver opmærksomhed ---------- */
+  .opm-kort{
+    position:relative;
+    margin:-52px 16px 0;
+    padding:14px;
+    background:#fff;
+    border:1px solid var(--streg-svag);
+    border-radius:16px;
+  }
+
+  .opm-titel{
+    margin:0 0 10px;
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    color:var(--label);
+  }
+
+  .opm-tom{ margin:0; padding:6px 0; font-size:16px; font-weight:700; color:var(--niveau-groen); }
+
+  .opm-post{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-height:52px;
+    margin-top:6px;
+    padding:8px 12px;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:15px;
+    font-weight:700;
+  }
+
+  .opm-over{ background:var(--blaek); color:#fff; }
+  .opm-snart{ background:var(--niveau-gul-lys); color:var(--blaek); }
+  .opm-tekst{ flex:1; min-width:0; line-height:1.25; }
+
+  .opm-flag{
+    flex:0 0 auto;
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--guld);
+  }
+
+  /* ---------- Beboerliste ---------- */
+  .mobil-beboere{ padding:22px 16px 0; }
+
+  .mobil-beboere-titel{
+    margin:0;
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    color:var(--label);
+  }
+
+  .mobil-forklaring{ margin:4px 0 10px; font-size:12px; color:var(--tekst-2); }
+
+  .mobil-beboer{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-height:64px;
+    margin-bottom:8px;
+    padding:10px 12px;
+    background:var(--la2-kort);
+    border:1px solid var(--streg-svag);
+    border-radius:12px;
+    color:var(--blaek);
+    text-decoration:none;
+  }
+
+  .mobil-beboer-tekst{ flex:1; min-width:0; display:flex; flex-direction:column; }
+
+  .mobil-beboer-navn{
+    font-size:16px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+
+  .mobil-beboer-under{ font-size:12px; color:var(--tekst-2); }
+
+  .status-firkanter{ display:flex; gap:4px; flex:0 0 auto; }
+
+  .status-firkant{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:28px;
+    height:28px;
+    padding:0 4px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:800;
+    background:#e3ece6;
+    color:var(--fase-trivsel);
+  }
+
+  .status-over{ background:var(--blaek); color:var(--guld); }
+  .status-snart{ background:var(--niveau-gul-lys); color:var(--fase-tryghed); }
+  .status-ny{ background:var(--fase-laering); color:#fff; }
+  .status-ok{ background:#e3ece6; color:var(--fase-trivsel); }
+  .status-ingen{ background:#fff; border:1px dashed var(--streg); color:var(--tom); }
+
+  .mobil-pil{ flex:0 0 auto; color:var(--tom); font-size:24px; line-height:1; }
+
+  /* ---------- Bundmenu ---------- */
+  .bundmenu{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:15;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-around;
+    height:calc(74px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:#fff;
+    border-top:1px solid var(--streg);
+  }
+
+  #topbar[hidden] ~ .bundmenu{ display:none; }
+
+  .bm-punkt{
+    flex:1 1 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    min-height:66px;
+    padding-top:6px;
+    color:var(--tom);
+    text-decoration:none;
+  }
+
+  .bm-tekst{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+  .bm-punkt.aktiv{ color:var(--brand); }
+
+  .bm-plus{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:60px;
+    height:60px;
+    margin-top:-20px;
+    border:4px solid var(--papir);
+    border-radius:50%;
+    background:var(--guld);
+    color:var(--brand);
+    text-decoration:none;
+  }
+}
+
+/* Selve bundmenuen vises kun på mobil og når man er logget ind */
+@media (max-width:759px){
+  .bundmenu{ display:flex; }
+}

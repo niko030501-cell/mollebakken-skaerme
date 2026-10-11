@@ -385,7 +385,7 @@
 
   // Marker det aktive menupunkt i topbjælken
   function saetAktivMenu(navn){
-    topbar.querySelectorAll('[data-nav]').forEach(function(a){
+    document.querySelectorAll('[data-nav]').forEach(function(a){
       var aktiv = a.getAttribute('data-nav') === navn;
       a.classList.toggle('aktiv', aktiv);
       if(aktiv) a.setAttribute('aria-current', 'page');
@@ -412,6 +412,10 @@
     var h = location.hash || '#/';
     var m = h.match(/^#\/beboer\/([0-9a-fA-F-]{36})(?:\/([a-z_]+))?(?:\/([0-9a-fA-F-]{36}|ny))?$/);
     stopPoll();
+    document.body.classList.remove('side-overblik');
+    // "+" i bundmenuen: direkte til beboeren, hvis man står på en beboerside
+    var bmPlus = document.getElementById('bmPlus');
+    if(bmPlus) bmPlus.setAttribute('href', m ? '#/beboer/' + m[1] + '/laering/ny' : '#/ny');
     if(m){
       var tab = TABS.indexOf(m[2]) !== -1 ? m[2] : 'trivsel';
       saetAktivMenu('overblik');
@@ -424,8 +428,12 @@
       startSide(window.LA2Overblik.revision(sideCtx()));
     }else if(h === '#/om'){
       visKommerSnart('Om LA2', 'om');
+    }else if(h === '#/ny'){
+      saetAktivMenu('');
+      visVaelgBeboer();
     }else{
       saetAktivMenu('overblik');
+      document.body.classList.add('side-overblik');
       startSide(window.LA2Overblik.overblik(sideCtx()));
     }
   }
@@ -479,11 +487,42 @@
   // Her styres kun kontekst og polling (hvert 60. sekund).
   // ---------------------------------------------------------------
 
+  // "+" i bundmenuen uden for en beboerside: vælg hvem episoden er for
+  function visVaelgBeboer(){
+    var liste = el('div', { class: 'liste' }, [el('div', { class: 'indlaeser', text: 'Henter beboere…' })]);
+    visIRod(el('div', null, [
+      el('h1', { class: 'side-titel', text: 'Ny episode' }),
+      el('p', { class: 'side-under', text: 'Hvem er episoden for?' }),
+      liste
+    ]));
+    D.residents().then(function(rows){
+      while(liste.firstChild) liste.removeChild(liste.firstChild);
+      rows.forEach(function(r){
+        var navn = r.beboere ? r.beboere.navn : 'Ukendt';
+        var farve = r.beboere && erFarve(r.beboere.farve) ? r.beboere.farve : '#374151';
+        var av = el('span', { class: 'avatar avatar-34', text: navn.charAt(0) });
+        av.setAttribute('aria-hidden', 'true');
+        av.style.background = farve;
+        liste.appendChild(el('a', { class: 'liste-post', href: '#/beboer/' + r.resident_id + '/laering/ny' }, [
+          av,
+          el('div', { class: 'liste-tekst' }, [el('div', { class: 'liste-titel', text: navn })])
+        ]));
+      });
+    }).catch(function(e){
+      if(erSessionFejl(e)) return sessionFejl();
+      console.error('vaelg beboer:', fejlTekst(e));
+      while(liste.firstChild) liste.removeChild(liste.firstChild);
+      liste.appendChild(el('div', { class: 'besked fejl', text: 'Kunne ikke hente beboerne.' }));
+    });
+  }
+
   function sideCtx(){
     return {
       name: state.name,
       visIRod: visIRod,
-      onSessionError: function(){ sessionFejl(); }
+      onSessionError: function(){ sessionFejl(); },
+      skiftNavn: function(){ topbarPille.click(); },
+      logUd: function(){ document.getElementById('logUdKnap').click(); }
     };
   }
 
@@ -977,6 +1016,11 @@
       visLogin('Kunne ikke kontakte serveren. Tjek forbindelsen og prøv igen.', true);
     });
   }
+
+  // Ikoner i bundmenuen (mobil)
+  document.querySelectorAll('#bundmenu [data-ikon]').forEach(function(n){
+    n.appendChild(window.LA2Ikoner.ikon(n.getAttribute('data-ikon'), { stoerrelse: n.getAttribute('data-ikon') === 'plus' ? 28 : 24 }));
+  });
 
   start();
 })();

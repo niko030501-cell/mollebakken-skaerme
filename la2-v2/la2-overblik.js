@@ -315,6 +315,123 @@ window.LA2Overblik = (function(){
     return el('a', { class: 'beboer-kort', href: '#/beboer/' + b.rid }, [hoved, raekker, bund]);
   }
 
+  // ---------------------------------------------------------------
+  // Mobil: hero, "Kræver opmærksomhed" og beboerliste
+  // ---------------------------------------------------------------
+
+  var KORT_BOKS = { trivsel: 'T', tryghed: 'Tr', laering: 'L' };
+  var KORT_NAVN = { trivsel: 'Trivsel', tryghed: 'Tryghed', laering: 'Læring' };
+  var BESTEMT = { trivsel: 'Trivselsplanen', tryghed: 'Tryghedsplanen' };
+
+  function mobilOverblik(m, t, ctx){
+    var wrap = el('div', { class: 'overblik-mobil' });
+
+    // ---- Hero (mørkegrøn flade med afrundede hjørner forneden) ----
+    var avatarKnap = el('button', {
+      type: 'button', class: 'hero-avatar', 'aria-haspopup': 'true', 'aria-expanded': 'false',
+      'aria-label': 'Dig: ' + ctx.name + '. Åbn menu'
+    }, [el('span', { class: 'avatar avatar-guld avatar-48', text: ctx.name ? ctx.name.charAt(0) : '' })]);
+
+    var menu = el('div', { class: 'bruger-menu', hidden: true, role: 'menu' }, [
+      el('button', { type: 'button', role: 'menuitem', class: 'bruger-menu-knap', text: 'Skift navn',
+        onclick: function(){ menu.hidden = true; ctx.skiftNavn(); } }),
+      el('button', { type: 'button', role: 'menuitem', class: 'bruger-menu-knap', text: 'Log ud',
+        onclick: function(){ menu.hidden = true; ctx.logUd(); } })
+    ]);
+    avatarKnap.addEventListener('click', function(){
+      menu.hidden = !menu.hidden;
+      avatarKnap.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
+    });
+
+    wrap.appendChild(el('header', { class: 'mobil-hero' }, [
+      el('div', { class: 'mobil-hero-top' }, [
+        el('div', { class: 'mobil-brand' }, [
+          el('span', { class: 'brand-maerke', 'aria-hidden': 'true', text: 'LA2' }),
+          el('span', { class: 'brand-titel', text: 'Sammen om trivsel' })
+        ]),
+        el('div', { class: 'mobil-bruger' }, [avatarKnap, menu])
+      ]),
+      el('div', { class: 'mobil-dato', text: UGEDAGE[t.getDay()] + ' ' + langDato(t) }),
+      el('h1', { class: 'mobil-hej', text: 'Hej ' + ctx.name })
+    ]));
+
+    // ---- Kræver opmærksomhed (ligger halvt ovenpå hero) ----
+    var poster = [];
+    m.beboere.forEach(function(b){
+      ['trivsel', 'tryghed'].forEach(function(type){
+        var rad = b.rader[type];
+        if(rad && rad.aktiv && (rad.tilstand === 'over' || rad.tilstand === 'snart')){
+          poster.push({ b: b, type: type, rad: rad });
+        }
+      });
+    });
+    poster.sort(function(a, c){ return a.rad.dage - c.rad.dage; });   // mest overskredne først
+
+    var opm = el('section', { class: 'opm-kort', 'aria-label': 'Kræver opmærksomhed' }, [
+      el('h2', { class: 'opm-titel', text: 'Kræver opmærksomhed' })
+    ]);
+    if(!poster.length){
+      opm.appendChild(el('p', { class: 'opm-tom', text: 'Alle planer er opdaterede ✓' }));
+    }else{
+      poster.forEach(function(p){
+        var over = p.rad.tilstand === 'over';
+        var tag = el('span', { class: 'la2-tag', text: p.b.navn });
+        if(erFarve(p.b.farve)) tag.style.background = p.b.farve;
+        var dage = p.rad.dage;
+        var tekst = BESTEMT[p.type] + ' skal revurderes';
+        if(!over) tekst += dage === 0 ? ' i dag' : ' om ' + dage + (dage === 1 ? ' dag' : ' dage');
+        opm.appendChild(el('a', {
+          class: 'opm-post ' + (over ? 'opm-over' : 'opm-snart'),
+          href: '#/beboer/' + p.b.rid + '/' + p.type
+        }, [
+          tag,
+          el('span', { class: 'opm-tekst', text: tekst }),
+          over ? el('span', { class: 'opm-flag', text: 'Over' }) : null
+        ]));
+      });
+    }
+    wrap.appendChild(opm);
+
+    // ---- Beboerliste ----
+    var sektion = el('section', { class: 'mobil-beboere' }, [
+      el('h2', { class: 'mobil-beboere-titel', text: 'Beboere' }),
+      el('p', { class: 'mobil-forklaring', text: 'T = Trivsel · Tr = Tryghed · L = Læring' })
+    ]);
+    if(!m.beboere.length){
+      sektion.appendChild(el('p', { class: 'tom-tilstand', text: 'Ingen beboere er sat op til LA2 endnu.' }));
+    }
+    m.beboere.forEach(function(b){
+      var under = [b.r.variant];
+      if(b.rader.laering.tilstand === 'ny') under.push('ny læringsplan');
+      else if(b.rader.trivsel.tilstand === 'ny' || b.rader.tryghed.tilstand === 'ny') under.push('opdateret i dag');
+
+      var firkanter = el('span', { class: 'status-firkanter' });
+      ['trivsel', 'tryghed', 'laering'].forEach(function(type){
+        var rad = b.rader[type];
+        var tekst = rad.badge ? rad.badge.textContent : '';
+        firkanter.appendChild(el('span', {
+          class: 'status-firkant status-' + rad.tilstand,
+          text: KORT_BOKS[type],
+          title: KORT_NAVN[type] + ': ' + tekst,
+          'aria-label': KORT_NAVN[type] + ': ' + tekst
+        }));
+      });
+
+      sektion.appendChild(el('a', { class: 'mobil-beboer', href: '#/beboer/' + b.rid }, [
+        avatar(b.navn, b.farve, 34),
+        el('span', { class: 'mobil-beboer-tekst' }, [
+          el('span', { class: 'mobil-beboer-navn', text: b.navn }),
+          el('span', { class: 'mobil-beboer-under', text: under.join(' · ') })
+        ]),
+        firkanter,
+        el('span', { class: 'mobil-pil', 'aria-hidden': 'true', text: '›' })
+      ]));
+    });
+    wrap.appendChild(sektion);
+
+    return wrap;
+  }
+
   function overblik(ctx){
     var maal = el('div', { id: 'overblikIndhold', class: 'indlaeser', text: 'Henter planer…' });
     ctx.visIRod(el('div', { class: 'overblik' }, [maal]));
@@ -349,9 +466,13 @@ window.LA2Overblik = (function(){
       if(!rod) return;
       while(rod.firstChild) rod.removeChild(rod.firstChild);
       rod.className = '';
-      rod.appendChild(el('section', { class: 'velkomst' }, [venstre, stat]));
-      rod.appendChild(faseLinje());
-      rod.appendChild(gitter);
+      // PC/tablet og mobil tegnes begge; CSS viser den rigtige (under 760 px = mobil)
+      rod.appendChild(el('div', { class: 'overblik-desktop' }, [
+        el('section', { class: 'velkomst' }, [venstre, stat]),
+        faseLinje(),
+        gitter
+      ]));
+      rod.appendChild(mobilOverblik(m, t, ctx));
     }
 
     function opdater(){

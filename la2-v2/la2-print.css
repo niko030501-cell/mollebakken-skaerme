@@ -7,6 +7,7 @@
 .print-rod{ display:none; }
 
 body.print-mode #topbar,
+body.print-mode #bundmenu,
 body.print-mode #rod{ display:none !important; }
 
 body.print-mode .print-rod{ display:block; }
@@ -223,6 +224,7 @@ body.print-mode .print-rod{ display:block; }
 
   /* Ingen navigation, knapper eller app-elementer */
   #topbar,
+  #bundmenu,
   #rod,
   .print-verktoej,
   noscript{ display:none !important; }

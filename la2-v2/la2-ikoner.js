@@ -11,6 +11,12 @@ window.LA2Ikoner = (function(){
   var NS = 'http://www.w3.org/2000/svg';
 
   var STIER = {
+    // Bundmenu (mobil)
+    overblik: ['M4 4h7v7H4z', 'M13 4h7v7h-7z', 'M4 13h7v7H4z', 'M13 13h7v7h-7z'],
+    episoder: ['M8 6h12', 'M8 12h12', 'M8 18h12', 'M4 6h.01', 'M4 12h.01', 'M4 18h.01'],
+    revision: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 'M12 7v5l3 2'],
+    om: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 'M12 11v5', 'M12 8h.01'],
+    plus: ['M12 5v14', 'M5 12h14'],
     // Fase 1 · Forebyggelse: spire (to blade på en stilk)
     spire: [
       'M12 21v-9',
