@@ -26,6 +26,28 @@ window.LA2Plans = (function(){
   function borgerKey(variant){ return variant === 'LA2u' ? 'din' : 'min'; }
   function borgerLabel(variant){ return variant === 'LA2u' ? 'Din' : 'Min'; }
 
+  function resNavn(res){ return res.beboere ? res.beboere.navn : ''; }
+
+  // Lars' / Louies
+  function genitiv(n){ return /[sxz]$/i.test(n) ? n + "'" : n + 's'; }
+
+  // Hvilken fase-farve en plantype tegnes i (mestring og håb hører til forebyggelse)
+  function faseKlasse(planType){
+    if(planType === 'tryghed') return 'plan-tryghed';
+    if(planType === 'laering') return 'plan-laering';
+    return 'plan-trivsel';
+  }
+
+  function planTitel(tpl, planType, key, erFag, episodeTitel){
+    if(planType === 'haab_droem'){
+      if(erFag) return 'Håb og drømme (fagprofessionel)';
+      return (key === 'din' ? 'Dine' : 'Mine') + ' håb og drømme';
+    }
+    var t = erFag ? tpl.title + ' (fagprofessionel)' : (key === 'din' ? 'Din ' : 'Min ') + tpl.title;
+    if(planType === 'laering' && episodeTitel) t += ': ' + episodeTitel;
+    return t;
+  }
+
   function textKey(variant, p){
     return p === 'fag' ? 'fag' : borgerKey(variant);
   }
@@ -97,16 +119,29 @@ window.LA2Plans = (function(){
     return { node: node, get: function(){ return ta.value.trim(); } };
   }
 
-  function listeFelt(label, vaerdi, readonly){
-    var items = Array.isArray(vaerdi) ? vaerdi.slice() : [];
+  function autoHoejde(ta){
+    if(!ta.scrollHeight) return;   // skjult (display:none) — måles næste gang
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  }
+
+  function listeFelt(label, vaerdi, readonly, skjulLabel){
+    var items = Array.isArray(vaerdi) ? vaerdi.slice()
+      : (typeof vaerdi === 'string' && vaerdi.trim() ? [vaerdi.trim()] : []);   // ældre planer gemte tekst
     if(!items.length) items.push('');
     var liste = el('div', { class: 'liste-rækker' });
-    var wrap = el('div', { class: 'felt liste-felt' }, [el('span', { class: 'felt-label', text: label }), liste]);
+    var wrap = el('div', { class: 'felt liste-felt' }, [el('span', { class: 'felt-label' + (skjulLabel ? ' sr-kun' : ''), text: label }), liste]);
 
     function tilfoej(v){
-      var inp = el('input', { type: 'text', maxlength: '500', 'aria-label': label });
+      // Selvudvidende felt, så lange punkter ikke afkortes
+      var inp = el('textarea', { rows: '1', maxlength: '500', 'aria-label': label, class: 'liste-punkt' });
       inp.value = v || '';
       if(readonly) inp.disabled = true;
+      inp.addEventListener('input', function(){ autoHoejde(inp); });
+      inp.addEventListener('keydown', function(ev){
+        if(ev.key === 'Enter') ev.preventDefault();   // ét punkt = én linje
+      });
+      setTimeout(function(){ autoHoejde(inp); }, 0);
       var raekke = el('div', { class: 'liste-raekke' }, [inp]);
       if(!readonly){
         raekke.appendChild(el('button', {
@@ -131,7 +166,7 @@ window.LA2Plans = (function(){
       node: wrap,
       get: function(){
         var out = [];
-        liste.querySelectorAll('input').forEach(function(i){
+        liste.querySelectorAll('textarea').forEach(function(i){
           var v = i.value.trim();
           if(v) out.push(v);
         });
@@ -149,7 +184,69 @@ window.LA2Plans = (function(){
   // Returnerer { node, get(): content }
   // ---------------------------------------------------------------
 
+  // Tryghedsplanen som barometer: tre kolonner (1 Grøn, 2 Gul, 3 Rød)
+  function byggBarometer(tpl, key, content, readonly){
+    var a = (content && content.a) || {};
+    var wrap = el('div', { class: 'barometer' });
+    var felter = [];
+
+    tpl.sections.forEach(function(sec, i){
+      var standard = T.tekst(sec.headline, key) || '';
+      var gemt = a[sec.id + '.headline'];
+      var hl = el('textarea', {
+        rows: '1', class: 'baro-overskrift', maxlength: '80',
+        'aria-label': 'Overskrift for niveau ' + (i + 1) + ', ' + sec.levelLabel
+      });
+      hl.value = (typeof gemt === 'string' && gemt.trim()) ? gemt : standard;
+      if(readonly) hl.disabled = true;
+      hl.addEventListener('input', function(){ autoHoejde(hl); });
+      hl.addEventListener('keydown', function(ev){
+        if(ev.key === 'Enter') ev.preventDefault();
+      });
+      setTimeout(function(){ autoHoejde(hl); }, 0);
+      // Gem kun en rettet overskrift; standardteksten følger perspektiv og variant
+      felter.push({ key: sec.id + '.headline', get: function(){
+        var v = hl.value.trim();
+        return v === standard ? '' : v;
+      } });
+
+      var kol = el('section', { class: 'baro-kol baro-' + sec.level });
+      kol.appendChild(el('div', { class: 'baro-hoved' }, [
+        el('span', { class: 'baro-nr', text: String(i + 1) }),
+        el('div', { class: 'baro-hoved-tekst' }, [
+          el('div', { class: 'baro-navn', text: sec.levelLabel }),
+          hl
+        ])
+      ]));
+
+      sec.questions.forEach(function(q){
+        var label = T.tekst(q.text, key);
+        if(!label) return;
+        var nøgle = sec.id + '.' + q.id;
+        var f = listeFelt(label, a[nøgle], readonly, true);
+        felter.push({ key: nøgle, get: f.get });
+        kol.appendChild(el('div', { class: 'baro-gruppe' }, [
+          el('div', { class: 'baro-gruppe-navn', text: q.gruppe || '' }),
+          el('div', { class: 'baro-hint', text: label }),
+          f.node
+        ]));
+      });
+      wrap.appendChild(kol);
+    });
+
+    return {
+      node: wrap,
+      get: function(){
+        var ud = kopi(content);
+        ud.a = ud.a || {};
+        felter.forEach(function(f){ ud.a[f.key] = f.get(); });
+        return ud;
+      }
+    };
+  }
+
   function byggStandardForm(tpl, key, content, readonly){
+    if(tpl.kind === 'tryghed') return byggBarometer(tpl, key, content, readonly);
     var a = (content && content.a) || {};
     var wrap = el('div', { class: 'plan-form' });
     var felter = [];
@@ -201,37 +298,25 @@ window.LA2Plans = (function(){
 
   function tegnKurve(svg, curve, vaerdier){
     tom(svg);
-    var W = 600, H = 240, pl = 44, pr = 24, pt = 20, pb = 56;
+    var W = 600, H = 190, pl = 22, pr = 22, pt = 26, pb = 42;
     var n = curve.points.length;
     var lo = curve.min, hi = curve.max;
+    var BLAA = '#34507a', ROED = '#b3413c';
 
     function x(i){ return pl + i * (W - pl - pr) / (n - 1); }
     function y(v){ return pt + (hi - v) * (H - pt - pb) / (hi - lo); }
 
-    var v;
-    for(v = lo; v <= hi; v++){
-      svg.appendChild(svgEl('line', { x1: pl, x2: W - pr, y1: y(v), y2: y(v), stroke: '#cdd5d0', 'stroke-width': 1 }));
-      var t = svgEl('text', { x: pl - 10, y: y(v) + 5, 'text-anchor': 'end', 'font-size': 15, fill: '#5a6b66' });
-      t.textContent = String(v);
-      svg.appendChild(t);
-    }
+    // Tynd grundlinje
+    var gy = H - pb + 12;
+    svg.appendChild(svgEl('line', { x1: pl, x2: W - pr, y1: gy, y2: gy, stroke: '#cdd5d0', 'stroke-width': 1.5 }));
 
-    curve.points.forEach(function(p, i){
-      var lines = p.short || [p.label];
-      lines.forEach(function(l, li){
-        var tt = svgEl('text', { x: x(i), y: H - pb + 22 + li * 16, 'text-anchor': 'middle', 'font-size': 13, fill: '#16211f' });
-        tt.textContent = l;
-        svg.appendChild(tt);
-      });
-    });
-
-    // Linjestykker mellem sammenhængende udfyldte punkter
+    // Kurven (sammenhængende udfyldte punkter)
     var seg = [];
     function flush(){
       if(seg.length > 1){
         svg.appendChild(svgEl('polyline', {
           points: seg.map(function(s){ return x(s) + ',' + y(vaerdier[s]); }).join(' '),
-          fill: 'none', stroke: '#1e3937', 'stroke-width': 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+          fill: 'none', stroke: BLAA, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
         }));
       }
       seg = [];
@@ -241,9 +326,27 @@ window.LA2Plans = (function(){
     });
     flush();
 
+    // Højeste punkt
+    var maxI = -1;
+    vaerdier.forEach(function(v, i){
+      if(v && (maxI === -1 || v > vaerdier[maxI])) maxI = i;
+    });
+
     curve.points.forEach(function(p, i){
       if(!vaerdier[i]) return;
-      svg.appendChild(svgEl('circle', { cx: x(i), cy: y(vaerdier[i]), r: 7, fill: '#16211f', stroke: '#fff', 'stroke-width': 2 }));
+      svg.appendChild(svgEl('circle', { cx: x(i), cy: y(vaerdier[i]), r: 4, fill: BLAA }));
+    });
+    if(maxI !== -1){
+      svg.appendChild(svgEl('circle', {
+        cx: x(maxI), cy: y(vaerdier[maxI]), r: 9, fill: 'none', stroke: ROED, 'stroke-width': 2.5
+      }));
+    }
+
+    // Tre labels under kurven
+    [['Dagene før', pl, 'start'], ['Episoden', W / 2, 'middle'], ['Efter', W - pr, 'end']].forEach(function(l){
+      var tt = svgEl('text', { x: l[1], y: H - 10, 'text-anchor': l[2], 'font-size': 14, 'font-weight': 700, fill: '#5a6b66' });
+      tt.textContent = l[0];
+      svg.appendChild(tt);
     });
   }
 
@@ -255,7 +358,7 @@ window.LA2Plans = (function(){
     });
 
     var svg = svgEl('svg', {
-      viewBox: '0 0 600 240', class: 'kurve-svg', role: 'img',
+      viewBox: '0 0 600 190', class: 'kurve-svg', role: 'img',
       'aria-label': curve.title
     });
     var rækkeNoder = el('div', { class: 'kurve-valg' });
@@ -370,7 +473,7 @@ window.LA2Plans = (function(){
   // Perspektivvælger (Min/Din ↔ Fagprofessionel)
   // ---------------------------------------------------------------
 
-  function perspektivVaelger(variant, onSkift){
+  function perspektivVaelger(variant, onSkift, navn){
     function knap(id, tekst){
       return el('button', {
         type: 'button', class: 'segment' + (persp === id ? ' aktiv' : ''), text: tekst,
@@ -384,8 +487,9 @@ window.LA2Plans = (function(){
         }
       });
     }
+    var borgerTekst = navn ? genitiv(navn) + ' ord' : borgerLabel(variant);
     return el('div', { class: 'segmenter', role: 'group', 'aria-label': 'Perspektiv' }, [
-      knap('borger', borgerLabel(variant)),
+      knap('borger', borgerTekst),
       knap('fag', 'Fagprofessionel')
     ]);
   }
@@ -472,30 +576,49 @@ window.LA2Plans = (function(){
   // ---------------------------------------------------------------
 
   function visEditor(mål, ctx, o){
-    // o: tpl, planType, row, groupInfo({title,date,group}|null), onSaved(savedRow, asDraft), onHistory, onReload
+    // o: tpl, planType, row, groupInfo({title,date,group}|null), vaelger, onSaved, onHistory, onArchive, onUnarchive
     var res = ctx.resident;
     var key = textKey(res.variant, persp);
     var row = o.row;
     var eff = effektivt(row);
     var arkiveret = row && row.status === 'arkiv';
     var tpl = o.tpl;
+    var erFag = persp === 'fag';
 
     tom(mål);
+    mål.className = 'plan-kort ' + faseKlasse(o.planType);
+    mål.hidden = false;
     dirty = false;
 
-    var statusLinje = el('div', { class: 'plan-hoved' }, [
-      el('h2', { class: 'plan-titel', text: tpl.title }),
-      statusChip(row ? row.status : null, !!(row && row.draft_content))
-    ]);
-    mål.appendChild(statusLinje);
-
-    if(row){
-      mål.appendChild(el('p', { class: 'meta', text:
-        'Sidst gemt ' + datoTid(row.updated_at) + ' af ' + row.updated_by_name +
-        (row.review_due && row.status === 'aktiv' ? ' · Næste revision senest ' + U().kortDato(U().lokalDato(row.review_due)) : '') }));
-    }else{
-      mål.appendChild(el('p', { class: 'meta', text: 'Der er ikke oprettet en plan i dette perspektiv endnu. Udfyld og gem for at oprette den.' }));
+    // ---- Hoved: titel, status, meta og perspektivvælger ----
+    var metaP = el('p', { class: 'plan-meta' });
+    function skrivMeta(versionNr){
+      var dele = [];
+      if(row){
+        if(eff.fw) dele.push('Udfyldt sammen med ' + eff.fw);
+        var d = new Date(row.updated_at);
+        dele.push(U().kortDato(d) + ' ' + d.getFullYear());
+        if(versionNr) dele.push('version ' + versionNr);
+      }else{
+        dele.push('Ikke oprettet endnu. Udfyld og gem for at oprette planen.');
+      }
+      metaP.textContent = dele.join(' · ');
     }
+    skrivMeta(null);
+    if(row) seneste(row.id).then(skrivMeta, function(){ /* versionsnummer er pynt */ });
+
+    var titelTekst = planTitel(tpl, o.planType, key, erFag, o.groupInfo ? o.groupInfo.title : '');
+    mål.appendChild(el('div', { class: 'plan-kort-hoved' }, [
+      el('div', { class: 'plan-kort-titelboks' }, [
+        el('div', { class: 'plan-kort-linje' }, [
+          el('h2', { class: 'plan-titel', text: titelTekst }),
+          statusChip(row ? row.status : null, !!(row && row.draft_content))
+        ]),
+        metaP
+      ]),
+      o.vaelger || null
+    ]));
+
     if(eff.erUdkast){
       mål.appendChild(besked('', 'Du arbejder videre på et udkast. Den gemte, aktive plan er uændret, indtil du trykker Gem.'));
     }
@@ -503,7 +626,7 @@ window.LA2Plans = (function(){
       mål.appendChild(besked('', 'Planen er arkiveret og kan ikke redigeres. Brug Historik for at se eller gendanne den.'));
     }
 
-    // Titel/dato (kun læringsplan)
+    // ---- Titel/dato (kun læringsplan) ----
     var titelInp = null, datoInp = null;
     if(o.groupInfo){
       titelInp = el('input', { type: 'text', maxlength: '120', 'aria-label': 'Titel' });
@@ -511,12 +634,13 @@ window.LA2Plans = (function(){
       datoInp = el('input', { type: 'date', 'aria-label': 'Dato for episoden' });
       datoInp.value = o.groupInfo.date || '';
       if(arkiveret){ titelInp.disabled = true; datoInp.disabled = true; }
-      mål.appendChild(el('div', { class: 'boks' }, [
+      mål.appendChild(el('div', { class: 'plan-felter' }, [
         el('label', { class: 'felt' }, [el('span', { text: 'Titel på episoden' }), titelInp]),
         el('label', { class: 'felt' }, [el('span', { text: 'Dato' }), datoInp])
       ]));
     }
 
+    // ---- Formular ----
     var form = byggForm(tpl, key, eff.content, !!arkiveret);
     mål.appendChild(form.node);
 
@@ -532,11 +656,10 @@ window.LA2Plans = (function(){
     monthsSel.value = String(row && [1, 3, 6].indexOf(row.review_months) !== -1 ? row.review_months : 3);
     if(arkiveret) monthsSel.disabled = true;
 
-    var bund = el('div', { class: 'boks' }, [
+    mål.appendChild(el('div', { class: 'plan-felter' }, [
       el('label', { class: 'felt' }, [el('span', { text: 'Udfyldt sammen med' }), fwInp]),
       el('label', { class: 'felt' }, [el('span', { text: 'Revideres senest efter' }), monthsSel])
-    ]);
-    mål.appendChild(bund);
+    ]));
 
     var status = el('div', { class: 'besked', role: 'status', hidden: true });
     mål.appendChild(status);
@@ -572,63 +695,74 @@ window.LA2Plans = (function(){
       });
     }
 
-    var rad = el('div', { class: 'handlinger' });
-    if(!arkiveret){
-      var gemKnap = el('button', { type: 'button', class: 'knap', text: 'Gem', onclick: function(){ gem(false); } });
-      var udkastKnap = el('button', { type: 'button', class: 'knap knap-sekundaer', text: 'Gem som udkast', onclick: function(){ gem(true); } });
-      knapper.push(gemKnap, udkastKnap);
-      rad.appendChild(gemKnap);
-      rad.appendChild(udkastKnap);
-    }
-    var skjulEditor = function(){ mål.hidden = false; };
-    rad.appendChild(el('button', { type: 'button', class: 'knap knap-sekundaer', text: 'Print', onclick: function(){
-      var ugemt = dirty;
-      var udskriv = function(nr){
-        mål.hidden = true;   // editoren bevares, så ugemte ændringer ikke går tabt
-        printPlan(ctx, {
-          tpl: tpl, row: row, content: form.get(), fw: fwInp.value.trim(),
-          titel: titelInp ? titelInp.value.trim() : '', dato: datoInp ? datoInp.value : '',
-          versionNr: nr, ugemt: ugemt && !!row, onClose: skjulEditor
-        });
-      };
-      if(row) seneste(row.id).then(udskriv, function(){ udskriv(null); });
-      else udskriv(null);
-    } }));
-    if(row){
-      rad.appendChild(el('button', { type: 'button', class: 'knap knap-sekundaer', text: 'Historik', onclick: function(){
-        if(dirty && !window.confirm('Du har ændringer, der ikke er gemt. Vil du forlade planen?')) return;
+    // ---- Arkivér / gendan (sekundære handlinger) ----
+    var ekstra = el('div', { class: 'plan-ekstra' });
+    if(row && !arkiveret){
+      var arkivKnap = el('button', { type: 'button', class: 'knap-tekst', text: 'Arkivér', onclick: function(){
+        var spoerg = row.status === 'udkast'
+          ? 'Arkivér udkastet? Det kan gendannes fra Historik.'
+          : 'Arkivér planen? Den kan gendannes fra Historik.';
+        if(dirty) spoerg += ' Ændringer, du ikke har gemt, går tabt.';
+        if(!window.confirm(spoerg)) return;
         dirty = false;
-        o.onHistory(row);
-      } }));
-      if(!arkiveret){
-        rad.appendChild(el('button', { type: 'button', class: 'knap knap-sekundaer', text: 'Arkivér', onclick: function(){
-          var spoerg = row.status === 'udkast'
-            ? 'Arkivér udkastet? Det kan gendannes fra Historik.'
-            : 'Arkivér planen? Den kan gendannes fra Historik.';
-          if(dirty) spoerg += ' Ændringer, du ikke har gemt, går tabt.';
-          if(!window.confirm(spoerg)) return;
-          dirty = false;
-          laas(true);
-          o.onArchive(row).catch(function(e){
-            kast(e, ctx);
-            laas(false);
-            visStatus('fejl', fejlBesked(e));
-          });
-        } }));
-      }
-      if(arkiveret){
-        rad.appendChild(el('button', { type: 'button', class: 'knap', text: 'Gendan fra arkiv', onclick: function(){
-          o.onUnarchive(row).catch(function(e){
-            kast(e, ctx);
-            visStatus('fejl', e && e.code === '23505'
-              ? 'Der findes allerede en aktiv plan her. Arkivér den først.'
-              : fejlBesked(e));
-          });
-        } }));
-      }
+        laas(true);
+        o.onArchive(row).catch(function(e){
+          kast(e, ctx);
+          laas(false);
+          visStatus('fejl', fejlBesked(e));
+        });
+      } });
+      knapper.push(arkivKnap);
+      ekstra.appendChild(arkivKnap);
     }
-    mål.appendChild(rad);
-    mål.appendChild(kildeFod());
+    if(row && arkiveret){
+      ekstra.appendChild(el('button', { type: 'button', class: 'knap', text: 'Gendan fra arkiv', onclick: function(){
+        o.onUnarchive(row).catch(function(e){
+          kast(e, ctx);
+          visStatus('fejl', e && e.code === '23505'
+            ? 'Der findes allerede en aktiv plan her. Arkivér den først.'
+            : fejlBesked(e));
+        });
+      } }));
+    }
+    if(ekstra.firstChild) mål.appendChild(ekstra);
+
+    // ---- Bund: kilde til venstre, gem-knapper til højre ----
+    var bundKnapper = el('div', { class: 'plan-bund-knapper' });
+    if(!arkiveret){
+      var udkastKnap = el('button', { type: 'button', class: 'knap knap-lys', text: 'Gem som udkast', onclick: function(){ gem(true); } });
+      var gemKnap = el('button', { type: 'button', class: 'knap', text: 'Gem', onclick: function(){ gem(false); } });
+      knapper.push(udkastKnap, gemKnap);
+      bundKnapper.appendChild(udkastKnap);
+      bundKnapper.appendChild(gemKnap);
+    }
+    mål.appendChild(el('div', { class: 'plan-bund' }, [kildeFod(), bundKnapper]));
+
+    // ---- Handlinger, som siden øverst (Print / Historik) og sidepanelet bruger ----
+    var skjulEditor = function(){ mål.hidden = false; };
+    if(ctx.setHandlinger){
+      ctx.setHandlinger({
+        row: row,
+        print: function(){
+          var ugemt = dirty;
+          var udskriv = function(nr){
+            mål.hidden = true;   // editoren bevares, så ugemte ændringer ikke går tabt
+            printPlan(ctx, {
+              tpl: tpl, row: row, content: form.get(), fw: fwInp.value.trim(),
+              titel: titelInp ? titelInp.value.trim() : '', dato: datoInp ? datoInp.value : '',
+              versionNr: nr, ugemt: ugemt && !!row, onClose: skjulEditor
+            });
+          };
+          if(row) seneste(row.id).then(udskriv, function(){ udskriv(null); });
+          else udskriv(null);
+        },
+        historik: row ? function(){
+          if(dirty && !window.confirm('Du har ændringer, der ikke er gemt. Vil du forlade planen?')) return;
+          dirty = false;
+          o.onHistory(row);
+        } : null
+      });
+    }
 
     // Ændringsregistrering for alle inputfelter
     mål.addEventListener('input', markDirty);
@@ -745,6 +879,7 @@ window.LA2Plans = (function(){
     var res = ctx.resident;
     tom(mål);
     mål.appendChild(el('div', { class: 'indlaeser', text: 'Henter plan…' }));
+    if(ctx.setHandlinger) ctx.setHandlinger(null);
 
     D.plansForResident(res.resident_id, tab).then(function(rows){
       var levende = rows.filter(function(r){ return r.status !== 'arkiv'; });
@@ -757,15 +892,17 @@ window.LA2Plans = (function(){
       }
 
       tom(mål);
-      var vaelger = perspektivVaelger(res.variant, function(){ visStandardFane(mål, ctx, tab); });
-      mål.appendChild(vaelger);
+      var vaelger = perspektivVaelger(res.variant, function(){ visStandardFane(mål, ctx, tab); }, resNavn(res));
       var plads = el('div', { class: 'plan-plads' });
       mål.appendChild(plads);
 
-      function genindlaes(){ visStandardFane(mål, ctx, tab); }
+      function genindlaes(){
+        if(ctx.onGemt) ctx.onGemt();
+        visStandardFane(mål, ctx, tab);
+      }
 
       visEditor(plads, ctx, {
-        tpl: tpl, planType: tab, row: row, groupInfo: null,
+        tpl: tpl, planType: tab, row: row, groupInfo: null, vaelger: vaelger,
         onSaved: function(saved, asDraft){ genindlaes(); },
         onHistory: function(r){
           visHistorik(plads, ctx, r, tpl, genindlaes, function(){ genindlaes(); });
@@ -808,10 +945,11 @@ window.LA2Plans = (function(){
   // Læring: liste over episoder + "Ny episode"
   // ---------------------------------------------------------------
 
-  function visLaeringListe(mål, ctx){
+  function visLaeringListe(mål, ctx, aabenForm){
     var res = ctx.resident;
     tom(mål);
     mål.appendChild(el('div', { class: 'indlaeser', text: 'Henter læringsplaner…' }));
+    if(ctx.setHandlinger) ctx.setHandlinger(null);
 
     D.plansForResident(res.resident_id, 'laering', false).then(function(rows){
       var grupper = {};
@@ -832,7 +970,7 @@ window.LA2Plans = (function(){
       tom(mål);
 
       // Ny episode
-      var formBoks = el('div', { class: 'boks', hidden: true });
+      var formBoks = el('div', { class: 'boks', hidden: !aabenForm });
       var titelInp = el('input', { type: 'text', maxlength: '120', 'aria-label': 'Titel' });
       var datoInp = el('input', { type: 'date', 'aria-label': 'Dato' });
       datoInp.value = lokalIdag();
@@ -879,6 +1017,7 @@ window.LA2Plans = (function(){
         nyKnap
       ]));
       mål.appendChild(formBoks);
+      if(aabenForm) titelInp.focus();
 
       if(!liste.length){
         mål.appendChild(el('p', { class: 'tom-tilstand', text: 'Ingen læringsplaner endnu. Opret en ny episode, når der har været en voldsom episode.' }));
@@ -936,6 +1075,7 @@ window.LA2Plans = (function(){
     var tpl = T.plans.laering;
     tom(mål);
     mål.appendChild(el('div', { class: 'indlaeser', text: 'Henter episode…' }));
+    if(ctx.setHandlinger) ctx.setHandlinger(null);
 
     D.planGroup(groupId).then(function(rows){
       if(!rows.length){
@@ -955,11 +1095,14 @@ window.LA2Plans = (function(){
 
       tom(mål);
       mål.appendChild(el('a', { class: 'tilbage', href: '#/beboer/' + res.resident_id + '/laering', text: '← Alle læringsplaner' }));
-      mål.appendChild(perspektivVaelger(res.variant, function(){ visEpisode(mål, ctx, groupId); }));
+      var vaelger = perspektivVaelger(res.variant, function(){ visEpisode(mål, ctx, groupId); }, resNavn(res));
       var plads = el('div', { class: 'plan-plads' });
       mål.appendChild(plads);
 
-      function genindlaes(){ visEpisode(mål, ctx, groupId); }
+      function genindlaes(){
+        if(ctx.onGemt) ctx.onGemt();
+        visEpisode(mål, ctx, groupId);
+      }
 
       // Hold titel/dato ens på søsterrækken
       function synkSoester(saved){
@@ -973,6 +1116,7 @@ window.LA2Plans = (function(){
       visEditor(plads, ctx, {
         tpl: tpl, planType: 'laering', row: row,
         groupInfo: { title: any.title, date: any.episode_date, group: groupId },
+        vaelger: vaelger,
         onSaved: function(saved, asDraft){
           synkSoester(saved).catch(function(){ /* søster-sync er bedste bud */ }).then(function(){
             if(!asDraft && spoergOpdatering(mål, ctx, groupId)) return;
@@ -1055,8 +1199,9 @@ window.LA2Plans = (function(){
   function renderTab(mål, ctx, tab, groupId){
     dirty = false;
     if(tab === 'laering'){
-      if(groupId) visEpisode(mål, ctx, groupId);
-      else visLaeringListe(mål, ctx);
+      if(groupId === 'ny') visLaeringListe(mål, ctx, true);
+      else if(groupId) visEpisode(mål, ctx, groupId);
+      else visLaeringListe(mål, ctx, false);
     }else{
       visStandardFane(mål, ctx, tab);
     }

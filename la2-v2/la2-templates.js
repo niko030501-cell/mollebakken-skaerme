@@ -103,17 +103,20 @@ window.LA2Templates = (function(){
       kind: 'tryghed',
       title: 'Tryghedsplan',
       fase: 'Håndtering',
+      // Barometer: niveau 1/2/3. `headline` er standardoverskriften, som kan
+      // rettes pr. plan. `gruppe` er den korte label over hver liste.
       sections: [
         {
           id: 'groen', level: 'groen', levelLabel: 'Grøn',
           // TODO: tjek mod Sopras PDF
           heading: t('Grøn: Jeg har det godt', 'Grøn: Du har det mon godt', 'Grøn: Borgeren har det godt'),
+          headline: t('Jeg har det godt', 'Du har det mon godt', 'Borgeren har det godt'),
           questions: [
-            { id: 'tegn', type: 'text',
+            { id: 'tegn', type: 'list', gruppe: 'Tegn',
               text: t('Hvad mærker jeg, og hvad kan du se på mig?',
                       'Hvad mærker du mon, og hvad kan vi se på dig?',
                       'Hvad ser vi hos borgeren?') },
-            { id: 'handling', type: 'text',
+            { id: 'handling', type: 'list', gruppe: 'Hvad gør vi',
               text: t('Hvad gør jeg, og hvad gør du?',
                       'Hvad gør du mon, og hvad gør vi?',
                       'Hvad gør vi?') }
@@ -123,12 +126,13 @@ window.LA2Templates = (function(){
           id: 'gul', level: 'gul', levelLabel: 'Gul',
           // TODO: tjek mod Sopras PDF
           heading: t('Gul: Det begynder at blive svært', 'Gul: Det begynder mon at blive svært for dig', 'Gul: Det begynder at blive svært for borgeren'),
+          headline: t('Jeg er ved at blive urolig', 'Du er mon ved at blive urolig', 'Borgeren er ved at blive urolig'),
           questions: [
-            { id: 'tegn', type: 'text',
+            { id: 'tegn', type: 'list', gruppe: 'Tegn',
               text: t('Hvad mærker jeg, og hvad kan du se på mig?',
                       'Hvad mærker du mon, og hvad kan vi se på dig?',
                       'Hvad ser vi hos borgeren?') },
-            { id: 'handling', type: 'text',
+            { id: 'handling', type: 'list', gruppe: 'Hvad gør vi',
               text: t('Hvad gør jeg, og hvad gør du?',
                       'Hvad gør du mon, og hvad gør vi?',
                       'Hvad gør vi?') }
@@ -138,12 +142,13 @@ window.LA2Templates = (function(){
           id: 'roed', level: 'roed', levelLabel: 'Rød',
           // TODO: tjek mod Sopras PDF
           heading: t('Rød: Det er meget svært', 'Rød: Det er mon meget svært for dig', 'Rød: Det er meget svært for borgeren'),
+          headline: t('Det er blevet for svært', 'Det er mon blevet for svært for dig', 'Det er blevet for svært for borgeren'),
           questions: [
-            { id: 'tegn', type: 'text',
+            { id: 'tegn', type: 'list', gruppe: 'Tegn',
               text: t('Hvad mærker jeg, og hvad kan du se på mig?',
                       'Hvad mærker du mon, og hvad kan vi se på dig?',
                       'Hvad ser vi hos borgeren?') },
-            { id: 'handling', type: 'text',
+            { id: 'handling', type: 'list', gruppe: 'Hvad gør vi',
               text: t('Hvad gør jeg, og hvad gør du?',
                       'Hvad gør du mon, og hvad gør vi?',
                       'Hvad gør vi?') }
@@ -221,7 +226,7 @@ window.LA2Templates = (function(){
       curve: {
         // TODO: tjek mod Sopras PDF (tidspunkter og skala er mit første udkast)
         title: 'Trivsels- og affektkurve',
-        hint: 'Hvordan havde borgeren det? 1 = meget svært, 5 = det gik godt.',
+        hint: 'Hvor slemt var det på hvert tidspunkt? 1 = roligt, 5 = meget slemt.',
         min: 1,
         max: 5,
         points: [

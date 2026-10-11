@@ -86,9 +86,13 @@ window.LA2Print = (function(){
     tpl.sections.forEach(function(sec){
       // Farvestribe som eget element (ikke border-left), så rammen er ens hele vejen rundt
       var indhold = el('div', { class: 'print-niveau-indhold' });
+      var gemtHl = a[sec.id + '.headline'];
+      var overskrift = (typeof gemtHl === 'string' && gemtHl.trim())
+        ? gemtHl
+        : (T.tekst(sec.headline, key) || T.tekst(sec.heading, key) || '');
       indhold.appendChild(el('h2', { class: 'print-niveau-titel' }, [
         el('span', { class: 'print-niveau-maerke', text: (NIVEAU_SYMBOL[sec.level] || '') + ' ' + sec.levelLabel.toUpperCase() }),
-        ' ' + (T.tekst(sec.heading, key) || '')
+        ' ' + overskrift
       ]));
       sec.questions.forEach(function(q){
         var label = T.tekst(q.text, key);

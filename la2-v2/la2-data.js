@@ -43,6 +43,11 @@ window.LA2Data = (function(){
       return client.auth.signInWithPassword({ email: email, password: password });
     },
 
+    // Forny sessionen (bruges før vi giver op og logger ud)
+    refresh: function(){
+      return client.auth.refreshSession();
+    },
+
     // scope:'local' er vigtigt: det fælles login bruges af mange telefoner
     // på samme tid. Et globalt signOut ville logge ALLE andre ud.
     signOut: function(){

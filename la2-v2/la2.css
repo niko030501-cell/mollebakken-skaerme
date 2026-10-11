@@ -215,6 +215,7 @@ button, input, select, textarea{ font-family:inherit; font-size:16px; } /* 16px:
   .brand-under{ display:none; }
   .bruger-navn{ display:none; }
   .bruger-pille{ padding:6px; }
+  .topbar-bruger{ gap:16px; }
 }
 
 /* ---------- Layout ---------- */
@@ -547,7 +548,7 @@ h1.side-titel{
 
 .liste{ display:flex; flex-direction:column; gap:10px; }
 
-.liste-raekke{
+.liste-post{
   display:flex;
   align-items:center;
   gap:12px;
@@ -560,8 +561,8 @@ h1.side-titel{
   color:var(--blaek);
 }
 
-.liste-raekke:hover,
-.liste-raekke:focus-visible{ border-color:var(--brand); outline:none; box-shadow:0 0 0 2px var(--brand); }
+.liste-post:hover,
+.liste-post:focus-visible{ border-color:var(--brand); outline:none; box-shadow:0 0 0 2px var(--brand); }
 
 .liste-tekst{ flex:1; min-width:0; }
 .liste-titel{ display:flex; align-items:center; gap:8px; font-size:16px; font-weight:800; }
@@ -869,4 +870,494 @@ details.boks summary{ cursor:pointer; font-weight:700; min-height:32px; }
 @media (max-width:520px){
   .kurve-knapper button{ min-height:44px; }
   .kurve-etiket{ font-size:10px; }
+}
+
+/* ==================================================================
+   Beboerens side (design fase 3)
+   ================================================================== */
+
+.sr-kun{
+  position:absolute !important;
+  width:1px; height:1px;
+  margin:-1px; padding:0;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+  border:0;
+}
+
+.tilbage{ text-transform:uppercase; letter-spacing:.1em; font-size:13px; font-weight:800; }
+
+/* ---------- Knapper ---------- */
+
+.knap{ text-transform:uppercase; letter-spacing:.07em; font-size:14px; min-height:44px; border-radius:8px; }
+
+.knap-lys{
+  background:#fff;
+  color:var(--brand);
+  border:1px solid var(--streg);
+}
+
+.knap-lys:disabled{ opacity:.45; }
+
+/* Den ENESTE guldknap på siden */
+.knap-guld{ background:var(--guld); color:var(--brand); }
+
+.knap-tekst{
+  min-height:44px;
+  padding:0 8px;
+  border:none;
+  background:transparent;
+  color:var(--tekst-2);
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  cursor:pointer;
+  text-decoration:underline;
+}
+
+.knap-stiplet{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:48px;
+  margin-top:10px;
+  border:2px dashed var(--streg);
+  border-radius:10px;
+  color:var(--brand);
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  text-decoration:none;
+}
+
+.knap-stiplet:hover{ border-color:var(--brand); }
+
+/* ---------- Header ---------- */
+
+.beboer-hoved{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+  margin:6px 0 20px;
+}
+
+.beboer-hoved-tekst{ flex:1 1 280px; min-width:0; }
+
+.beboer-navn{
+  margin:0;
+  font-size:34px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  line-height:1.05;
+}
+
+@media (min-width:700px){ .beboer-navn{ font-size:42px; } }
+
+.beboer-meta{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px 14px;
+  margin-top:8px;
+  font-size:14px;
+  color:var(--tekst-2);
+}
+
+.beboer-handlinger{ display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ---------- Faseforløb ---------- */
+
+.forloeb{
+  display:flex;
+  align-items:stretch;
+  gap:16px;
+  margin:0 0 20px;
+  overflow-x:auto;
+  padding-bottom:4px;
+  -webkit-overflow-scrolling:touch;
+}
+
+.forloeb-raekke{
+  display:flex;
+  align-items:stretch;
+  gap:10px;
+  flex:1 1 auto;
+}
+
+.forloeb-pil{ align-self:center; color:var(--tom); font-weight:800; font-size:20px; }
+
+.forloeb-kort{
+  flex:1 1 0;
+  min-width:210px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+  color:var(--blaek);
+  text-decoration:none;
+}
+
+.forloeb-kort:hover{ border-color:var(--brand); }
+
+.forloeb-kort .fase-ikon{ width:44px; height:44px; border-radius:12px; }
+
+.forloeb-label{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
+
+.forloeb-kort.fase-trivsel .forloeb-label{ color:var(--fase-trivsel); }
+.forloeb-kort.fase-tryghed .forloeb-label{ color:var(--fase-tryghed); }
+.forloeb-kort.fase-laering .forloeb-label{ color:var(--fase-laering); }
+
+.forloeb-plan{ font-size:17px; font-weight:800; line-height:1.2; }
+.forloeb-opd{ margin-top:2px; font-size:13px; color:var(--tekst-2); }
+
+/* Aktivt kort: nu-block */
+.forloeb-kort.aktiv{ background:var(--blaek); border-color:var(--blaek); color:#fff; }
+.forloeb-kort.aktiv .forloeb-label{ color:var(--guld); }
+.forloeb-kort.aktiv .forloeb-opd{ color:var(--la2-dimmet); }
+.forloeb-kort.aktiv .fase-ikon{ background:rgba(255,255,255,.1); color:var(--guld); }
+
+.forloeb-streg{ flex:0 0 1px; background:var(--streg); }
+
+.forloeb-ekstra{ display:flex; flex-direction:column; justify-content:center; gap:8px; flex:0 0 auto; }
+
+.forloeb-lille{
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  padding:0 14px;
+  border:1px solid var(--streg);
+  border-radius:10px;
+  background:#fff;
+  color:var(--brand);
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  text-decoration:none;
+  white-space:nowrap;
+}
+
+.forloeb-lille.aktiv{ background:var(--blaek); border-color:var(--blaek); color:#fff; }
+
+/* ---------- Plan + sidepanel ---------- */
+
+.beboer-grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr);
+  gap:20px;
+  align-items:start;
+}
+
+@media (min-width:1050px){
+  .beboer-grid{ grid-template-columns:minmax(0, 1fr) 320px; }
+}
+
+.plan-kort{
+  --accent:var(--fase-trivsel);
+  --accent-lys:var(--fase-trivsel-lys);
+  padding:20px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.plan-kort.plan-tryghed{ --accent:var(--fase-tryghed); --accent-lys:var(--fase-tryghed-lys); }
+.plan-kort.plan-laering{ --accent:var(--fase-laering); --accent-lys:var(--fase-laering-lys); }
+
+.plan-kort-hoved{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+.plan-kort-titelboks{ flex:1 1 260px; min-width:0; }
+.plan-kort-linje{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.plan-kort .plan-titel{ font-size:24px; }
+.plan-meta{ margin:6px 0 0; font-size:14px; color:var(--tekst-2); }
+
+/* Segmenteret knap: aktiv del er mørk */
+.segmenter{ margin:0; border-radius:10px; }
+.segment{ min-height:44px; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+.segment.aktiv{ background:var(--blaek); color:#fff; }
+
+/* Sektioner: lys baggrund i fasens farve, hvide "bobler" til svar */
+.plan-kort .plan-sektion{
+  background:var(--accent-lys);
+  border:none;
+  border-radius:12px;
+  padding:14px 16px 6px;
+}
+
+.plan-kort .sektion-titel{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--accent);
+}
+
+.plan-kort .felt > span,
+.plan-kort .felt-label{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--label);
+}
+
+.plan-kort textarea,
+.plan-kort .liste-raekke input,
+.plan-kort .felt input,
+.plan-kort .felt select{
+  background:#fff;
+  border:1px solid var(--streg-svag);
+  border-radius:12px;
+}
+
+.plan-kort textarea{ padding:10px 12px; }
+
+.plan-felter{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0 16px;
+  margin-top:16px;
+}
+
+@media (min-width:700px){ .plan-felter{ grid-template-columns:1fr 1fr; } }
+
+.plan-ekstra{ display:flex; gap:8px; margin-top:4px; }
+
+.plan-bund{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--streg-svag);
+}
+
+.plan-bund .kilde{ margin:0; flex:1 1 220px; }
+.plan-bund-knapper{ display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ---------- Barometer (tryghedsplan) ---------- */
+
+.barometer{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+}
+
+@media (min-width:900px){ .barometer{ grid-template-columns:repeat(3, 1fr); } }
+
+.baro-kol{
+  padding:14px;
+  border-radius:12px;
+  background:var(--niveau-groen-lys);
+}
+
+.baro-gul{ background:var(--niveau-gul-lys); }
+.baro-roed{ background:var(--niveau-roed-lys); }
+
+.baro-hoved{ display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; }
+
+.baro-nr{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  color:#fff;
+  font-size:18px;
+  font-weight:800;
+  background:var(--niveau-groen);
+}
+
+.baro-gul .baro-nr{ background:var(--niveau-gul); color:var(--blaek); }
+.baro-roed .baro-nr{ background:var(--niveau-roed); }
+
+.baro-hoved-tekst{ flex:1; min-width:0; }
+
+.baro-navn{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--niveau-groen);
+}
+
+.baro-gul .baro-navn{ color:var(--niveau-gul-tekst); }
+.baro-roed .baro-navn{ color:var(--niveau-roed-tekst); }
+
+.plan-kort .baro-overskrift{
+  width:100%;
+  margin-top:2px;
+  padding:4px 0;
+  border:none;
+  border-bottom:1px dashed transparent;
+  border-radius:0;
+  background:transparent;
+  color:var(--blaek);
+  font-size:17px;
+  font-weight:800;
+}
+
+.plan-kort .baro-overskrift:focus,
+.plan-kort .baro-overskrift:hover{ border-bottom-color:var(--tom); outline:none; background:transparent; }
+
+.baro-gruppe{ margin-top:12px; }
+
+.baro-gruppe-navn{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--label);
+}
+
+.baro-hint{ margin:2px 0 6px; font-size:12px; color:var(--tekst-2); }
+
+.baro-gruppe .felt.liste-felt{ margin-bottom:6px; }
+
+/* ---------- Læringsplan ---------- */
+
+.plan-laering .celle-kolonne{
+  background:#fff;
+  color:var(--fase-laering);
+  border-radius:8px;
+}
+
+/* ---------- Kurve ---------- */
+
+.plan-kort .kurve-knapper button{ background:#fff; border-radius:10px; }
+.plan-kort .kurve-knapper button.valgt{ background:var(--fase-laering); border-color:var(--fase-laering); color:#fff; }
+.plan-kort .kurve-svg{ margin-top:12px; }
+
+/* ---------- Sidepanel ---------- */
+
+.sidepanel{ display:flex; flex-direction:column; gap:14px; }
+
+.side-kort{
+  padding:16px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.side-kort-titel{
+  margin:0 0 10px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--label);
+}
+
+.episode-stor{
+  display:block;
+  padding:12px;
+  background:var(--fase-laering-lys);
+  border-radius:12px;
+  color:var(--blaek);
+  text-decoration:none;
+}
+
+.episode-stor-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.episode-stor-titel{ font-size:16px; font-weight:800; }
+.episode-stor-under{ margin-top:2px; font-size:13px; color:var(--tekst-2); }
+.mini-kurve{ display:block; width:140px; height:44px; margin-top:8px; }
+
+.episode-lille{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  min-height:44px;
+  padding:8px 4px;
+  border-bottom:1px solid var(--streg-svag);
+  color:var(--blaek);
+  text-decoration:none;
+  font-size:14px;
+}
+
+.episode-lille-dato{ flex:0 0 auto; color:var(--tekst-2); font-variant-numeric:tabular-nums; }
+.episode-lille-titel{ flex:1; min-width:0; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.episode-lille-pers{ flex:0 0 auto; color:var(--tom); font-size:12px; }
+
+.revision-tekst{ font-size:17px; font-weight:800; }
+.revision-over{ color:var(--niveau-roed-tekst); }
+
+.bar{
+  height:12px;
+  margin:10px 0 8px;
+  border-radius:999px;
+  background:var(--la2-raekke);
+  overflow:hidden;
+}
+
+.bar-fyld{ height:100%; border-radius:999px; background:var(--niveau-groen); }
+.bar-snart .bar-fyld{ background:var(--niveau-gul); }
+.bar-over{ background:var(--blaek); }
+.bar-over .bar-fyld{ background:var(--guld); }
+
+.revision-under{ font-size:12px; color:var(--tekst-2); }
+
+.versions-raekke{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  min-height:36px;
+  padding:6px 0;
+  border-bottom:1px solid var(--streg-svag);
+  font-size:14px;
+}
+
+.versions-nr{ font-weight:800; font-variant-numeric:tabular-nums; }
+.versions-navn{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.versions-dato{ color:var(--tekst-2); font-size:13px; }
+
+/* ---------- Punktlister: selvudvidende felter ---------- */
+
+.liste-raekke{ align-items:flex-start; }
+
+.liste-raekke textarea{
+  flex:1;
+  min-width:0;
+  min-height:44px;
+  padding:10px 12px;
+  resize:none;
+  overflow:hidden;
+  line-height:1.3;
+  border:1px solid var(--streg);
+  border-radius:12px;
+  background:#fff;
+  color:var(--blaek);
+}
+
+.liste-raekke .knap-lille{ flex:0 0 auto; min-width:44px; padding:0; }
+
+.plan-kort .baro-overskrift{
+  resize:none;
+  overflow:hidden;
+  line-height:1.25;
+  min-height:0;
+  display:block;
 }

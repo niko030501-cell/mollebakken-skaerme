@@ -92,6 +92,9 @@
     return Math.round((lokalMidnat(til) - lokalMidnat(fra)) / 86400000);
   }
 
+  var MAANEDER_LANG = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august',
+    'september', 'oktober', 'november', 'december'];
+
   var MAANEDER = ['jan.', 'feb.', 'mar.', 'apr.', 'maj', 'jun.', 'jul.', 'aug.', 'sep.', 'okt.', 'nov.', 'dec.'];
 
   function kortDato(d){
@@ -194,6 +197,30 @@
       visLogin(besked || '');
     }, function(){
       visLogin(besked || '');
+    });
+  }
+
+  // En session-fejl (fx "JWT udløbet" efter at telefonen har sovet) betyder
+  // ikke nødvendigvis, at man skal logges ud: prøv først at forny sessionen.
+  // Kun hvis fornyelsen afvises, logges der ud. Er det blot nettet, der
+  // er nede, sker der ingenting (næste polling prøver igen).
+  var sidsteFornyelse = 0;
+
+  function sessionFejl(){
+    var nu = Date.now();
+    var besked = 'Din session er udløbet — log ind igen.';
+    if(nu - sidsteFornyelse < 20000) return logUd(besked);   // undgå løkke
+    sidsteFornyelse = nu;
+    return D.refresh().then(function(res){
+      if(res && res.data && res.data.session){
+        noteAktivitet(true);
+        route();
+        return null;
+      }
+      if(res && res.error && res.error.name === 'AuthRetryableFetchError') return null;   // netværk
+      return logUd(besked);
+    }, function(){
+      return null;   // netværksfejl: behold sessionen
     });
   }
 
@@ -336,7 +363,7 @@
       boks.appendChild(tilfoej);
       ekstra.forEach(function(k){ boks.appendChild(k); });
     }).catch(function(e){
-      if(erSessionFejl(e)) return logUd('Din session er udløbet — log ind igen.');
+      if(erSessionFejl(e)) return sessionFejl();
       console.error('staff:', fejlTekst(e));
       var fejl = el('div', { class: 'besked fejl', text: 'Kunne ikke hente navnene. Prøv igen om lidt.' });
       boks.replaceChild(fejl, indhold);
@@ -383,7 +410,7 @@
     if(!state.name) return;
     if(window.LA2Print) window.LA2Print.close();
     var h = location.hash || '#/';
-    var m = h.match(/^#\/beboer\/([0-9a-fA-F-]{36})(?:\/([a-z_]+))?(?:\/([0-9a-fA-F-]{36}))?$/);
+    var m = h.match(/^#\/beboer\/([0-9a-fA-F-]{36})(?:\/([a-z_]+))?(?:\/([0-9a-fA-F-]{36}|ny))?$/);
     stopPoll();
     if(m){
       var tab = TABS.indexOf(m[2]) !== -1 ? m[2] : 'trivsel';
@@ -435,7 +462,10 @@
     visHvemErDu(true);
   });
   document.getElementById('logUdKnap').addEventListener('click', function(){
-    if(harUgemt() && !window.confirm('Du har ændringer, der ikke er gemt. Vil du logge ud alligevel?')) return;
+    var spoerg = harUgemt()
+      ? 'Du har ændringer, der ikke er gemt. Vil du logge ud alligevel?'
+      : 'Vil du logge ud?';
+    if(!window.confirm(spoerg)) return;
     if(window.LA2Plans) window.LA2Plans.clearDirty();
     logUd('Du er logget ud.');
   });
@@ -453,7 +483,7 @@
     return {
       name: state.name,
       visIRod: visIRod,
-      onSessionError: function(){ logUd('Din session er udløbet — log ind igen.'); }
+      onSessionError: function(){ sessionFejl(); }
     };
   }
 
@@ -465,16 +495,58 @@
   }
 
   // ---------------------------------------------------------------
-  // Beboerside: faner + plansider (Fase 3) + indstillinger
+  // Beboerside: header, faseforløb, plan og sidepanel
   // ---------------------------------------------------------------
 
-  var FANE_LABELS = [
-    { id: 'trivsel', label: 'Trivsel' },
-    { id: 'tryghed', label: 'Tryghed' },
-    { id: 'laering', label: 'Læring' },
-    { id: 'mestring', label: 'Mestring' },
+  var EKSTRA_TABS = [
+    { id: 'mestring', label: 'Mestringsplan' },
     { id: 'haab_droem', label: 'Håb og drømme' }
   ];
+
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function svgNode(tag, attrs){
+    var n = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs || {}).forEach(function(k){ n.setAttribute(k, attrs[k]); });
+    return n;
+  }
+
+  // Lille affektkurve til sidepanelet: Lærings-blå, højeste punkt markeret i rødt
+  function miniKurve(vaerdier){
+    var W = 140, H = 44, pl = 8, pr = 8, pt = 8, pb = 8;
+    var svg = svgNode('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'mini-kurve', role: 'img',
+      'aria-label': 'Affektkurve for episoden' });
+    var n = vaerdier.length;
+    function x(i){ return n > 1 ? pl + i * (W - pl - pr) / (n - 1) : W / 2; }
+    function y(v){ return pt + (5 - Math.max(1, Math.min(5, v))) * (H - pt - pb) / 4; }
+
+    svg.appendChild(svgNode('line', { x1: pl, x2: W - pr, y1: H - pb + 2, y2: H - pb + 2, stroke: '#cdd5d0', 'stroke-width': 1 }));
+
+    var seg = [];
+    function flush(){
+      if(seg.length > 1){
+        svg.appendChild(svgNode('polyline', {
+          points: seg.map(function(i){ return x(i).toFixed(1) + ',' + y(vaerdier[i]).toFixed(1); }).join(' '),
+          fill: 'none', stroke: '#34507a', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+        }));
+      }
+      seg = [];
+    }
+    var maxI = -1;
+    vaerdier.forEach(function(v, i){
+      if(typeof v === 'number'){
+        seg.push(i);
+        if(maxI === -1 || v > vaerdier[maxI]) maxI = i;
+      }else{
+        flush();
+      }
+    });
+    flush();
+    if(maxI !== -1){
+      svg.appendChild(svgNode('circle', { cx: x(maxI).toFixed(1), cy: y(vaerdier[maxI]).toFixed(1), r: 4, fill: 'none', stroke: '#b3413c', 'stroke-width': 2 }));
+    }
+    return svg;
+  }
 
   function visBeboer(residentId, tab, groupId){
     var side = el('div', null, [
@@ -483,8 +555,16 @@
     ]);
     visIRod(side);
 
-    D.residents().then(function(rows){
-      var r = rows.filter(function(x){ return x.resident_id === residentId; })[0];
+    var i90 = new Date();
+    i90.setDate(i90.getDate() - 90);
+
+    Promise.all([
+      D.residents(),
+      D.screenFeed().catch(function(){ return []; }),
+      D.plansForResident(residentId, 'laering', false).catch(function(){ return []; }),
+      D.laeringKurver(lokalDatoISO(i90)).catch(function(){ return []; })
+    ]).then(function(rs){
+      var r = rs[0].filter(function(x){ return x.resident_id === residentId; })[0];
       var mål = document.getElementById('beboerIndhold');
       if(!mål) return;
       if(!r){
@@ -492,33 +572,311 @@
         mål.textContent = 'Beboeren blev ikke fundet.';
         return;
       }
-      tegnBeboer(mål, r, tab, groupId);
+      tegnBeboer(mål, r, tab, groupId, { feed: rs[1], laering: rs[2], kurver: rs[3] });
     }).catch(function(e){
-      if(erSessionFejl(e)) return logUd('Din session er udløbet — log ind igen.');
+      if(erSessionFejl(e)) return sessionFejl();
       console.error('beboer:', fejlTekst(e));
       var mål = document.getElementById('beboerIndhold');
       if(mål){ mål.className = 'besked fejl'; mål.textContent = 'Kunne ikke hente beboeren.'; }
     });
   }
 
-  function tegnBeboer(mål, r, tab, groupId){
+  function tegnBeboer(mål, r, tab, groupId, bs){
+    var I = window.LA2Ikoner;
     var navn = r.beboere ? r.beboere.navn : 'Ukendt';
     var farve = r.beboere && erFarve(r.beboere.farve) ? r.beboere.farve : '#374151';
-    var tag = el('span', { class: 'beboer-tag stor', text: navn });
-    tag.style.background = farve;
+    var rid = r.resident_id;
+    var nu = new Date();
+    var iDag = lokalMidnat(nu);
 
-    // ---- Faner ----
-    var faner = el('nav', { class: 'faner', 'aria-label': 'Planer' });
-    FANE_LABELS.forEach(function(f){
-      faner.appendChild(el('a', {
-        class: 'fane' + (f.id === tab ? ' aktiv' : ''),
-        href: '#/beboer/' + r.resident_id + '/' + f.id,
-        text: f.label,
-        'aria-current': f.id === tab ? 'page' : null
-      }));
+    bs.handl = null;
+    bs.versionerFor = '';
+    bs.versioner = [];
+
+    function planRows(type){
+      return bs.feed.filter(function(f){ return f.resident_name === navn && f.plan_type === type; });
+    }
+
+    function senesteAf(rows){
+      return rows.reduce(function(a, x){
+        var t = new Date(x.last_active_at || x.updated_at);
+        return t > a ? t : a;
+      }, new Date(0));
+    }
+
+    // ---- Header ----
+    var avatar = el('span', { class: 'avatar avatar-72', text: navn.charAt(0) });
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.style.background = farve;
+
+    var metaLinje = el('div', { class: 'beboer-meta' });
+
+    function tegnMeta(){
+      while(metaLinje.firstChild) metaLinje.removeChild(metaLinje.firstChild);
+      metaLinje.appendChild(el('span', { class: 'variant-maerke', text: r.variant }));
+      if((r.contact_persons || '').trim()){
+        metaLinje.appendChild(el('span', { text: 'Kontaktperson: ' + r.contact_persons.trim() }));
+      }
+      var frister = bs.feed
+        .filter(function(f){ return f.resident_name === navn && f.plan_type !== 'laering' && f.review_due; })
+        .map(function(f){ return f.review_due; }).sort();
+      if(frister.length){
+        var d = lokalDato(frister[0]);
+        metaLinje.appendChild(el('span', { text: 'Næste revision: ' + d.getDate() + '. ' + MAANEDER_LANG[d.getMonth()] }));
+      }
+    }
+
+    var printKnap = el('button', { type: 'button', class: 'knap knap-lys', text: 'Print', disabled: true });
+    var historikKnap = el('button', { type: 'button', class: 'knap knap-lys', text: 'Historik', disabled: true });
+    var nyKnap = el('a', { class: 'knap knap-guld', href: '#/beboer/' + rid + '/laering/ny', text: '+ Ny episode' });
+    printKnap.addEventListener('click', function(){
+      if(bs.handl && bs.handl.print) bs.handl.print();
+    });
+    historikKnap.addEventListener('click', function(){
+      if(bs.handl && bs.handl.historik) bs.handl.historik();
     });
 
+    function opdaterKnapper(){
+      printKnap.disabled = !(bs.handl && bs.handl.print);
+      historikKnap.disabled = !(bs.handl && bs.handl.historik);
+    }
+
+    var hoved = el('header', { class: 'beboer-hoved' }, [
+      avatar,
+      el('div', { class: 'beboer-hoved-tekst' }, [
+        el('h1', { class: 'beboer-navn', text: navn }),
+        metaLinje
+      ]),
+      el('div', { class: 'beboer-handlinger' }, [printKnap, historikKnap, nyKnap])
+    ]);
+
+    // ---- Faseforløb ----
+    var forloeb = el('nav', { class: 'forloeb', 'aria-label': 'Planer' });
+
+    function tegnForloeb(){
+      while(forloeb.firstChild) forloeb.removeChild(forloeb.firstChild);
+      var raekke = el('div', { class: 'forloeb-raekke' });
+
+      ['trivsel', 'tryghed', 'laering'].forEach(function(t, i){
+        var f = I.FASER[t];
+        var aktiv = tab === t;
+        var opd;
+        if(t === 'laering'){
+          var graense = new Date(iDag.getFullYear(), iDag.getMonth(), iDag.getDate() - 30);
+          var grupper = {};
+          planRows('laering').forEach(function(x){
+            if(x.episode_date && lokalDato(x.episode_date) >= graense) grupper[x.episode_group_id || x.plan_id] = true;
+          });
+          var antal = Object.keys(grupper).length;
+          opd = antal > 0 ? antal + (antal === 1 ? ' episode' : ' episoder') + ' de sidste 30 dage'
+            : (planRows('laering').length ? 'Ingen de sidste 30 dage' : 'Ingen episoder endnu');
+        }else{
+          var rows = planRows(t);
+          opd = rows.length ? 'Opdateret ' + kortDato(senesteAf(rows)) : 'Ingen plan endnu';
+        }
+
+        if(i > 0) raekke.appendChild(el('span', { class: 'forloeb-pil', 'aria-hidden': 'true', text: '→' }));
+        var ikon = el('span', { class: 'fase-ikon fase-' + t });
+        ikon.appendChild(I.ikon(f.ikon, { stoerrelse: 24 }));
+        raekke.appendChild(el('a', {
+          class: 'forloeb-kort fase-' + t + (aktiv ? ' aktiv' : ''),
+          href: '#/beboer/' + rid + '/' + t,
+          'aria-current': aktiv ? 'page' : null
+        }, [
+          ikon,
+          el('div', { class: 'forloeb-tekst' }, [
+            el('div', { class: 'forloeb-label', text: f.nr + ' · ' + f.fase }),
+            el('div', { class: 'forloeb-plan', text: t === 'laering' ? 'Læringsplaner' : f.plan }),
+            el('div', { class: 'forloeb-opd', text: opd })
+          ])
+        ]));
+      });
+
+      forloeb.appendChild(raekke);
+      forloeb.appendChild(el('span', { class: 'forloeb-streg', 'aria-hidden': 'true' }));
+      var ekstra = el('div', { class: 'forloeb-ekstra' });
+      EKSTRA_TABS.forEach(function(e){
+        var aktiv = tab === e.id;
+        ekstra.appendChild(el('a', {
+          class: 'forloeb-lille' + (aktiv ? ' aktiv' : ''),
+          href: '#/beboer/' + rid + '/' + e.id,
+          text: e.label,
+          'aria-current': aktiv ? 'page' : null
+        }));
+      });
+      forloeb.appendChild(ekstra);
+    }
+
+    // ---- Sidepanel ----
+    var sidepanel = el('aside', { class: 'sidepanel', 'aria-label': 'Overblik for beboeren' });
+
+    function episodeListe(){
+      var g = {};
+      bs.laering.filter(function(p){ return p.status !== 'arkiv'; }).forEach(function(p){
+        var k = p.episode_group_id || p.id;
+        if(!g[k]) g[k] = { group: k, titel: p.title, dato: p.episode_date, oprettet: new Date(p.created_at), pers: [] };
+        var o = new Date(p.created_at);
+        if(o < g[k].oprettet) g[k].oprettet = o;
+        g[k].pers.push(p.perspective === 'fagprofessionel' ? 'Fagprofessionel' : (p.perspective === 'din' ? 'Din' : 'Min'));
+      });
+      return Object.keys(g).map(function(k){ return g[k]; })
+        .sort(function(a, b){ return (b.dato || '').localeCompare(a.dato || ''); });
+    }
+
+    function kortHoved(titel){
+      return el('h2', { class: 'side-kort-titel', text: titel });
+    }
+
+    function laeringKort(){
+      var liste = episodeListe();
+      var kort = el('section', { class: 'side-kort' }, [kortHoved('Seneste læringsplaner')]);
+
+      if(!liste.length){
+        kort.appendChild(el('p', { class: 'tom-tilstand', text: 'Ingen episoder endnu.' }));
+      }else{
+        var nyeste = liste[0];
+        var dato = nyeste.dato ? lokalDato(nyeste.dato) : null;
+        var erNy = (nu - nyeste.oprettet) < 7 * 86400000;
+        var kurveRow = bs.kurver.filter(function(k){
+          return k.episode_group_id === nyeste.group && Array.isArray(k.curve) &&
+            k.curve.some(function(v){ return typeof v === 'number'; });
+        })[0];
+
+        var stor = el('a', { class: 'episode-stor', href: '#/beboer/' + rid + '/laering/' + nyeste.group }, [
+          el('div', { class: 'episode-stor-top' }, [
+            el('span', { class: 'episode-stor-titel', text: nyeste.titel || 'Uden titel' }),
+            erNy ? el('span', { class: 'badge badge-ny', text: 'Ny' }) : null
+          ]),
+          el('div', { class: 'episode-stor-under', text: (dato ? dato.getDate() + '. ' + MAANEDER_LANG[dato.getMonth()] + ' ' + dato.getFullYear() : '') + ' · ' + nyeste.pers.join(', ') })
+        ]);
+        if(kurveRow){
+          stor.appendChild(miniKurve(kurveRow.curve.map(function(v){ return typeof v === 'number' ? v : null; })));
+        }
+        kort.appendChild(stor);
+
+        liste.slice(1, 4).forEach(function(e){
+          var d = e.dato ? lokalDato(e.dato) : null;
+          kort.appendChild(el('a', { class: 'episode-lille', href: '#/beboer/' + rid + '/laering/' + e.group }, [
+            el('span', { class: 'episode-lille-dato', text: d ? kortDato(d) : '' }),
+            el('span', { class: 'episode-lille-titel', text: e.titel || 'Uden titel' }),
+            el('span', { class: 'episode-lille-pers', text: e.pers.join(', ') })
+          ]));
+        });
+      }
+      kort.appendChild(el('a', { class: 'knap-stiplet', href: '#/beboer/' + rid + '/laering/ny', text: '+ Ny episode' }));
+      return kort;
+    }
+
+    function revisionKort(){
+      var kort = el('section', { class: 'side-kort' }, [kortHoved('Revision')]);
+      var typer = ['trivsel', 'tryghed', 'mestring', 'haab_droem'].indexOf(tab) !== -1 ? [tab] : ['trivsel', 'tryghed'];
+      var rows = [];
+      typer.forEach(function(t){ rows = rows.concat(planRows(t)); });
+      rows = rows.filter(function(x){ return x.review_due; });
+      if(!rows.length && typer.length === 1){
+        ['trivsel', 'tryghed'].forEach(function(t){ rows = rows.concat(planRows(t)); });
+        rows = rows.filter(function(x){ return x.review_due; });
+      }
+      if(!rows.length){
+        kort.appendChild(el('p', { class: 'tom-tilstand', text: 'Ingen aktiv plan med revisionsfrist endnu.' }));
+        return kort;
+      }
+
+      var frist = lokalDato(rows.map(function(x){ return x.review_due; }).sort()[0]);
+      var start = senesteAf(rows);
+      var dage = dageMellem(iDag, frist);   // positiv = i fremtiden
+      var samlet = frist.getTime() - lokalMidnat(start).getTime();
+      var gaaet = nu.getTime() - lokalMidnat(start).getTime();
+      var andel = samlet > 0 ? Math.max(0, Math.min(1, gaaet / samlet)) : 1;
+
+      var klasse = 'bar-ok';
+      var tekst;
+      if(dage < 0){ klasse = 'bar-over'; tekst = 'Fristen er overskredet for ' + (-dage) + (dage === -1 ? ' dag' : ' dage') + ' siden'; }
+      else if(dage === 0){ klasse = 'bar-snart'; tekst = 'Fristen er i dag'; }
+      else if(dage <= 14){ klasse = 'bar-snart'; tekst = 'Næste gang om ' + dage + (dage === 1 ? ' dag' : ' dage'); }
+      else{ tekst = 'Næste gang om ' + dage + ' dage'; }
+
+      var bar = el('div', { class: 'bar ' + klasse, role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100',
+        'aria-valuenow': String(Math.round(andel * 100)), 'aria-label': 'Hvor langt man er inde i revisionsperioden' });
+      var fyld = el('div', { class: 'bar-fyld' });
+      fyld.style.width = Math.round(andel * 100) + '%';
+      bar.appendChild(fyld);
+
+      kort.appendChild(el('div', { class: 'revision-tekst ' + (dage < 0 ? 'revision-over' : ''), text: tekst }));
+      kort.appendChild(bar);
+      kort.appendChild(el('div', { class: 'revision-under',
+        text: 'Frist: ' + frist.getDate() + '. ' + MAANEDER_LANG[frist.getMonth()] + ' · flyttes selv frem, når planen gemmes' }));
+      return kort;
+    }
+
+    function historikKort(){
+      var kort = el('section', { class: 'side-kort' }, [kortHoved('Historik')]);
+      var row = bs.handl && bs.handl.row;
+      if(!row){
+        kort.appendChild(el('p', { class: 'tom-tilstand', text: 'Ingen versioner endnu.' }));
+        return kort;
+      }
+      var noegle = row.id + ':' + row.updated_at;
+      if(bs.versionerFor !== noegle){
+        bs.versionerFor = noegle;
+        bs.versioner = [];
+        bs.versionerHentet = false;
+        D.versions(row.id).then(function(vs){
+          if(bs.versionerFor !== noegle) return;
+          bs.versioner = vs;
+          bs.versionerHentet = true;
+          tegnSidepanel();
+        }).catch(function(){
+          if(bs.versionerFor !== noegle) return;
+          bs.versionerHentet = true;   // historikken er et supplement
+          tegnSidepanel();
+        });
+      }
+      if(!bs.versioner.length){
+        kort.appendChild(el('p', { class: 'tom-tilstand',
+          text: bs.versionerHentet ? 'Ingen versioner endnu.' : 'Henter versioner…' }));
+      }else{
+        bs.versioner.slice(0, 3).forEach(function(v){
+          var d = new Date(v.edited_at);
+          kort.appendChild(el('div', { class: 'versions-raekke' }, [
+            el('span', { class: 'versions-nr', text: 'v' + v.version_no }),
+            el('span', { class: 'versions-navn', text: v.edited_by_name }),
+            el('span', { class: 'versions-dato', text: kortDato(d) })
+          ]));
+        });
+      }
+      if(bs.handl && bs.handl.historik){
+        kort.appendChild(el('button', { type: 'button', class: 'knap-tekst', text: 'Se alle', onclick: function(){ bs.handl.historik(); } }));
+      }
+      return kort;
+    }
+
+    function tegnSidepanel(){
+      while(sidepanel.firstChild) sidepanel.removeChild(sidepanel.firstChild);
+      sidepanel.appendChild(laeringKort());
+      sidepanel.appendChild(revisionKort());
+      sidepanel.appendChild(historikKort());
+    }
+
+    // ---- Plan ----
     var planer = el('div', { class: 'planer' });
+
+    function opdaterOmkring(){
+      var i90 = new Date();
+      i90.setDate(i90.getDate() - 90);
+      Promise.all([
+        D.screenFeed(),
+        D.plansForResident(rid, 'laering', false),
+        D.laeringKurver(lokalDatoISO(i90))
+      ]).then(function(rs){
+        bs.feed = rs[0];
+        bs.laering = rs[1];
+        bs.kurver = rs[2];
+        tegnMeta();
+        tegnForloeb();
+        tegnSidepanel();
+      }).catch(function(){ /* næste opdatering prøver igen */ });
+    }
 
     // ---- Indstillinger ----
     var variant = el('select', { id: 'variantValg' }, [
@@ -551,7 +909,7 @@
         status.hidden = false;
         if(variantÆndret && !harUgemt()) route();
       }).catch(function(e){
-        if(erSessionFejl(e)) return logUd('Din session er udløbet — log ind igen.');
+        if(erSessionFejl(e)) return sessionFejl();
         console.error('updateResident:', fejlTekst(e));
         status.className = 'besked fejl';
         status.textContent = 'Kunne ikke gemme. Prøv igen.';
@@ -562,16 +920,16 @@
     });
 
     while(mål.firstChild) mål.removeChild(mål.firstChild);
-    mål.className = '';
+    mål.className = 'beboer-side';
     mål.removeAttribute('id');
 
-    var hoved = [tag, el('span', { class: 'variant-maerke', text: r.variant })];
-    mål.appendChild(el('div', { class: 'hoved-raekke' }, hoved));
-    if(r.contact_persons){
-      mål.appendChild(el('p', { class: 'meta', text: 'Kontaktpersoner: ' + r.contact_persons }));
-    }
-    mål.appendChild(faner);
-    mål.appendChild(planer);
+    tegnMeta();
+    tegnForloeb();
+    tegnSidepanel();
+
+    mål.appendChild(hoved);
+    mål.appendChild(forloeb);
+    mål.appendChild(el('div', { class: 'beboer-grid' }, [planer, sidepanel]));
     mål.appendChild(el('details', { class: 'boks indstillinger' }, [
       el('summary', { text: 'Indstillinger for ' + navn }),
       el('label', { class: 'felt' }, [el('span', { text: 'Variant' }), variant]),
@@ -584,7 +942,13 @@
       resident: r,
       name: state.name,
       go: gaaTil,
-      onSessionError: function(){ logUd('Din session er udløbet — log ind igen.'); }
+      onSessionError: function(){ sessionFejl(); },
+      setHandlinger: function(h){
+        bs.handl = h;
+        opdaterKnapper();
+        tegnSidepanel();
+      },
+      onGemt: opdaterOmkring
     }, tab, groupId);
   }
 

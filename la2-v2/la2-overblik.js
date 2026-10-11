@@ -426,7 +426,7 @@ window.LA2Overblik = (function(){
           ? stort(UGEDAGE[dato.getDay()]) + ' ' + langDato(dato) + ' ' + dato.getFullYear() +
             (alder >= 0 ? ' · ' + alderTekst : '')
           : '';
-        ul.appendChild(el('a', { class: 'liste-raekke', href: '#/beboer/' + g.rid + '/laering/' + g.group }, [
+        ul.appendChild(el('a', { class: 'liste-post', href: '#/beboer/' + g.rid + '/laering/' + g.group }, [
           avatar(navne[g.rid], farver[g.rid], 34),
           el('div', { class: 'liste-tekst' }, [
             el('div', { class: 'liste-titel', text: g.titel || 'Uden titel' }),
@@ -514,7 +514,7 @@ window.LA2Overblik = (function(){
 
         var ikon = I.FASER[f.plan_type] ? faseIkon(f.plan_type, 20) : null;
         var raekke = el('a', {
-          class: 'liste-raekke',
+          class: 'liste-post',
           href: r ? '#/beboer/' + r.resident_id + '/' + (TAB_FOR[f.plan_type] || 'trivsel') : '#/'
         }, [
           avatar(f.resident_name, f.resident_color, 34),
