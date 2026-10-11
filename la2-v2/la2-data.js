@@ -137,6 +137,22 @@ window.LA2Data = (function(){
         .then(unwrap);
     },
 
+    // ---- Feedet (samme som infoskærmen): metadata for AKTIVE planer ----
+    screenFeed: function(){
+      return client.rpc('la2_screen_feed').then(unwrap);
+    },
+
+    // ---- Kun kurve-tallene fra aktive læringsplaner siden en dato ----
+    // (til sparklinen i overblikket — resten af indholdet hentes ikke)
+    laeringKurver: function(sidenISO){
+      return client.from('la2_plans')
+        .select('resident_id,episode_group_id,episode_date,curve:content->curve')
+        .eq('plan_type', 'laering')
+        .eq('status', 'aktiv')
+        .gte('episode_date', sidenISO)
+        .then(unwrap);
+    },
+
     // ---- Planer: KUN metadata til overblikket (aldrig content) ----
     plansMeta: function(){
       return client.from('la2_plans')

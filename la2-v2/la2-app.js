@@ -18,7 +18,9 @@
 
   var rod = document.getElementById('rod');
   var topbar = document.getElementById('topbar');
-  var brugerTekst = document.getElementById('brugerTekst');
+  var brugerNavn = document.getElementById('brugerNavn');
+  var brugerAvatar = document.getElementById('brugerAvatar');
+  var topbarPille = document.getElementById('skiftNavnKnap');
 
   var state = {
     name: '',
@@ -118,7 +120,10 @@
     el: el,
     lokalDatoISO: lokalDatoISO,
     lokalDato: lokalDato,
+    lokalMidnat: lokalMidnat,
+    dageMellem: dageMellem,
     kortDato: kortDato,
+    erFarve: erFarve,
     erSessionFejl: erSessionFejl,
     fejlTekst: fejlTekst
   };
@@ -344,10 +349,30 @@
 
   function visApp(){
     topbar.hidden = false;
-    while(brugerTekst.firstChild) brugerTekst.removeChild(brugerTekst.firstChild);
-    brugerTekst.appendChild(document.createTextNode('Du er logget ind som '));
-    brugerTekst.appendChild(el('strong', { text: state.name }));
+    brugerNavn.textContent = state.name;
+    brugerAvatar.textContent = state.name ? state.name.charAt(0) : '';
+    topbarPille.setAttribute('aria-label', 'Du er logget ind som ' + state.name + '. Tryk for at skifte navn.');
+    topbarPille.setAttribute('title', 'Du er logget ind som ' + state.name + ' — tryk for at skifte navn');
     route();
+  }
+
+  // Marker det aktive menupunkt i topbjælken
+  function saetAktivMenu(navn){
+    topbar.querySelectorAll('[data-nav]').forEach(function(a){
+      var aktiv = a.getAttribute('data-nav') === navn;
+      a.classList.toggle('aktiv', aktiv);
+      if(aktiv) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+
+  // Sider i menuen, der endnu ikke er bygget
+  function visKommerSnart(titel, menu){
+    saetAktivMenu(menu);
+    visIRod(el('div', null, [
+      el('h1', { class: 'side-titel', text: titel }),
+      el('p', { class: 'tom-tilstand', text: 'Kommer snart.' })
+    ]));
   }
 
   var TABS = ['trivsel', 'tryghed', 'laering', 'mestring', 'haab_droem'];
@@ -362,9 +387,19 @@
     stopPoll();
     if(m){
       var tab = TABS.indexOf(m[2]) !== -1 ? m[2] : 'trivsel';
+      saetAktivMenu('overblik');
       visBeboer(m[1], tab, m[3] || null);
+    }else if(h === '#/episoder'){
+      saetAktivMenu('episoder');
+      startSide(window.LA2Overblik.episoder(sideCtx()));
+    }else if(h === '#/revision'){
+      saetAktivMenu('revision');
+      startSide(window.LA2Overblik.revision(sideCtx()));
+    }else if(h === '#/om'){
+      visKommerSnart('Om LA2', 'om');
     }else{
-      visOverblik();
+      saetAktivMenu('overblik');
+      startSide(window.LA2Overblik.overblik(sideCtx()));
     }
   }
 
@@ -410,149 +445,23 @@
   }
 
   // ---------------------------------------------------------------
-  // Overblik
+  // Overblik, Episoder og Revision ligger i la2-overblik.js.
+  // Her styres kun kontekst og polling (hvert 60. sekund).
   // ---------------------------------------------------------------
 
-  var FASER = [
-    { type: 'trivsel', navn: 'Trivsel', harRevision: true },
-    { type: 'tryghed', navn: 'Tryghed', harRevision: true },
-    { type: 'laering', navn: 'Læring', harRevision: false }
-  ];
+  function sideCtx(){
+    return {
+      name: state.name,
+      visIRod: visIRod,
+      onSessionError: function(){ logUd('Din session er udløbet — log ind igen.'); }
+    };
+  }
 
-  function visOverblik(){
-    var side = el('div', null, [
-      el('h1', { class: 'side-titel', text: 'Beboere' }),
-      el('p', { class: 'side-under', text: 'Vælg en beboer for at se og redigere planerne.' }),
-      el('div', { id: 'overblikIndhold', class: 'indlaeser', text: 'Henter planer…' })
-    ]);
-    visIRod(side);
-    hentOverblik();
+  function startSide(side){
+    stopPoll();
     state.pollTimer = setInterval(function(){
-      if(!document.hidden) hentOverblik();
+      if(!document.hidden) side.opdater();
     }, POLL_MS);
-  }
-
-  function hentOverblik(){
-    Promise.all([D.residents(), D.plansMeta()]).then(function(r){
-      state.residents = r[0];
-      state.plans = r[1];
-      tegnOverblik();
-    }).catch(function(e){
-      if(erSessionFejl(e)) return logUd('Din session er udløbet — log ind igen.');
-      console.error('overblik:', fejlTekst(e));
-      var mål = document.getElementById('overblikIndhold');
-      if(mål && !state.residents){
-        mål.className = 'besked fejl';
-        mål.textContent = 'Kunne ikke hente planerne. Prøver igen om et øjeblik.';
-      }
-    });
-  }
-
-  function faseOversigt(plans, fase){
-    var iDag = new Date();
-    var aktive = plans.filter(function(p){ return p.status === 'aktiv'; });
-    var udkast = plans.filter(function(p){ return p.status === 'udkast'; });
-    var hoved = '';
-    var under = [];
-    var overskredet = 0;
-    var tom = false;
-
-    if(fase.type === 'laering'){
-      var graense = new Date(iDag.getFullYear(), iDag.getMonth(), iDag.getDate() - 30);
-      var grupper = {};
-      aktive.forEach(function(p){
-        if(p.episode_date && lokalDato(p.episode_date) >= graense){
-          grupper[p.episode_group_id || p.id] = true;
-        }
-      });
-      var antal = Object.keys(grupper).length;
-      hoved = antal + (antal === 1 ? ' læringsplan' : ' læringsplaner') + ' de sidste 30 dage';
-      if(aktive.length){
-        var sidst = aktive.reduce(function(a, b){ return a.updated_at > b.updated_at ? a : b; });
-        under.push('Senest opdateret ' + relativDato(new Date(sidst.updated_at)));
-      }else if(udkast.length){
-        under.push('Kun udkast');
-      }else{
-        hoved = 'Ingen læringsplaner endnu';
-        tom = true;
-      }
-    }else if(aktive.length){
-      var senest = aktive.reduce(function(a, b){ return a.updated_at > b.updated_at ? a : b; });
-      hoved = 'Opdateret ' + relativDato(new Date(senest.updated_at));
-      under.push('af ' + senest.updated_by_name);
-      var frist = aktive.map(function(p){ return p.review_due; }).filter(Boolean).sort()[0];
-      if(frist){
-        var dage = dageMellem(lokalDato(frist), iDag);   // positivt = frist overskredet
-        if(dage > 0) overskredet = dage;
-        else under.push('Revision senest ' + kortDato(lokalDato(frist)));
-      }
-    }else if(udkast.length){
-      hoved = 'Kun udkast';
-      under.push('Ikke gemt som aktiv plan endnu');
-    }else{
-      hoved = 'Ingen plan endnu';
-      tom = true;
-    }
-    return { hoved: hoved, under: under, overskredet: overskredet, tom: tom };
-  }
-
-  function tegnOverblik(){
-    var mål = document.getElementById('overblikIndhold');
-    if(!mål) return;   // brugeren er gået væk fra overblikket
-
-    var antalOverskredet = 0;
-    var kort = state.residents.map(function(r){
-      var plans = state.plans.filter(function(p){ return p.resident_id === r.resident_id; });
-      var navn = r.beboere ? r.beboere.navn : 'Ukendt';
-      var farve = r.beboere && erFarve(r.beboere.farve) ? r.beboere.farve : '#374151';
-
-      var tag = el('span', { class: 'beboer-tag stor', text: navn });
-      tag.style.background = farve;
-
-      var node = el('a', { class: 'beboer-kort', href: '#/beboer/' + r.resident_id }, [
-        el('div', { class: 'kort-hoved' }, [
-          tag,
-          el('span', { class: 'variant-maerke', text: r.variant })
-        ])
-      ]);
-
-      FASER.forEach(function(fase){
-        var o = faseOversigt(plans.filter(function(p){ return p.plan_type === fase.type; }), fase);
-        if(o.overskredet > 0) antalOverskredet++;
-        var blok = el('div', { class: 'fase' }, [
-          el('div', { class: 'fase-navn', text: fase.navn }),
-          el('div', { class: 'fase-hoved' + (o.tom ? ' fase-tom' : ''), text: o.hoved })
-        ]);
-        if(o.under.length) blok.appendChild(el('div', { class: 'fase-under', text: o.under.join(' · ') }));
-        if(o.overskredet > 0){
-          blok.appendChild(el('span', {
-            class: 'nu-block',
-            text: 'Revision overskredet · ' + o.overskredet + (o.overskredet === 1 ? ' dag' : ' dage')
-          }));
-        }
-        node.appendChild(blok);
-      });
-      return node;
-    });
-
-    var ramme = el('div', null, []);
-    if(antalOverskredet > 0){
-      ramme.appendChild(el('div', { class: 'advarsel-bjaelke' }, [
-        el('span', { class: 'guld', text: '!' }),
-        el('span', { text: antalOverskredet + (antalOverskredet === 1 ? ' plan skal revurderes' : ' planer skal revurderes') })
-      ]));
-    }
-    var gitter = el('div', { class: 'kort-gitter' }, kort);
-    if(!kort.length){
-      gitter = el('p', { class: 'tom-tilstand', text: 'Ingen beboere er sat op til LA2 endnu.' });
-    }
-    ramme.appendChild(gitter);
-
-    mål.className = '';
-    mål.removeAttribute('id');
-    while(mål.firstChild) mål.removeChild(mål.firstChild);
-    mål.setAttribute('id', 'overblikIndhold');
-    mål.appendChild(ramme);
   }
 
   // ---------------------------------------------------------------

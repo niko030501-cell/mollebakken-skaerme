@@ -16,18 +16,27 @@
 <body>
 
 <header id="topbar" class="topbar" hidden>
-  <div class="topbar-venstre">
-    <a class="topbar-hjem" href="#/">
-      <span class="eyebrow">Møllebakken</span>
-      <span class="topbar-titel">LA2</span>
-    </a>
-  </div>
-  <div class="topbar-midt">
-    <span id="brugerTekst" class="bruger-tekst"></span>
-  </div>
-  <div class="topbar-hoejre">
-    <button type="button" class="knap knap-sekundaer" id="skiftNavnKnap">Skift navn</button>
-    <button type="button" class="knap knap-sekundaer" id="logUdKnap">Log ud</button>
+  <a class="topbar-brand" href="#/" aria-label="LA2 — Overblik">
+    <span class="brand-maerke" aria-hidden="true">LA2</span>
+    <span class="brand-tekst">
+      <span class="brand-titel">Sammen om trivsel</span>
+      <span class="brand-under">Møllebakken botilbud</span>
+    </span>
+  </a>
+
+  <nav class="topbar-menu" aria-label="Hovedmenu">
+    <a href="#/" data-nav="overblik">Overblik</a>
+    <a href="#/episoder" data-nav="episoder">Episoder</a>
+    <a href="#/revision" data-nav="revision">Revision</a>
+    <a href="#/om" data-nav="om">Om LA2</a>
+  </nav>
+
+  <div class="topbar-bruger">
+    <button type="button" class="bruger-pille" id="skiftNavnKnap" title="Skift navn">
+      <span class="avatar avatar-guld avatar-36" id="brugerAvatar" aria-hidden="true"></span>
+      <span class="bruger-navn" id="brugerNavn"></span>
+    </button>
+    <button type="button" class="knap-kant" id="logUdKnap">Log ud</button>
   </div>
 </header>
 
@@ -40,9 +49,11 @@
 <noscript><p style="padding:24px">LA2 kræver JavaScript.</p></noscript>
 
 <script src="supabase-js.min.js"></script>
+<script src="la2-ikoner.js"></script>
 <script src="la2-data.js"></script>
 <script src="la2-templates.js"></script>
 <script src="la2-plans.js"></script>
+<script src="la2-overblik.js"></script>
 <script src="la2-print.js"></script>
 <script src="la2-app.js"></script>
 </body>
