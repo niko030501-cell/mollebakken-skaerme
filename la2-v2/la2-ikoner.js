@@ -83,6 +83,8 @@ window.LA2Ikoner = (function(){
     skjold:    function(o){ return ikon('skjold', o); },
     cirkelpil: function(o){ return ikon('cirkelpil', o); },
     FASER: FASER,
+    // De rå sti-data (bruges til at tegne ikoner inde i større SVG-diagrammer)
+    stier: function(navn){ return (STIER[navn] || []).slice(); },
     // Ikon for en plantype; mestring og håb og drømme har ikke en fase
     forPlan: function(planType, o){
       var f = FASER[planType];

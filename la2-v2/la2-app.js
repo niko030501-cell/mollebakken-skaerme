@@ -427,7 +427,8 @@
       saetAktivMenu('revision');
       startSide(window.LA2Overblik.revision(sideCtx()));
     }else if(h === '#/om'){
-      visKommerSnart('Om LA2', 'om');
+      saetAktivMenu('om');
+      startSide(window.LA2Om.vis(sideCtx()));
     }else if(h === '#/ny'){
       saetAktivMenu('');
       visVaelgBeboer();

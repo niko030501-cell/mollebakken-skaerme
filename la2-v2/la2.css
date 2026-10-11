@@ -1626,3 +1626,260 @@ details.boks summary{ cursor:pointer; font-weight:700; min-height:32px; }
 @media (max-width:759px){
   .bundmenu{ display:flex; }
 }
+
+/* ==================================================================
+   Om LA2 (design fase 5)
+   ================================================================== */
+
+.om{ max-width:960px; margin:0 auto; }
+
+.om-top{ margin:4px 0 28px; }
+.om-h1{ margin:0 0 12px; font-size:36px; font-weight:800; line-height:1.1; }
+@media (min-width:700px){ .om-h1{ font-size:48px; } }
+
+.om-intro{ margin:0 0 8px; font-size:18px; line-height:1.5; color:var(--blaek); max-width:60ch; }
+
+.om-sektion{ margin:0 0 36px; }
+
+.om-h2{
+  margin:0 0 6px;
+  font-size:24px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+.om-under{ margin:0 0 16px; font-size:16px; color:var(--tekst-2); max-width:60ch; }
+
+.om-diagram{
+  margin:0 0 16px;
+  padding:12px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.om-svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+
+/* ---------- Faser ---------- */
+
+.om-fase-raekke{ display:grid; grid-template-columns:1fr; gap:12px; }
+@media (min-width:760px){ .om-fase-raekke{ grid-template-columns:repeat(3, 1fr); } }
+
+.om-fase-kort{
+  padding:16px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.om-fase-kort .fase-ikon{ width:44px; height:44px; border-radius:12px; margin-bottom:10px; }
+
+.om-fase-label{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--fk);
+}
+
+.om-fase-plan{ margin:2px 0 6px; font-size:19px; font-weight:800; }
+.om-fase-tekst{ margin:0; font-size:15px; line-height:1.45; color:var(--tekst-2); }
+
+/* ---------- Perspektiver ---------- */
+
+.om-persp-raekke{ display:grid; grid-template-columns:1fr; gap:12px; }
+@media (min-width:760px){ .om-persp-raekke{ grid-template-columns:repeat(3, 1fr); } }
+
+.om-persp-kort{
+  padding:16px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.om-persp-nr{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  margin-bottom:8px;
+  border-radius:50%;
+  background:var(--brand);
+  color:#fff;
+  font-weight:800;
+}
+
+.om-persp-navn{ font-size:18px; font-weight:800; }
+.om-persp-ord{ margin:2px 0 8px; font-size:13px; font-weight:700; color:var(--label); }
+.om-persp-tekst{ margin:0; font-size:15px; line-height:1.45; color:var(--tekst-2); }
+
+/* ---------- Barometer (statisk eksempel) ---------- */
+
+.om-baro{ display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:14px; }
+@media (min-width:760px){ .om-baro{ grid-template-columns:repeat(3, 1fr); } }
+
+.om-baro-kol{ position:relative; padding:14px 14px 28px; border-radius:12px; }
+
+.om-baro-hoved{ display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.om-baro-overskrift{ font-size:17px; font-weight:800; line-height:1.25; }
+
+.om-boble{
+  margin:6px 0 10px;
+  padding:10px 12px;
+  background:#fff;
+  border-radius:12px;
+  font-size:14px;
+  line-height:1.35;
+}
+
+.om-eksempel{
+  position:absolute;
+  right:12px;
+  bottom:8px;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--tekst-2);
+}
+
+.om-forklaring{ margin:0; padding-left:20px; font-size:15px; line-height:1.5; }
+
+/* ---------- Otte principper ---------- */
+
+.om-principper{ display:grid; grid-template-columns:1fr; gap:10px; }
+@media (min-width:760px){ .om-principper{ grid-template-columns:1fr 1fr; } }
+
+.om-princip{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:14px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:12px;
+}
+
+.om-princip.fase-trivsel{ background:var(--fase-trivsel-lys); border-color:transparent; }
+.om-princip.fase-tryghed{ background:var(--fase-tryghed-lys); border-color:transparent; }
+.om-princip.fase-laering{ background:var(--fase-laering-lys); border-color:transparent; }
+
+.om-princip-nr{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  background:var(--la2-raekke);
+  color:var(--brand);
+  font-weight:800;
+}
+
+.om-princip .fase-ikon{ background:#fff; }
+.om-princip-navn{ font-size:16px; font-weight:800; }
+.om-princip-sub{ margin:2px 0 0; font-size:14px; line-height:1.4; color:var(--tekst-2); }
+
+/* ---------- LA2 / LA2u ---------- */
+
+.om-la2u-raekke{ display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:14px; }
+@media (min-width:760px){ .om-la2u-raekke{ grid-template-columns:1fr 1fr; } }
+
+.om-la2u-kort{
+  padding:16px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.om-la2u-kort p{ margin:10px 0 0; font-size:15px; line-height:1.45; color:var(--tekst-2); }
+
+.om-la2u-beboere{ padding:4px 0; }
+
+.om-la2u-avatarer{ display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; }
+
+.om-avatar{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:48px;
+  padding-right:12px;
+  border-radius:999px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  color:var(--blaek);
+  text-decoration:none;
+  font-weight:700;
+}
+
+/* ---------- Trin ---------- */
+
+.om-trin{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+
+.om-trin-post{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:60px;
+  padding:10px 14px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:12px;
+}
+
+.om-trin-nr{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:var(--brand);
+  color:#fff;
+  font-weight:800;
+}
+
+.om-trin-ikon{ flex:0 0 auto; display:inline-flex; color:var(--brand); }
+.om-trin-tekst{ font-size:16px; line-height:1.35; }
+
+/* ---------- Lær mere ---------- */
+
+.om-links{ display:grid; grid-template-columns:1fr; gap:10px; }
+@media (min-width:760px){ .om-links{ grid-template-columns:1fr 1fr; } }
+
+.om-link{
+  position:relative;
+  display:block;
+  min-height:64px;
+  padding:12px 40px 12px 14px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:12px;
+  color:var(--blaek);
+  text-decoration:none;
+}
+
+.om-link:hover, .om-link:focus-visible{ border-color:var(--brand); outline:none; box-shadow:0 0 0 2px var(--brand); }
+
+.om-link-titel{ display:block; font-size:16px; font-weight:800; }
+.om-link-tekst{ display:block; margin-top:2px; font-size:14px; color:var(--tekst-2); }
+
+.om-link-pil{
+  position:absolute;
+  right:14px;
+  top:12px;
+  font-size:18px;
+  font-weight:800;
+  color:var(--brand);
+}
+
+.om-kilde{
+  margin:8px 0 0;
+  padding-top:16px;
+  border-top:1px solid var(--streg);
+  font-size:13px;
+  color:var(--tekst-2);
+}
