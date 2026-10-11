@@ -1235,6 +1235,7 @@ window.LA2Sammenlign = (function(){
   }
 
   function kurveFarve(){
+    if(KURVE_SORT) return '#000';
     return U().erFarve(S.farve) ? S.farve : '#374151';
   }
 
@@ -1738,6 +1739,234 @@ window.LA2Sammenlign = (function(){
   }
 
   // ---------------------------------------------------------------
+  // Print: den viste visning (Tabel, Tre bunker eller Kurver) som liggende A4.
+  // Alt bæres af tekst, kantstil og former, så det kan skelnes i sort-hvid.
+  // Dokumentet bygges kun i DOM'en og fjernes igen ved "Tilbage".
+  // ---------------------------------------------------------------
+
+  var KURVE_SORT = false;     // sand mens kurverne tegnes til print (sort på hvid)
+
+  function datoTekst(d){
+    return d.getDate() + '. ' + ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august',
+      'september', 'oktober', 'november', 'december'][d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function printSideTekst(valg, side){
+    if(!valg) return 'Ingen plan';
+    var plan = planMedId(valg.planId);
+    var t = planNavn(plan) + ' · version ' + valg.versionNo;
+    if(side && side.editedAt) t += ' · ' + datoAar(side.editedAt);
+    if(side && side.isDraft) t += ' · udkast';
+    return t;
+  }
+
+  function printNoteNode(key){
+    var n = S.noter[key];
+    if(!n) return null;
+    var tekst = (n.note || '').trim();
+    if(!n.marking && !tekst) return null;
+    var kids = [];
+    if(n.marking){
+      var m = MARKERINGER.filter(function(x){ return x.id === n.marking; })[0];
+      kids.push(el('div', { class: 'sp-markering', text: 'Markering: ' + (m ? m.label : '') }));
+    }
+    if(tekst) kids.push(el('div', { class: 'sp-note-tekst', text: tekst }));
+    return el('div', { class: 'sp-note' }, kids);
+  }
+
+  function printListe(poster, tomTekst){
+    if(!poster.length) return el('div', { class: 'sp-tom', text: tomTekst });
+    var ul = el('ul', { class: 'sp-liste' });
+    poster.forEach(function(p){ ul.appendChild(el('li', { text: p.t })); });
+    return ul;
+  }
+
+  function printTabel(){
+    var raekker = bunkeRaekker();
+    var tL = sideNavn(S.leftValg) || 'indefra';
+    var tR = sideNavn(S.rightValg) || 'udefra';
+    var tabel = el('table', { class: 'sp-tabel' });
+    tabel.appendChild(el('thead', null, [el('tr', null, [
+      el('th', { text: 'Felt' }),
+      el('th', { text: 'Indefra: ' + tL }),
+      el('th', { text: 'Udefra: ' + tR }),
+      el('th', { text: 'Til mødet' })
+    ])]));
+    var tb = el('tbody');
+    raekker.forEach(function(r){
+      var celleNote = el('td');
+      var note = printNoteNode(r.key);
+      if(note) celleNote.appendChild(note);
+      tb.appendChild(el('tr', null, [
+        el('td', null, [
+          el('div', { class: 'sp-sektion', text: r.sektion }),
+          el('div', { class: 'sp-feltnavn', text: r.felt })
+        ]),
+        el('td', null, [printListe(punkter(S.left, r), 'Intet skrevet her')]),
+        el('td', null, [printListe(punkter(S.right, r), 'Intet skrevet her')]),
+        celleNote
+      ]));
+    });
+    tabel.appendChild(tb);
+    return tabel;
+  }
+
+  function printKort(klasse, overskrift, dele){
+    var k = el('div', { class: 'sp-kort ' + klasse });
+    if(overskrift) k.appendChild(el('div', { class: 'sp-kort-fra', text: overskrift }));
+    dele.forEach(function(d){
+      if(d.label) k.appendChild(el('div', { class: 'sp-kort-label', text: d.label }));
+      k.appendChild(el('div', { text: d.t }));
+    });
+    return k;
+  }
+
+  function printKolonne(klasse, titel, antal, kort, tomTekst){
+    var k = el('div', { class: 'sp-kol ' + klasse }, [
+      el('div', { class: 'sp-kol-titel' }, [
+        el('span', { text: titel }),
+        el('span', { class: 'sp-kol-antal', text: String(antal) })
+      ])
+    ]);
+    if(!kort.length) k.appendChild(el('div', { class: 'sp-tom', text: tomTekst }));
+    kort.forEach(function(x){ k.appendChild(x); });
+    return k;
+  }
+
+  function printBunker(){
+    var vOrd = sideNavn(S.leftValg) || 'indefra';
+    var hOrd = sideNavn(S.rightValg) || 'udefra';
+    var wrap = el('div', { class: 'sp-bunker' });
+    var sum = [];
+
+    bunkeRaekker().forEach(function(r){
+      var d = bunkerFor(r);
+      var harV = punkter(S.left, r).length > 0;
+      var harH = punkter(S.right, r).length > 0;
+
+      var gruppe = null;
+      for(var i = 0; i < sum.length; i++){ if(sum[i].navn === r.sektion){ gruppe = sum[i]; break; } }
+      if(!gruppe){ gruppe = { navn: r.sektion, niveau: r.niveau, v: 0, m: 0, h: 0 }; sum.push(gruppe); }
+      gruppe.v += d.kunL.length; gruppe.m += d.midt.length; gruppe.h += d.kunR.length;
+
+      var note = printNoteNode(r.key);
+      if(!d.kunL.length && !d.kunR.length && !d.midt.length && !note) return;
+
+      var venstre = d.kunL.map(function(p){ return printKort('sp-kort-v', null, [{ t: p.t }]); });
+      var hoejre = d.kunR.map(function(p){ return printKort('sp-kort-h', null, [{ t: p.t }]); });
+      var midt = d.midt.map(function(e){
+        if(e.li && e.ri) return printKort('sp-kort-m', 'Fra begge', [{ label: vOrd, t: e.li.t }, { label: hOrd, t: e.ri.t }]);
+        if(e.li) return printKort('sp-kort-m', 'Fra ' + vOrd, [{ t: e.li.t }]);
+        return printKort('sp-kort-m', 'Fra ' + hOrd, [{ t: e.ri.t }]);
+      });
+
+      var blok = el('section', { class: 'sp-felt' }, [
+        el('h3', { class: 'sp-felt-titel' }, [
+          el('span', { class: 'sp-sektion', text: r.sektion + ' · ' }),
+          el('span', { text: r.felt })
+        ]),
+        el('div', { class: 'sp-kolonner' }, [
+          printKolonne('sp-kol-v', 'Kun ' + vOrd, venstre.length, venstre, harV ? 'Alt er flyttet til midten' : 'Intet skrevet her'),
+          printKolonne('sp-kol-m', 'Begge er enige', midt.length, midt, 'Intet flyttet hertil'),
+          printKolonne('sp-kol-h', 'Kun ' + hOrd, hoejre.length, hoejre, harH ? 'Alt er flyttet til midten' : 'Intet skrevet her')
+        ])
+      ]);
+      if(note) blok.appendChild(note);
+      wrap.appendChild(blok);
+    });
+
+    // Hele planen på én gang
+    var oversigt = el('section', { class: 'sp-felt sp-hele' }, [
+      el('h3', { class: 'sp-felt-titel', text: 'Hele planen på én gang' })
+    ]);
+    sum.forEach(function(g){
+      var total = g.v + g.m + g.h;
+      var bar = el('div', { class: 'sp-bar', 'aria-hidden': 'true' });
+      if(total){
+        [['v', g.v], ['m', g.m], ['h', g.h]].forEach(function(s){
+          if(s[1]) bar.appendChild(el('span', { class: 'sp-seg sp-seg-' + s[0], style: 'flex:' + s[1] + ' 1 0' }));
+        });
+      }
+      oversigt.appendChild(el('div', { class: 'sp-hele-raekke' }, [
+        el('div', { class: 'sp-hele-navn', text: (g.niveau ? g.niveau.nr + ' ' : '') + g.navn }),
+        bar,
+        el('div', { class: 'sp-hele-tal',
+          text: 'Kun ' + vOrd + ' ' + g.v + ' · Begge ' + g.m + ' · Kun ' + hOrd + ' ' + g.h })
+      ]));
+    });
+    oversigt.appendChild(el('div', { class: 'sp-bar-forklaring' }, [
+      el('span', { class: 'sp-seg sp-seg-v' }), el('span', { text: 'Kun ' + vOrd }),
+      el('span', { class: 'sp-seg sp-seg-m' }), el('span', { text: 'Begge er enige' }),
+      el('span', { class: 'sp-seg sp-seg-h' }), el('span', { text: 'Kun ' + hOrd })
+    ]));
+    wrap.appendChild(oversigt);
+    return wrap;
+  }
+
+  function printKurver(){
+    var wrap = el('div', { class: 'sp-kurver' });
+    var curve = kurveSkabelon();
+    if(S.tab !== 'laering' || !curve){
+      wrap.appendChild(el('p', { text: 'Kurver findes kun for læringsplaner.' }));
+      return wrap;
+    }
+    KURVE_SORT = true;
+    try{
+      tegnKurver(wrap, true);
+    }finally{
+      KURVE_SORT = false;
+    }
+    return wrap;
+  }
+
+  function byggPrintDokument(){
+    var visning = S.visning;
+    var visningNavn = visning === 'bunker' ? 'Tre bunker' : (visning === 'kurver' ? 'Kurver' : 'Tabel');
+
+    var tag = el('span', { class: 'print-beboer', text: S.navn });
+    if(U().erFarve(S.farve)) tag.style.background = S.farve;
+
+    var episode = null;
+    if(S.tab === 'laering' && S.gruppe){
+      episode = S.episoder.filter(function(e){ return e.group === S.gruppe; })[0] || null;
+    }
+    var titel = 'Sammenlign: ' + (PLAN_NAVN[S.tab] || '') + ' · ' + visningNavn;
+    if(episode && episode.titel) titel += ' · ' + episode.titel;
+
+    var hoved = el('header', { class: 'print-hoved' }, [
+      el('div', { class: 'print-eyebrow', text: 'Møllebakken · LA2 · Møde om indefra og udefra' }),
+      el('h1', { class: 'print-h1', text: titel }),
+      el('div', { class: 'print-id' }, [tag]),
+      el('div', { class: 'sp-sider' }, [
+        el('div', null, [el('strong', { text: 'Indefra: ' }), printSideTekst(S.leftValg, S.left)]),
+        el('div', null, [el('strong', { text: 'Udefra: ' }), printSideTekst(S.rightValg, S.right)])
+      ])
+    ]);
+
+    var krop = visning === 'bunker' ? printBunker() : (visning === 'kurver' ? printKurver() : printTabel());
+
+    var fod = el('div', { class: 'print-fod' }, [
+      el('div', null, [el('strong', { text: S.navn }), ' · ' + (PLAN_NAVN[S.tab] || '') + ' · ' + visningNavn]),
+      el('div', { text: 'Printet ' + datoTekst(new Date()) + ' af ' + S.ctx.name }),
+      el('div', { class: 'print-fortroligt', text: 'Fortroligt: indeholder personfølsomme oplysninger og noter fra mødet' })
+    ]);
+
+    var ramme = el('table', { class: 'print-ramme' }, [
+      el('tbody', null, [el('tr', null, [el('td', null, [hoved, krop])])]),
+      el('tfoot', null, [el('tr', null, [el('td', null, [fod])])])
+    ]);
+    return el('article', { class: 'print-dokument print-liggende sp-dok' }, [ramme]);
+  }
+
+  function printSammenligning(){
+    if(!noteOk() || !window.LA2Print) return;
+    gemAlt().then(function(){
+      if(!S) return;
+      window.LA2Print.openNode(byggPrintDokument(), true, null);
+    });
+  }
+
+  // ---------------------------------------------------------------
   // Siden
   // ---------------------------------------------------------------
 
@@ -1791,6 +2020,8 @@ window.LA2Sammenlign = (function(){
       ]),
       el('button', { type: 'button', class: 'knap knap-lys sam-moedeknap', text: 'Mødevisning',
         disabled: !noteOk(), onclick: function(ev){ aabnMoedevisning(ev.currentTarget); } }),
+      el('button', { type: 'button', class: 'knap knap-lys', text: 'Print',
+        disabled: !noteOk(), onclick: function(){ printSammenligning(); } }),
       S.tab !== 'laering' ? el('span', { class: 'sam-hjaelp', text: 'Kurver: kun for læringsplaner' }) : null
     ]));
 

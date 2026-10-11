@@ -249,13 +249,13 @@ window.LA2Print = (function(){
     if(cb) cb();
   }
 
-  function aabn(o, onClose){
+  // Fælles: viser et færdigbygget A4-dokument i printvisningen
+  function visDokument(dokument, liggende, onClose){
     var r = printRod();
     if(!r) return;
     luk();
     naarLukket = onClose || null;
 
-    var liggende = o.tpl.kind === 'laering';
     sideStil = document.createElement('style');
     sideStil.textContent = '@page{size:A4 ' + (liggende ? 'landscape' : 'portrait') + ';margin:12mm 12mm 10mm 12mm;}';
     document.head.appendChild(sideStil);
@@ -268,11 +268,21 @@ window.LA2Print = (function(){
 
     while(r.firstChild) r.removeChild(r.firstChild);
     r.appendChild(verktoej);
-    r.appendChild(byggDokument(o));
+    r.appendChild(dokument);
     aaben = true;
     document.body.classList.add('print-mode');
     window.scrollTo(0, 0);
   }
 
-  return { open: aabn, close: luk, isOpen: function(){ return aaben; } };
+  function aabn(o, onClose){
+    if(!printRod()) return;
+    visDokument(byggDokument(o), o.tpl.kind === 'laering', onClose);
+  }
+
+  // Et dokument bygget udenfor (fx Sammenlign)
+  function aabnDokument(node, liggende, onClose){
+    visDokument(node, !!liggende, onClose);
+  }
+
+  return { open: aabn, openNode: aabnDokument, close: luk, isOpen: function(){ return aaben; } };
 })();

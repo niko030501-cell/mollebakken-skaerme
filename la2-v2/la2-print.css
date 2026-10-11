@@ -245,3 +245,133 @@ body.print-mode .print-rod{ display:block; }
 
   a{ color:inherit; text-decoration:none; }
 }
+
+/* ==================================================================
+   Sammenlign (liggende A4). Sort på hvid: forskel på bunkerne ligger i
+   kantstil og tekst, ikke kun i farve.
+   ================================================================== */
+
+.sp-dok{ font-size:10pt; }
+.sp-dok *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+.sp-sider{ display:grid; grid-template-columns:1fr 1fr; gap:4mm; margin:0 0 5mm; font-size:10pt; }
+
+.sp-sektion{ font-size:8.5pt; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#333; }
+.sp-feltnavn{ margin-top:0.5mm; font-weight:800; }
+
+.sp-tom{
+  padding:1.5mm 2mm;
+  border:1pt dashed #000;
+  font-style:italic;
+  font-size:9pt;
+}
+
+.sp-liste{ margin:0; padding-left:5mm; }
+.sp-liste li{ margin-bottom:1mm; }
+
+/* ---------- Tabel ---------- */
+
+.sp-tabel{ width:100%; border-collapse:collapse; table-layout:fixed; }
+.sp-tabel th{
+  padding:2mm;
+  border:1.5pt solid #000;
+  background:#e6e6e6;
+  font-size:9pt;
+  text-align:left;
+  vertical-align:bottom;
+}
+.sp-tabel td{ padding:2mm; border:0.75pt solid #000; vertical-align:top; overflow-wrap:anywhere; }
+.sp-tabel tr{ break-inside:avoid; }
+.sp-tabel thead{ display:table-header-group; }
+
+.sp-markering{
+  display:inline-block;
+  margin-bottom:1mm;
+  padding:0.5mm 2mm;
+  border:1.5pt solid #000;
+  font-size:9pt;
+  font-weight:800;
+}
+
+.sp-note-tekst{ white-space:pre-wrap; overflow-wrap:anywhere; }
+.sp-note{ margin-top:2mm; }
+
+/* ---------- Tre bunker ---------- */
+
+.sp-felt{ margin:0 0 6mm; break-inside:avoid; }
+.sp-felt-titel{ margin:0 0 2mm; padding-bottom:1mm; border-bottom:1.5pt solid #000; font-size:12pt; font-weight:800; }
+.sp-felt-titel .sp-sektion{ font-size:9pt; }
+
+.sp-kolonner{ display:grid; grid-template-columns:1fr 1.15fr 1fr; gap:4mm; align-items:start; }
+
+.sp-kol{ padding:2mm; }
+.sp-kol-v{ border:0.75pt solid #000; }
+.sp-kol-m{ border:3pt double #000; }
+.sp-kol-h{ border:0.75pt dashed #000; }
+
+.sp-kol-titel{
+  display:flex;
+  justify-content:space-between;
+  gap:2mm;
+  margin-bottom:2mm;
+  font-size:10pt;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.sp-kol-m .sp-kol-titel::before{ content:'\2713\00a0'; }
+.sp-kol-antal{ font-weight:800; }
+
+.sp-kort{ margin-bottom:2mm; padding:1.5mm 2mm; background:#fff; break-inside:avoid; overflow-wrap:anywhere; }
+.sp-kort-v{ border:0.75pt solid #000; }
+.sp-kort-m{ border:2pt solid #000; background:#eee; }
+.sp-kort-h{ border:0.75pt dashed #000; }
+
+.sp-kort-fra, .sp-kort-label{
+  font-size:8pt;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.sp-hele-raekke{ display:grid; grid-template-columns:50mm 1fr 85mm; gap:3mm; align-items:center; margin-bottom:2mm; font-size:9pt; }
+.sp-hele-navn{ font-weight:800; }
+
+.sp-bar{ display:flex; height:5mm; border:1pt solid #000; }
+.sp-seg{ display:block; min-width:1mm; }
+.sp-seg-v{ background:#bdbdbd; }
+.sp-seg-m{ background:#000; }
+.sp-seg-h{ background:#fff; border-left:0.75pt solid #000; }
+.sp-bar > .sp-seg-v + .sp-seg-m, .sp-bar > .sp-seg-m + .sp-seg-h{ border-left:0.75pt solid #fff; }
+
+.sp-bar-forklaring{ display:flex; align-items:center; flex-wrap:wrap; gap:2mm 4mm; margin-top:3mm; font-size:9pt; }
+.sp-bar-forklaring .sp-seg{ width:8mm; height:4mm; border:1pt solid #000; }
+
+/* ---------- Kurver ---------- */
+
+.sp-kurver .sam-kurve-titel{ margin:0; font-size:13pt; }
+.sp-kurver .sam-kurve-hint{ margin:1mm 0 2mm; font-size:10pt; }
+.sp-kurver .sam-kurve-forklaring{ display:flex; flex-wrap:wrap; gap:2mm 6mm; margin:0 0 2mm; font-size:10pt; font-weight:700; }
+.sp-kurver .sam-tegn{ display:inline-flex; align-items:center; gap:2mm; }
+.sp-kurver .sam-kurve-graf{ max-width:190mm; padding:0; border:1pt solid #000; border-radius:0; background:#fff; }
+.sp-kurver .kurve-sam-svg{ width:100%; height:auto; }
+.sp-kurver .kurve-baand{ fill:#999; opacity:.35; }
+.sp-kurver .kurve-baand-stoerst{ opacity:.55; }
+.sp-kurver .kurve-episode, .sp-kurver .kurve-akse-episode, .sp-kurver .kurve-episode-tekst{ stroke:#000; }
+.sp-kurver .kurve-akse-episode, .sp-kurver .kurve-episode-tekst{ fill:#000; stroke:none; font-weight:800; }
+.sp-kurver .kurve-akse{ fill:#000; }
+.sp-kurver .kurve-gitter{ stroke:#999; }
+.sp-kurver .sam-kurve-resume{ margin:3mm 0; padding:2mm 3mm; border:1.5pt solid #000; border-left-width:5pt; font-size:10pt; }
+.sp-kurver .sam-kurve-stoerst-titel{ font-size:8.5pt; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+.sp-kurver .sam-kurve-kunen{ margin-top:1mm; font-size:9.5pt; }
+.sp-kurver .sam-kurve-tabel{ width:100%; border-collapse:collapse; font-size:9.5pt; }
+.sp-kurver .sam-kurve-tabel th, .sp-kurver .sam-kurve-tabel td{ padding:1mm 2mm; border:0.75pt solid #000; text-align:center; }
+.sp-kurver .sam-kurve-tabel tbody th{ text-align:left; }
+.sp-kurver .sam-kurve-tabel thead th{ background:#e6e6e6; }
+.sp-kurver .sam-kurve-tabel tr.sam-kurve-stor th, .sp-kurver .sam-kurve-tabel tr.sam-kurve-stor td{ background:#ddd; font-weight:800; }
+.sp-kurver .mv-note{ margin-top:3mm; padding:2mm 3mm; border:1.5pt solid #000; border-radius:0; background:#fff; }
+.sp-kurver .mv-note-label{ font-size:8.5pt; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#000; }
+.sp-kurver .mv-chip{ margin-top:1mm; padding:0.5mm 2mm; border:1.5pt solid #000; background:#fff; color:#000; font-size:9pt; border-radius:0; }
+.sp-kurver .mv-note-tekst{ margin:1mm 0 0; font-size:10pt; }
+.sp-kurver .tom-tilstand{ font-style:italic; }
