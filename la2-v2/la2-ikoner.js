@@ -17,6 +17,7 @@ window.LA2Ikoner = (function(){
     revision: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 'M12 7v5l3 2'],
     om: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 'M12 11v5', 'M12 8h.01'],
     plus: ['M12 5v14', 'M5 12h14'],
+    gruppe: ['M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6', 'M16 11a2.5 2.5 0 1 0 0-5', 'M18 14c1.7.5 3 2.5 3 5'],
     // Fase 1 · Forebyggelse: spire (to blade på en stilk)
     spire: [
       'M12 21v-9',

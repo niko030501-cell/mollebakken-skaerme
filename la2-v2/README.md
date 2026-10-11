@@ -44,6 +44,10 @@ Alle plantyper og spørgsmål ligger i **én fil**: `la2-v2/la2-templates.js`. R
   i de gemte svar. Ændres de, kan gamle svar ikke længere vises. Tilføj i stedet et nyt `id`.
 - Spørgsmål markeret `// TODO: tjek mod Sopras PDF` er første udkast. Ret dem til efter Sopras materiale.
 - Kurven (trivsels- og affektkurven) bruger skalaen **1 = roligt, 5 = meget slemt**. Høj værdi betyder slemt.
+- Kurven har **7 faste tidspunkter** (3 dage før · 2 dage før · Dagen før · Samme morgen · Episoden · Lige efter ·
+  Næste dag). Ældre kurver med 6 værdier vises ét tidspunkt forskudt, med første plads tom. Der opfindes aldrig værdier.
+- **Punkter i lister har et fast id** (`{ id, t }`). Det bruges til at genkende et punkt på tværs af versioner.
+  Ældre planer med ren tekst får id'erne `l0`, `l1`, … ved næste gem. Ret aldrig id'erne i hånden.
 
 ## Ret teksterne på "Om LA2" (`om-la2.js`)
 

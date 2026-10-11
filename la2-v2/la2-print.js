@@ -42,12 +42,15 @@ window.LA2Print = (function(){
 
   // v: streng, liste eller tom → udfyldt tekst eller linjer til håndskrift
   function svarBlok(v, antalLinjer){
-    if(Array.isArray(v) && v.length){
-      var ul = el('ul', { class: 'print-liste' });
-      v.forEach(function(x){ ul.appendChild(el('li', { text: x })); });
-      return ul;
-    }
-    if(typeof v === 'string' && v.trim()){
+    if(Array.isArray(v)){
+      // lister kan være tekster (ældre planer) eller { id, t }
+      var tekster = window.LA2Punkter.tekster(v);
+      if(tekster.length){
+        var ul = el('ul', { class: 'print-liste' });
+        tekster.forEach(function(x){ ul.appendChild(el('li', { text: x })); });
+        return ul;
+      }
+    }else if(typeof v === 'string' && v.trim()){
       return el('p', { class: 'print-tekst', text: v });
     }
     return skrivelinjer(antalLinjer || 3);
@@ -144,8 +147,9 @@ window.LA2Print = (function(){
     // Kurve
     var curve = tpl.curve;
     var vaerdier = [];
+    var gemtKurve = window.LA2Punkter.kurve7(content && content.curve, curve.points.length);
     curve.points.forEach(function(p, i){
-      var v = content && content.curve && content.curve[i];
+      var v = gemtKurve[i];
       vaerdier.push(typeof v === 'number' ? v : null);
     });
     var svg = window.LA2Plans.svgEl('svg', { viewBox: '0 0 600 240', class: 'print-kurve-svg', role: 'img', 'aria-label': curve.title });

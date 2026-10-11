@@ -142,6 +142,24 @@ window.LA2Data = (function(){
         .then(unwrap);
     },
 
+    // ---- Sammenlign: noter og markeringer (mødedata, ændrer aldrig planerne) ----
+    // Alle noter for et planpar (uanset version og rækkefølge)
+    compareNotes: function(planA, planB){
+      return client.from('la2_compare_notes')
+        .select('*')
+        .in('left_plan_id', [planA, planB])
+        .in('right_plan_id', [planA, planB])
+        .then(unwrap);
+    },
+
+    compareNoteInsert: function(fields){
+      return client.from('la2_compare_notes').insert(fields).select('*').then(unwrap);
+    },
+
+    compareNoteUpdate: function(id, fields){
+      return client.from('la2_compare_notes').update(fields).eq('id', id).select('*').then(unwrap);
+    },
+
     // ---- Feedet (samme som infoskærmen): metadata for AKTIVE planer ----
     screenFeed: function(){
       return client.rpc('la2_screen_feed').then(unwrap);

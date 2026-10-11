@@ -222,20 +222,23 @@ window.LA2Templates = (function(){
         }
       ],
 
-      // Trivsels- og affektkurve: 1-5 på hvert tidspunkt (6 tidspunkter)
+      // Trivsels- og affektkurve: 1-5 på hvert tidspunkt (7 faste tidspunkter)
       curve: {
         // TODO: tjek mod Sopras PDF (tidspunkter og skala er mit første udkast)
         title: 'Trivsels- og affektkurve',
         hint: 'Hvor slemt var det på hvert tidspunkt? 1 = roligt, 5 = meget slemt.',
         min: 1,
         max: 5,
+        // 7 faste tidspunkter (samme i begge perspektiver, så kurverne kan lægges oven i hinanden)
+        episodeIndex: 4,
         points: [
-          { id: 'p1', label: 'Dagene før',                  short: ['Dagene', 'før'] },
-          { id: 'p2', label: 'Dagen før',                   short: ['Dagen', 'før'] },
-          { id: 'p3', label: 'Lige før episoden',           short: ['Lige før', 'episoden'] },
-          { id: 'p4', label: 'Under episoden',              short: ['Under', 'episoden'] },
-          { id: 'p5', label: 'Lige efter episoden',         short: ['Lige efter', 'episoden'] },
-          { id: 'p6', label: 'Dagen efter',                 short: ['Dagen', 'efter'] }
+          { id: 'p1', label: '3 dage før',   short: ['3 dage', 'før'] },
+          { id: 'p2', label: '2 dage før',   short: ['2 dage', 'før'] },
+          { id: 'p3', label: 'Dagen før',    short: ['Dagen', 'før'] },
+          { id: 'p4', label: 'Samme morgen', short: ['Samme', 'morgen'] },
+          { id: 'p5', label: 'Episoden',     short: ['Episoden'] },
+          { id: 'p6', label: 'Lige efter',   short: ['Lige', 'efter'] },
+          { id: 'p7', label: 'Næste dag',    short: ['Næste', 'dag'] }
         ]
       }
     },

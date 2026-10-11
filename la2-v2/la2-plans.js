@@ -126,16 +126,20 @@ window.LA2Plans = (function(){
   }
 
   function listeFelt(label, vaerdi, readonly, skjulLabel){
-    var items = Array.isArray(vaerdi) ? vaerdi.slice()
-      : (typeof vaerdi === 'string' && vaerdi.trim() ? [vaerdi.trim()] : []);   // ældre planer gemte tekst
-    if(!items.length) items.push('');
+    var P = window.LA2Punkter;
+    // [{ id, t }] — ældre tekst får id'erne l0, l1, … (skrives ind ved næste gem)
+    var items = P.tilPunkter(vaerdi);
+    var brugte = {};
+    items.forEach(function(p){ brugte[p.id] = true; });
+    if(!items.length) items.push({ id: '', t: '' });
     var liste = el('div', { class: 'liste-rækker' });
     var wrap = el('div', { class: 'felt liste-felt' }, [el('span', { class: 'felt-label' + (skjulLabel ? ' sr-kun' : ''), text: label }), liste]);
 
-    function tilfoej(v){
+    function tilfoej(p){
       // Selvudvidende felt, så lange punkter ikke afkortes
       var inp = el('textarea', { rows: '1', maxlength: '500', 'aria-label': label, class: 'liste-punkt' });
-      inp.value = v || '';
+      inp.value = p.t || '';
+      inp.setAttribute('data-id', p.id || '');   // tomt = nyt punkt, får id når det gemmes
       if(readonly) inp.disabled = true;
       inp.addEventListener('input', function(){ autoHoejde(inp); });
       inp.addEventListener('keydown', function(ev){
@@ -148,7 +152,7 @@ window.LA2Plans = (function(){
           type: 'button', class: 'knap knap-sekundaer knap-lille', 'aria-label': 'Fjern punkt', text: '×',
           onclick: function(){
             liste.removeChild(raekke);
-            if(!liste.firstChild) tilfoej('');
+            if(!liste.firstChild) tilfoej({ id: '', t: '' });
             markDirty();
           }
         }));
@@ -159,16 +163,25 @@ window.LA2Plans = (function(){
     if(!readonly){
       wrap.appendChild(el('button', {
         type: 'button', class: 'knap knap-sekundaer', text: '+ Tilføj punkt',
-        onclick: function(){ tilfoej(''); markDirty(); }
+        onclick: function(){ tilfoej({ id: '', t: '' }); markDirty(); }
       }));
     }
     return {
       node: wrap,
+      // Returnerer [{ id, t }] for udfyldte punkter. Eksisterende punkter beholder
+      // deres id; nye får et nyt, som huskes på feltet.
       get: function(){
         var out = [];
-        liste.querySelectorAll('textarea').forEach(function(i){
-          var v = i.value.trim();
-          if(v) out.push(v);
+        liste.querySelectorAll('textarea').forEach(function(inp){
+          var v = inp.value.trim();
+          if(!v) return;
+          var id = inp.getAttribute('data-id');
+          if(!id){
+            id = P.nytId(brugte);
+            brugte[id] = true;
+            inp.setAttribute('data-id', id);
+          }
+          out.push({ id: id, t: v });
         });
         return out;
       }
@@ -343,7 +356,8 @@ window.LA2Plans = (function(){
     }
 
     // Tre labels under kurven
-    [['Dagene før', pl, 'start'], ['Episoden', W / 2, 'middle'], ['Efter', W - pr, 'end']].forEach(function(l){
+    var epi = typeof curve.episodeIndex === 'number' ? curve.episodeIndex : Math.floor((n - 1) / 2);
+    [[curve.points[0].label, pl, 'start'], ['Episoden', x(epi), 'middle'], [curve.points[n - 1].label, W - pr, 'end']].forEach(function(l){
       var tt = svgEl('text', { x: l[1], y: H - 10, 'text-anchor': l[2], 'font-size': 14, 'font-weight': 700, fill: '#5a6b66' });
       tt.textContent = l[0];
       svg.appendChild(tt);
@@ -352,8 +366,9 @@ window.LA2Plans = (function(){
 
   function byggKurve(curve, gemt, readonly){
     var vaerdier = [];
+    gemt = window.LA2Punkter.kurve7(gemt, curve.points.length);
     curve.points.forEach(function(p, i){
-      var v = gemt && gemt[i];
+      var v = gemt[i];
       vaerdier.push(typeof v === 'number' && v >= curve.min && v <= curve.max ? v : null);
     });
 
@@ -1211,6 +1226,8 @@ window.LA2Plans = (function(){
     svgEl: svgEl,
     tegnKurve: tegnKurve,
     renderTab: renderTab,
+    // Bruges af Sammenlign: "Opdatér plan →" åbner den fagprofessionelle plan
+    saetPerspektiv: function(v){ persp = (v === 'fag') ? 'fag' : 'borger'; },
     isDirty: function(){ return dirty; },
     clearDirty: function(){ dirty = false; }
   };

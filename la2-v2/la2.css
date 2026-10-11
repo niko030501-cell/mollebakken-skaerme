@@ -793,7 +793,7 @@ h1.side-titel{
 
 .kurve-valg{
   display:grid;
-  grid-template-columns:repeat(6, 1fr);
+  grid-template-columns:repeat(7, 1fr);
   gap:6px;
   margin-bottom:8px;
 }
@@ -1883,3 +1883,287 @@ details.boks summary{ cursor:pointer; font-weight:700; min-height:32px; }
   font-size:13px;
   color:var(--tekst-2);
 }
+
+/* ---------- Kurve med 7 tidspunkter på smalle skærme ----------
+   Ét tidspunkt pr. række med fem store knapper (1-5, min. 44 px). */
+
+@media (max-width:620px){
+  .kurve-valg{ grid-template-columns:1fr; gap:8px; }
+
+  .kurve-kolonne{
+    flex-direction:column;
+    align-items:stretch;
+    gap:4px;
+  }
+
+  .kurve-etiket{
+    order:-1;
+    margin:0;
+    text-align:left;
+    font-size:14px;
+    font-weight:700;
+    color:var(--blaek);
+  }
+
+  .kurve-knapper{ flex-direction:row-reverse; gap:6px; }
+  .kurve-knapper button{ flex:1; min-width:0; min-height:44px; }
+}
+
+/* ==================================================================
+   Sammenlign (Tabel)
+   ================================================================== */
+
+.sammenlign{ max-width:1280px; margin:0 auto; }
+
+.sam-top{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin:8px 0 18px;
+}
+
+.sam-top-tekst{ min-width:0; }
+
+.sam-label{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--label);
+}
+
+.sam-h1{ margin:4px 0 0; font-size:28px; font-weight:800; line-height:1.15; }
+@media (min-width:700px){ .sam-h1{ font-size:36px; } }
+
+.sam-visninger{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 14px; }
+.sam-visninger .segmenter{ margin:0; }
+.segment:disabled{ color:var(--tom); cursor:default; background:var(--la2-raekke); }
+.sam-hjaelp{ font-size:13px; color:var(--tekst-2); }
+
+/* ---------- Vælg hvad der sammenlignes ---------- */
+
+.sam-valgbjaelke{
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:0 0 16px;
+  padding:12px 14px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-radius:12px;
+}
+
+.sam-valg-felt{ margin:0; flex:1 1 220px; min-width:0; }
+.sam-valg-felt select{ width:100%; min-height:48px; padding:0 10px; border:1px solid var(--streg); border-radius:10px; background:#fff; }
+
+.sam-mod{
+  align-self:center;
+  padding-top:18px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--label);
+}
+
+.sam-afkryds{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:48px;
+  margin-left:auto;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.sam-afkryds input{ width:22px; height:22px; accent-color:var(--brand); }
+
+/* ---------- Tabellen ---------- */
+
+.sam-hoved{ display:none; }
+
+@media (min-width:900px){
+  .sam-hoved{
+    display:grid;
+    grid-template-columns:minmax(170px, 210px) minmax(0, 1fr) minmax(0, 1fr) minmax(220px, 300px);
+    gap:12px;
+    align-items:end;
+    padding:0 12px 8px;
+  }
+}
+
+.sam-hoved-felt{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  color:var(--label);
+}
+
+.sam-kol-hoved{ display:flex; align-items:center; gap:10px; min-height:44px; }
+.sam-kol-titel{ font-size:15px; font-weight:800; }
+.sam-kol-under{ font-size:12px; color:var(--tekst-2); }
+.sam-kol-moede .sam-kol-titel{ color:var(--fase-tryghed); }
+
+.sam-gruppeikon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:var(--brand);
+  color:#fff;
+}
+
+.sam-raekker{ display:flex; flex-direction:column; gap:10px; }
+
+.sam-raekke{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr);
+  gap:10px;
+  padding:12px;
+  border-radius:12px;
+  background:var(--la2-raekke);
+}
+
+@media (min-width:900px){
+  .sam-raekke{
+    grid-template-columns:minmax(170px, 210px) minmax(0, 1fr) minmax(0, 1fr) minmax(220px, 300px);
+    gap:12px;
+    align-items:start;
+  }
+}
+
+/* meget lys baggrund i niveauets eller fasens farve */
+.sam-raekke.niveau-groen{ background:var(--niveau-groen-lys); }
+.sam-raekke.niveau-gul{ background:var(--niveau-gul-lys); }
+.sam-raekke.niveau-roed{ background:var(--niveau-roed-lys); }
+.sam-raekke.fase-trivsel{ background:var(--fase-trivsel-lys); }
+.sam-raekke.fase-tryghed{ background:var(--fase-tryghed-lys); }
+.sam-raekke.fase-laering{ background:var(--fase-laering-lys); }
+
+.sam-felt{ display:flex; align-items:flex-start; gap:10px; }
+.sam-nr{ width:34px; height:34px; font-size:16px; }
+.sam-felt .fase-ikon{ background:#fff; }
+
+.sam-sektion{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--label);
+}
+
+.sam-feltnavn{ margin-top:2px; font-size:15px; font-weight:800; line-height:1.25; }
+
+.sam-celle-label{
+  margin-bottom:4px;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--label);
+}
+
+@media (min-width:900px){ .sam-celle-label{ display:none; } }
+
+.sam-side{ display:flex; flex-direction:column; gap:6px; }
+
+.sam-boble{
+  padding:10px 12px;
+  background:#fff;
+  border-radius:12px;
+  font-size:15px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+
+/* Tom side: stiplet guld-boks (det eneste systemet selv markerer) */
+.sam-tom{
+  padding:10px 12px;
+  border:2px dashed var(--guld);
+  border-radius:12px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--fase-tryghed);
+  background:rgba(255,255,255,.55);
+}
+
+.sam-moede{ min-width:0; }
+
+.sam-note{
+  width:100%;
+  min-height:64px;
+  padding:10px 12px;
+  border:1px solid var(--streg);
+  border-radius:12px;
+  background:#fff;
+  font-size:15px;
+  resize:vertical;
+}
+
+.sam-valg{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+
+.sam-markering{
+  min-height:44px;
+  padding:0 12px;
+  border:1px solid var(--streg);
+  border-radius:8px;
+  background:#fff;
+  color:var(--blaek);
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.sam-markering:disabled{ opacity:.5; cursor:default; }
+
+/* Valgt markering: nu-block */
+.sam-markering.valgt{ background:var(--blaek); border-color:var(--blaek); color:#fff; }
+
+.sam-fra{ margin-top:6px; font-size:12px; color:var(--tekst-2); font-style:italic; }
+
+/* ---------- Bund ---------- */
+
+.sam-bund{ margin-top:18px; }
+
+.sam-bund-raekke{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:14px 0;
+  border-top:1px solid var(--streg);
+}
+
+.sam-bund-tekst{ display:flex; flex-direction:column; gap:2px; font-size:14px; color:var(--tekst-2); }
+.sam-status{ font-size:13px; font-weight:700; color:var(--niveau-groen); min-height:18px; }
+.sam-status-fejl{ color:var(--niveau-roed-tekst); }
+.sam-bund-knapper{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.sam-besked{ margin:0 0 12px; }
+.sam-link{ color:var(--brand); font-weight:800; }
+
+/* Noter fra mødet i sidepanelet */
+.moede-post{ padding:8px 0; border-bottom:1px solid var(--streg-svag); }
+.moede-felt{ font-size:13px; font-weight:800; }
+.moede-note{ margin:4px 0 0; font-size:14px; white-space:pre-wrap; overflow-wrap:anywhere; }
+
+.moede-chip{
+  display:inline-block;
+  margin-top:4px;
+  padding:2px 8px;
+  border-radius:6px;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.moede-enige{ background:var(--niveau-groen-lys); color:var(--niveau-groen); }
+.moede-forskel{ background:var(--blaek); color:#fff; }
+.moede-spoergsmaal{ background:var(--niveau-gul-lys); color:var(--fase-tryghed); }

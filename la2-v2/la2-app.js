@@ -411,12 +411,22 @@
     if(window.LA2Print) window.LA2Print.close();
     var h = location.hash || '#/';
     var m = h.match(/^#\/beboer\/([0-9a-fA-F-]{36})(?:\/([a-z_]+))?(?:\/([0-9a-fA-F-]{36}|ny))?$/);
+    var sm = h.match(/^#\/beboer\/([0-9a-fA-F-]{36})\/([a-z_]+)(?:\/([0-9a-fA-F-]{36}))?\/sammenlign$/);
+    if(window.LA2Sammenlign) window.LA2Sammenlign.afslut();
     stopPoll();
     document.body.classList.remove('side-overblik');
+    // Mødenoter hører til beboeren; forlader man beboeren, glemmes de
+    if(window.LA2Sammenlign){
+      var aktivRid = (sm && sm[1]) || (m && m[1]) || null;
+      if(!aktivRid) window.LA2Sammenlign.nulstilMoede();
+    }
     // "+" i bundmenuen: direkte til beboeren, hvis man står på en beboerside
     var bmPlus = document.getElementById('bmPlus');
     if(bmPlus) bmPlus.setAttribute('href', m ? '#/beboer/' + m[1] + '/laering/ny' : '#/ny');
-    if(m){
+    if(sm && TABS.indexOf(sm[2]) !== -1){
+      saetAktivMenu('overblik');
+      startSide(window.LA2Sammenlign.vis(sideCtx(), sm[1], sm[2], sm[3] || null));
+    }else if(m){
       var tab = TABS.indexOf(m[2]) !== -1 ? m[2] : 'trivsel';
       saetAktivMenu('overblik');
       visBeboer(m[1], tab, m[3] || null);
@@ -522,6 +532,7 @@
       name: state.name,
       visIRod: visIRod,
       onSessionError: function(){ sessionFejl(); },
+      go: gaaTil,
       skiftNavn: function(){ topbarPille.click(); },
       logUd: function(){ document.getElementById('logUdKnap').click(); }
     };
@@ -668,6 +679,8 @@
 
     var printKnap = el('button', { type: 'button', class: 'knap knap-lys', text: 'Print', disabled: true });
     var historikKnap = el('button', { type: 'button', class: 'knap knap-lys', text: 'Historik', disabled: true });
+    var sammenlignHref = '#/beboer/' + rid + '/' + tab + (tab === 'laering' && groupId && groupId !== 'ny' ? '/' + groupId : '') + '/sammenlign';
+    var sammenlignKnap = el('a', { class: 'knap knap-lys', href: sammenlignHref, text: 'Sammenlign' });
     var nyKnap = el('a', { class: 'knap knap-guld', href: '#/beboer/' + rid + '/laering/ny', text: '+ Ny episode' });
     printKnap.addEventListener('click', function(){
       if(bs.handl && bs.handl.print) bs.handl.print();
@@ -687,7 +700,7 @@
         el('h1', { class: 'beboer-navn', text: navn }),
         metaLinje
       ]),
-      el('div', { class: 'beboer-handlinger' }, [printKnap, historikKnap, nyKnap])
+      el('div', { class: 'beboer-handlinger' }, [printKnap, historikKnap, sammenlignKnap, nyKnap])
     ]);
 
     // ---- Faseforløb ----
@@ -891,8 +904,36 @@
       return kort;
     }
 
+    // Noter fra et sammenligningsmøde ("Opdatér plan →"), kun mens beboeren er åben
+    var MARKERINGSTEKST = { enige: 'Enige', forskel: 'Forskel', spoergsmaal: 'Spørgsmål' };
+
+    function moedeKort(){
+      var mo = window.LA2Sammenlign ? window.LA2Sammenlign.moedeFor(rid, tab) : null;
+      if(!mo) return null;
+      var kort = el('section', { class: 'side-kort side-kort-moede' }, [kortHoved('Noter fra mødet')]);
+      if(mo.indefra){
+        kort.appendChild(el('div', { class: 'besked' }, [
+          el('span', { text: mo.indefra.tekst + ' ' }),
+          el('a', { class: 'sam-link', href: mo.indefra.href, text: mo.indefra.label })
+        ]));
+      }
+      if(!mo.poster.length){
+        kort.appendChild(el('p', { class: 'tom-tilstand', text: 'Ingen noter eller markeringer fra mødet.' }));
+      }
+      mo.poster.forEach(function(p){
+        kort.appendChild(el('div', { class: 'moede-post' }, [
+          el('div', { class: 'moede-felt', text: p.label }),
+          p.marking ? el('span', { class: 'moede-chip moede-' + p.marking, text: MARKERINGSTEKST[p.marking] || '' }) : null,
+          p.note ? el('p', { class: 'moede-note', text: p.note }) : null
+        ]));
+      });
+      return kort;
+    }
+
     function tegnSidepanel(){
       while(sidepanel.firstChild) sidepanel.removeChild(sidepanel.firstChild);
+      var mk = moedeKort();
+      if(mk) sidepanel.appendChild(mk);
       sidepanel.appendChild(laeringKort());
       sidepanel.appendChild(revisionKort());
       sidepanel.appendChild(historikKort());
