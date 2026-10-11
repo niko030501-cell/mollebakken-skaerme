@@ -561,6 +561,10 @@ window.LA2Sammenlign = (function(){
         poster.push({ label: r.sektion + ' · ' + r.felt, marking: n.marking, note: (n.note || '').trim() });
       }
     });
+    var kn = S.noter.kurve;
+    if(kn && (kn.marking || (kn.note || '').trim())){
+      poster.push({ label: 'Trivsels- og affektkurve', marking: kn.marking, note: (kn.note || '').trim() });
+    }
     return {
       rid: S.resident.resident_id,
       tab: S.tab,
@@ -1199,6 +1203,291 @@ window.LA2Sammenlign = (function(){
   }
 
   // ---------------------------------------------------------------
+  // Kurver: trivsels- og affektkurven fra to læringsplaner lagt oven på hinanden.
+  //
+  // Systemet måler kun tal: hvor kurverne ligger, og hvor mange trin der er
+  // mellem dem. Hvad en forskel betyder, afgør personalet på mødet.
+  // Skala: 1 = roligt, 5 = meget slemt (høj = slemt).
+  // ---------------------------------------------------------------
+
+  var KURVE_FORSKEL = 2;      // "Største forskel" vises fra og med så mange trin
+
+  function kurveSkabelon(){
+    var tpl = T.plans.laering;
+    return tpl && tpl.curve ? tpl.curve : null;
+  }
+
+  // 7 værdier (tal eller null) for en side
+  function kurveVaerdier(side, curve){
+    var gemt = P.kurve7(side && side.content && side.content.curve, curve.points.length);
+    return gemt.map(function(v){
+      return (typeof v === 'number' && v >= curve.min && v <= curve.max) ? v : null;
+    });
+  }
+
+  // Hvilken side er "indefra" (fuld streg, prikker) og hvilken "udefra" (stiplet, firkanter)
+  function kurveStil(){
+    var lp = S.leftValg ? planMedId(S.leftValg.planId) : null;
+    var rp = S.rightValg ? planMedId(S.rightValg.planId) : null;
+    var lFag = erFag(lp), rFag = erFag(rp);
+    if(lFag && !rFag) return { left: 'ude', right: 'inde' };
+    return { left: 'inde', right: 'ude' };
+  }
+
+  function kurveFarve(){
+    return U().erFarve(S.farve) ? S.farve : '#374151';
+  }
+
+  // Lille tegn til forklaringen
+  function kurveTegn(stil){
+    var s = svgNode('svg', { width: '44', height: '16', viewBox: '0 0 44 16', 'aria-hidden': 'true', focusable: 'false' });
+    if(stil === 'inde'){
+      s.appendChild(svgNode('line', { x1: '2', x2: '42', y1: '8', y2: '8', stroke: kurveFarve(), 'stroke-width': '4', 'stroke-linecap': 'round' }));
+      s.appendChild(svgNode('circle', { cx: '22', cy: '8', r: '6', fill: kurveFarve(), stroke: '#fff', 'stroke-width': '2' }));
+    }else if(stil === 'ude'){
+      s.appendChild(svgNode('line', { x1: '2', x2: '42', y1: '8', y2: '8', 'class': 'kurve-linje-ude', 'stroke-width': '4', 'stroke-dasharray': '8 5' }));
+      s.appendChild(svgNode('rect', { x: '15', y: '1', width: '14', height: '14', 'class': 'kurve-firkant', 'stroke-width': '2' }));
+    }else{
+      s.appendChild(svgNode('line', { x1: '22', x2: '22', y1: '0', y2: '16', 'class': 'kurve-episode', 'stroke-width': '3', 'stroke-dasharray': '4 3' }));
+    }
+    return s;
+  }
+
+  function kurveGraf(curve, vL, vR, stil, navnL, navnR){
+    var W = 720, H = 360, pl = 104, pr = 28, pt = 40, pb = 70;
+    var n = curve.points.length;
+    var lo = curve.min, hi = curve.max;
+    var svg = svgNode('svg', { viewBox: '0 0 ' + W + ' ' + H, 'class': 'kurve-sam-svg', role: 'img',
+      'aria-label': 'Kurver: ' + navnL + ' og ' + navnR + ' lagt oven på hinanden. Tallene står i tabellen under grafen.' });
+
+    function x(i){ return pl + i * (W - pl - pr) / (n - 1); }
+    function y(v){ return pt + (hi - v) * (H - pt - pb) / (hi - lo); }
+    function tekst(txt, attrs){
+      var t = svgNode('text', attrs);
+      t.textContent = txt;
+      return t;
+    }
+
+    // Vandrette hjælpelinjer med tal (1 roligt … 5 meget slemt)
+    for(var v = lo; v <= hi; v++){
+      svg.appendChild(svgNode('line', { x1: pl, x2: W - pr, y1: y(v), y2: y(v), 'class': 'kurve-gitter' }));
+      var lbl = String(v) + (v === lo ? ' roligt' : (v === hi ? ' meget slemt' : ''));
+      svg.appendChild(tekst(lbl, { x: pl - 10, y: y(v) + 5, 'text-anchor': 'end', 'class': 'kurve-akse' }));
+    }
+
+    // Tidspunkter med to linjer (som i planen)
+    var epi = typeof curve.episodeIndex === 'number' ? curve.episodeIndex : Math.floor((n - 1) / 2);
+    curve.points.forEach(function(p, i){
+      var linjer = p.short || [p.label];
+      linjer.forEach(function(l, k){
+        svg.appendChild(tekst(l, { x: x(i), y: H - pb + 28 + k * 17, 'text-anchor': 'middle',
+          'class': 'kurve-akse' + (i === epi ? ' kurve-akse-episode' : '') }));
+      });
+    });
+
+    // Forskelle på 2 trin eller mere: guldbånd bag kurverne
+    var stoerst = 0;
+    var forskelle = [];
+    for(var i = 0; i < n; i++){
+      if(vL[i] !== null && vR[i] !== null){
+        var f = Math.abs(vL[i] - vR[i]);
+        forskelle.push(f);
+        if(f > stoerst) stoerst = f;
+      }else{
+        forskelle.push(null);
+      }
+    }
+    forskelle.forEach(function(f, i){
+      if(f !== null && f >= KURVE_FORSKEL){
+        svg.appendChild(svgNode('rect', { x: x(i) - 26, y: pt - 14, width: 52, height: H - pt - pb + 28,
+          rx: 8, 'class': 'kurve-baand' + (f === stoerst ? ' kurve-baand-stoerst' : '') }));
+      }
+    });
+
+    // Rød stiplet streg ved Episoden
+    svg.appendChild(svgNode('line', { x1: x(epi), x2: x(epi), y1: pt - 18, y2: H - pb + 8,
+      'class': 'kurve-episode', 'stroke-width': 3, 'stroke-dasharray': '7 5' }));
+    svg.appendChild(tekst('Episoden', { x: x(epi), y: pt - 24, 'text-anchor': 'middle', 'class': 'kurve-episode-tekst' }));
+
+    // Serierne: forskudt et par pixel, så to ens værdier begge kan ses
+    function serie(vaerdier, st, forskyd){
+      var seg = [];
+      function flush(){
+        if(seg.length > 1){
+          var l = svgNode('polyline', {
+            points: seg.map(function(i){ return (x(i) + forskyd) + ',' + y(vaerdier[i]); }).join(' '),
+            fill: 'none', 'stroke-width': 4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+          });
+          if(st === 'inde'){ l.setAttribute('stroke', kurveFarve()); }
+          else{ l.setAttribute('class', 'kurve-linje-ude'); l.setAttribute('stroke-dasharray', '10 6'); l.setAttribute('stroke-linecap', 'butt'); }
+          svg.appendChild(l);
+        }
+        seg = [];
+      }
+      for(var i = 0; i < n; i++){
+        if(vaerdier[i] !== null) seg.push(i); else flush();
+      }
+      flush();
+      for(var j = 0; j < n; j++){
+        if(vaerdier[j] === null) continue;
+        var cx = x(j) + forskyd, cy = y(vaerdier[j]);
+        if(st === 'inde'){
+          svg.appendChild(svgNode('circle', { cx: cx, cy: cy, r: 8, fill: kurveFarve(), stroke: '#fff', 'stroke-width': 2 }));
+        }else{
+          svg.appendChild(svgNode('rect', { x: cx - 7, y: cy - 7, width: 14, height: 14, 'class': 'kurve-firkant', 'stroke-width': 2 }));
+        }
+      }
+    }
+    serie(vR, stil.right, stil.right === 'inde' ? -4 : 4);
+    serie(vL, stil.left, stil.left === 'inde' ? -4 : 4);
+
+    return { svg: svg, forskelle: forskelle, stoerst: stoerst };
+  }
+
+  // Note + markering til kurven (row_key = 'kurve', samme som i Tabel)
+  function kurveNote(){
+    var n = noteFor('kurve');
+    var fraDetaljer = el('div', { class: 'sam-fra', text: n.fra ? 'Fra et tidligere møde (' + n.fra + ')' : '', hidden: !n.fra });
+    var ta = el('textarea', {
+      rows: '3', maxlength: '4000', class: 'sam-note',
+      'aria-label': 'Note til kurverne',
+      placeholder: 'Hvad ser I, når I kigger på kurverne sammen?'
+    });
+    ta.value = n.note || '';
+    ta.addEventListener('input', function(){
+      n.note = ta.value;
+      if(n.fra){ n.id = null; n.fra = null; fraDetaljer.hidden = true; }
+      S.dirty.kurve = true;
+      planlaeg();
+    });
+
+    var knapper = el('div', { class: 'sam-valg', role: 'group', 'aria-label': 'Markering' });
+    MARKERINGER.forEach(function(m){
+      var b = el('button', {
+        type: 'button',
+        class: 'sam-markering' + (n.marking === m.id ? ' valgt' : ''),
+        'aria-pressed': n.marking === m.id ? 'true' : 'false',
+        text: m.label
+      });
+      b.addEventListener('click', function(){
+        if(n.fra){ n.id = null; n.fra = null; fraDetaljer.hidden = true; }
+        n.marking = (n.marking === m.id) ? null : m.id;
+        S.dirty.kurve = true;
+        knapper.querySelectorAll('button').forEach(function(x, i){
+          var valgt = n.marking === MARKERINGER[i].id;
+          x.className = 'sam-markering' + (valgt ? ' valgt' : '');
+          x.setAttribute('aria-pressed', valgt ? 'true' : 'false');
+        });
+        planlaeg();
+      });
+      knapper.appendChild(b);
+    });
+
+    return el('div', { class: 'sam-kurve-note' }, [
+      el('div', { class: 'sam-celle-label sam-kurve-label', text: 'Refleksion og spørgsmål' }),
+      ta, knapper, fraDetaljer
+    ]);
+  }
+
+  function tegnKurver(maal){
+    tom(maal);
+    var curve = kurveSkabelon();
+    if(S.tab !== 'laering' || !curve){
+      maal.appendChild(el('p', { class: 'tom-tilstand', text: 'Kurver findes kun for læringsplaner.' }));
+      return;
+    }
+    if(!S.left || !S.right){
+      maal.appendChild(el('p', { class: 'tom-tilstand',
+        text: 'Kurver kræver to planer at sammenligne. Vælg en plan i begge felter ovenfor.' }));
+      return;
+    }
+
+    var vL = kurveVaerdier(S.left, curve);
+    var vR = kurveVaerdier(S.right, curve);
+    var stil = kurveStil();
+    var navnL = sideNavn(S.leftValg) || 'venstre';
+    var navnR = sideNavn(S.rightValg) || 'højre';
+    var tekstL = navnL + (stil.left === 'inde' ? ' (indefra)' : ' (udefra)');
+    var tekstR = navnR + (stil.right === 'inde' ? ' (indefra)' : ' (udefra)');
+
+    var harNogen = vL.concat(vR).some(function(v){ return v !== null; });
+
+    // Titel + forklaring
+    maal.appendChild(el('div', { class: 'sam-kurve-hoved' }, [
+      el('h2', { class: 'sam-kurve-titel', text: curve.title }),
+      el('p', { class: 'sam-kurve-hint', text: curve.hint })
+    ]));
+
+    var forklaring = el('div', { class: 'sam-kurve-forklaring' });
+    [[stil.left, tekstL], [stil.right, tekstR], ['episode', 'Episoden']].forEach(function(f){
+      forklaring.appendChild(el('span', { class: 'sam-tegn' }, [kurveTegn(f[0]), el('span', { text: f[1] })]));
+    });
+    maal.appendChild(forklaring);
+
+    if(!harNogen){
+      maal.appendChild(el('p', { class: 'tom-tilstand',
+        text: 'Ingen af de to planer har udfyldt kurven endnu.' }));
+      maal.appendChild(kurveNote());
+      return;
+    }
+
+    var graf = kurveGraf(curve, vL, vR, stil, navnL, navnR);
+    maal.appendChild(el('div', { class: 'sam-kurve-graf' }, [graf.svg]));
+
+    // Det systemet kan måle: forskel i trin og tomme tidspunkter
+    var resume = el('div', { class: 'sam-kurve-resume' });
+    if(graf.stoerst >= KURVE_FORSKEL){
+      var stoerste = [];
+      graf.forskelle.forEach(function(f, i){ if(f === graf.stoerst) stoerste.push(i); });
+      resume.appendChild(el('div', { class: 'sam-kurve-stoerst-titel', text: 'Største forskel' }));
+      stoerste.forEach(function(i){
+        resume.appendChild(el('div', { class: 'sam-kurve-stoerst' }, [
+          el('strong', { text: curve.points[i].label + ': ' + graf.stoerst + ' trin' }),
+          el('span', { text: ' · ' + navnL + ' ' + vL[i] + ', ' + navnR + ' ' + vR[i] })
+        ]));
+      });
+    }else{
+      resume.appendChild(el('div', { class: 'sam-kurve-stoerst-ingen',
+        text: 'Ingen tidspunkter, hvor kurverne ligger ' + KURVE_FORSKEL + ' trin eller mere fra hinanden.' }));
+    }
+
+    var kunEn = [];
+    curve.points.forEach(function(p, i){
+      if((vL[i] === null) !== (vR[i] === null)){
+        kunEn.push(p.label + ' (kun ' + (vL[i] !== null ? navnL : navnR) + ')');
+      }
+    });
+    if(kunEn.length){
+      resume.appendChild(el('div', { class: 'sam-kurve-kunen', text: 'Kun udfyldt på den ene side: ' + kunEn.join(', ') + '.' }));
+    }
+    maal.appendChild(resume);
+
+    // Tallene som tabel (kan læses uden farver og på telefon)
+    var tabel = el('table', { class: 'sam-kurve-tabel' });
+    tabel.appendChild(el('thead', null, [el('tr', null, [
+      el('th', { scope: 'col', text: 'Tidspunkt' }),
+      el('th', { scope: 'col', text: tekstL }),
+      el('th', { scope: 'col', text: tekstR }),
+      el('th', { scope: 'col', text: 'Forskel' })
+    ])]));
+    var tb = el('tbody');
+    curve.points.forEach(function(p, i){
+      var f = graf.forskelle[i];
+      var stor = f !== null && f >= KURVE_FORSKEL;
+      tb.appendChild(el('tr', { class: stor ? 'sam-kurve-stor' : null }, [
+        el('th', { scope: 'row', text: p.label }),
+        el('td', { text: vL[i] !== null ? String(vL[i]) : '–' }),
+        el('td', { text: vR[i] !== null ? String(vR[i]) : '–' }),
+        el('td', { text: f !== null ? String(f) : '–' })
+      ]));
+    });
+    tabel.appendChild(tb);
+    maal.appendChild(el('div', { class: 'sam-kurve-tabel-wrap' }, [tabel]));
+
+    maal.appendChild(kurveNote());
+  }
+
+  // ---------------------------------------------------------------
   // Siden
   // ---------------------------------------------------------------
 
@@ -1206,6 +1495,7 @@ window.LA2Sammenlign = (function(){
     var maal = S.rod.querySelector('.sam-indhold');
     if(!maal) return;
     if(S.visning === 'bunker') tegnBunker(maal);
+    else if(S.visning === 'kurver') tegnKurver(maal);
     else tegnTabel(maal);
   }
 
@@ -1222,7 +1512,7 @@ window.LA2Sammenlign = (function(){
     var rod = S.rod;
     tom(rod);
     var tpl = T.plans[S.tab];
-    var visningNavn = S.visning === 'bunker' ? 'Tre bunker' : 'Tabel';
+    var visningNavn = S.visning === 'bunker' ? 'Tre bunker' : (S.visning === 'kurver' ? 'Kurver' : 'Tabel');
 
     // Top
     rod.appendChild(el('a', { class: 'tilbage', href: planHref(false), text: '← ' + genitiv(S.navn) + ' planer' }));
@@ -1243,8 +1533,11 @@ window.LA2Sammenlign = (function(){
         el('button', { type: 'button', class: 'segment' + (S.visning === 'bunker' ? ' aktiv' : ''),
           'aria-pressed': S.visning === 'bunker' ? 'true' : 'false', text: 'Tre bunker',
           onclick: function(){ skiftVisning('bunker'); } }),
-        el('button', { type: 'button', class: 'segment', disabled: true,
-          text: 'Kurver', title: S.tab === 'laering' ? 'Kommer i en senere del' : 'Kun for læringsplaner' })
+        el('button', { type: 'button', class: 'segment' + (S.visning === 'kurver' ? ' aktiv' : ''),
+          'aria-pressed': S.visning === 'kurver' ? 'true' : 'false', text: 'Kurver',
+          disabled: S.tab !== 'laering',
+          title: S.tab === 'laering' ? null : 'Kun for læringsplaner',
+          onclick: function(){ skiftVisning('kurver'); } })
       ]),
       S.tab !== 'laering' ? el('span', { class: 'sam-hjaelp', text: 'Kurver: kun for læringsplaner' }) : null
     ]));
@@ -1331,7 +1624,7 @@ window.LA2Sammenlign = (function(){
     bjaelke.appendChild(el('span', { class: 'sam-mod', 'aria-hidden': 'true', text: 'mod' }));
     bjaelke.appendChild(lavSelect('Højre', 'right'));
 
-    if(S.visning === 'bunker') return bjaelke;
+    if(S.visning !== 'tabel') return bjaelke;
 
     var cb = el('input', { type: 'checkbox', id: 'samKunForskelle' });
     cb.checked = !!S.kunForskelle;

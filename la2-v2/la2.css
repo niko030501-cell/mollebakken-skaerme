@@ -2429,3 +2429,83 @@ details.boks summary{ cursor:pointer; font-weight:700; min-height:32px; }
 .sam-tegn .sam-seg{ width:22px; height:14px; border:1px solid var(--blaek); border-radius:3px; }
 
 @media print{ .sam-spoegelse{ display:none; } }
+
+/* ==================================================================
+   Sammenlign (Kurver)
+   ================================================================== */
+
+.sam-kurve-hoved{ margin:0 0 10px; }
+.sam-kurve-titel{ margin:0; font-size:20px; font-weight:800; }
+.sam-kurve-hint{ margin:4px 0 0; font-size:14px; color:var(--tekst-2); }
+
+.sam-kurve-forklaring{ display:flex; flex-wrap:wrap; gap:8px 20px; margin:0 0 12px; font-size:14px; font-weight:700; }
+
+.sam-kurve-graf{
+  padding:8px;
+  background:#fff;
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.kurve-sam-svg{ display:block; width:100%; height:auto; }
+
+.kurve-gitter{ stroke:#d9dde2; stroke-width:1; }
+.kurve-akse{ font-size:14px; font-weight:700; fill:var(--tekst-2); }
+.kurve-akse-episode{ fill:var(--niveau-roed); }
+.kurve-episode{ stroke:var(--niveau-roed); }
+.kurve-episode-tekst{ font-size:14px; font-weight:800; fill:var(--niveau-roed); }
+.kurve-linje-ude{ stroke:var(--blaek); }
+.kurve-firkant{ fill:var(--blaek); stroke:#fff; }
+.kurve-baand{ fill:var(--guld); opacity:.18; }
+.kurve-baand-stoerst{ opacity:.38; }
+
+@media (max-width:620px){
+  .kurve-akse{ font-size:17px; }
+}
+
+/* ---------- Resumé og tabel ---------- */
+
+.sam-kurve-resume{
+  margin:12px 0;
+  padding:12px 14px;
+  background:var(--la2-kort);
+  border:1px solid var(--streg-svag);
+  border-left:6px solid var(--guld);
+  border-radius:12px;
+  font-size:15px;
+}
+
+.sam-kurve-stoerst-titel{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--label);
+}
+
+.sam-kurve-stoerst{ margin-top:4px; }
+.sam-kurve-kunen{ margin-top:8px; font-size:13px; color:var(--tekst-2); }
+.sam-kurve-stoerst-ingen{ color:var(--tekst-2); }
+
+.sam-kurve-tabel-wrap{ overflow-x:auto; margin:0 0 14px; }
+
+.sam-kurve-tabel{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border:1px solid var(--streg-svag);
+  font-size:14px;
+}
+
+.sam-kurve-tabel th, .sam-kurve-tabel td{
+  padding:8px 10px;
+  border-bottom:1px solid var(--streg-svag);
+  text-align:center;
+}
+
+.sam-kurve-tabel thead th{ font-size:12px; font-weight:800; background:var(--la2-kort); }
+.sam-kurve-tabel tbody th{ text-align:left; font-weight:700; }
+.sam-kurve-tabel tr.sam-kurve-stor td, .sam-kurve-tabel tr.sam-kurve-stor th{ background:var(--niveau-gul-lys); font-weight:800; }
+
+.sam-kurve-note{ max-width:720px; }
+.sam-kurve-label{ display:block; }
