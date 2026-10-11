@@ -580,6 +580,20 @@ window.LA2Plans = (function(){
       rad.appendChild(gemKnap);
       rad.appendChild(udkastKnap);
     }
+    var skjulEditor = function(){ mål.hidden = false; };
+    rad.appendChild(el('button', { type: 'button', class: 'knap knap-sekundaer', text: 'Print', onclick: function(){
+      var ugemt = dirty;
+      var udskriv = function(nr){
+        mål.hidden = true;   // editoren bevares, så ugemte ændringer ikke går tabt
+        printPlan(ctx, {
+          tpl: tpl, row: row, content: form.get(), fw: fwInp.value.trim(),
+          titel: titelInp ? titelInp.value.trim() : '', dato: datoInp ? datoInp.value : '',
+          versionNr: nr, ugemt: ugemt && !!row, onClose: skjulEditor
+        });
+      };
+      if(row) seneste(row.id).then(udskriv, function(){ udskriv(null); });
+      else udskriv(null);
+    } }));
     if(row){
       rad.appendChild(el('button', { type: 'button', class: 'knap knap-sekundaer', text: 'Historik', onclick: function(){
         if(dirty && !window.confirm('Du har ændringer, der ikke er gemt. Vil du forlade planen?')) return;
@@ -699,7 +713,15 @@ window.LA2Plans = (function(){
             status.hidden = false;
           });
         } });
-        mål.appendChild(el('div', { class: 'handlinger' }, [gendan]));
+        var printVersion = el('button', { type: 'button', class: 'knap knap-sekundaer', text: 'Print denne version', onclick: function(){
+          mål.hidden = true;
+          printPlan(ctx, {
+            tpl: tpl, row: row, content: v.content, fw: v.filled_with || '',
+            titel: v.title || '', dato: row.episode_date || '', versionNr: v.version_no, ugemt: false,
+            onClose: function(){ mål.hidden = false; }
+          });
+        } });
+        mål.appendChild(el('div', { class: 'handlinger' }, [gendan, printVersion]));
         mål.appendChild(kildeFod());
       }).catch(function(e){
         kast(e, ctx);
@@ -983,6 +1005,45 @@ window.LA2Plans = (function(){
   }
 
   // ---------------------------------------------------------------
+  // Udskrift (selve visningen ligger i la2-print.js)
+  // ---------------------------------------------------------------
+
+  function printPlan(ctx, o){
+    // o: tpl, row, content, fw, onClose, titel, dato, versionNr
+    var res = ctx.resident;
+    var row = o.row;
+    var erFag = row ? row.perspective === 'fagprofessionel' : persp === 'fag';
+    var statusTekst = '';
+    if(row){
+      statusTekst = row.status === 'aktiv' ? (row.draft_content ? 'Aktiv · udkast i gang' : 'Aktiv') :
+        (row.status === 'udkast' ? 'Udkast' : 'Arkiveret');
+    }else{
+      statusTekst = 'Ikke gemt endnu';
+    }
+    var versionTekst = o.versionNr ? 'Version ' + o.versionNr : 'Ikke gemt endnu';
+    if(o.ugemt) versionTekst += ' (med ugemte ændringer)';
+
+    window.LA2Print.open({
+      tpl: o.tpl,
+      key: erFag ? 'fag' : textKey(res.variant, 'borger'),
+      content: o.content,
+      residentName: res.beboere ? res.beboere.navn : 'Ukendt',
+      residentColor: res.beboere ? res.beboere.farve : '',
+      perspektivLabel: erFag ? 'Fagprofessionel' : borgerLabel(res.variant),
+      statusTekst: statusTekst,
+      filledWith: o.fw,
+      episodeTitle: o.titel,
+      episodeDate: o.dato,
+      versionTekst: versionTekst,
+      userName: ctx.name
+    }, o.onClose);
+  }
+
+  function seneste(rowId){
+    return D.versions(rowId).then(function(vs){ return vs.length ? vs[0].version_no : null; });
+  }
+
+  // ---------------------------------------------------------------
   // Indgang
   // ---------------------------------------------------------------
 
@@ -997,6 +1058,8 @@ window.LA2Plans = (function(){
   }
 
   return {
+    svgEl: svgEl,
+    tegnKurve: tegnKurve,
     renderTab: renderTab,
     isDirty: function(){ return dirty; },
     clearDirty: function(){ dirty = false; }

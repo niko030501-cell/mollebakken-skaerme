@@ -177,6 +177,7 @@
 
   function logUd(besked){
     stopPoll();
+    if(window.LA2Print) window.LA2Print.close();
     if(window.LA2Plans) window.LA2Plans.clearDirty();
     state.name = '';
     state.residents = null;
@@ -355,6 +356,7 @@
 
   function route(){
     if(!state.name) return;
+    if(window.LA2Print) window.LA2Print.close();
     var h = location.hash || '#/';
     var m = h.match(/^#\/beboer\/([0-9a-fA-F-]{36})(?:\/([a-z_]+))?(?:\/([0-9a-fA-F-]{36}))?$/);
     stopPoll();
