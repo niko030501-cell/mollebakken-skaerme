@@ -9,6 +9,7 @@
   <script src="../shared/auto-reload.js"></script>
   <link rel="stylesheet" href="../shared/tokens.css">
   <link rel="stylesheet" href="dagens-besked.css">
+  <link rel="stylesheet" href="la2-fane.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -398,6 +399,7 @@
     <button id="btnBeskeder" class="aktiv" onclick="visSide('beskeder')">Beskeder</button>
     <button id="btnUgeplaner" onclick="visSide('ugeplaner')">Dagsplan</button>
     <button id="btnPmoede" onclick="visSide('pmoede')" style="display:none;">P-møde</button>
+    <button id="btnLa2" onclick="visSide('la2')" style="display:none;">LA2</button>
   </nav>
 
   <div id="topHøjreInfo">
@@ -473,6 +475,15 @@
   <div id="pmoedeSideIndikator" class="pmoedeSideIndikator"></div>
 </div>
 
+<!-- ==================== LA2 ==================== -->
+
+<div id="la2" class="side">
+  <div class="stor-overskrift">LA2</div>
+  <div id="la2Indhold">
+    <div class="la2Besked"><div class="la2BeskedTekst">LA2 kræver login – kontakt Nikolaj</div></div>
+  </div>
+</div>
+
 </main>
 
 <div id="filFejlBoks" role="alert" hidden></div>
@@ -515,7 +526,8 @@ const knapIdPerSide = {
   ugeplaner:    'btnUgeplaner',
   afkrydsning:  'btnAfkrydsning',
   overlap:      'btnOverlap',
-  pmoede:       'btnPmoede'
+  pmoede:       'btnPmoede',
+  la2:          'btnLa2'
 };
 
 const UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
@@ -546,6 +558,7 @@ function visSide(side){
     pmoedeSideStart = Date.now();
     visPmoedeSide();
   }
+  if(side === 'la2' && window.LA2Fane) window.LA2Fane.vis();
   if(side === 'afkrydsning') hentAfkrydsningsskema();
   if(side === 'overlap') hentOverlap();
 }
@@ -1354,6 +1367,7 @@ async function hentSkaermIndstillinger(){
   // når der intet er at vise, så den uovervågede skærm ikke "farer forbi"
   // en tom side.
   document.getElementById('btnPmoede').style.display = data.some(r => r.noegle === 'pmoede') ? '' : 'none';
+  document.getElementById('btnLa2').style.display = data.some(r => r.noegle === 'la2') ? '' : 'none';
 
   let sider = data
     .map(r => r.noegle)
@@ -1553,6 +1567,7 @@ if(sb){
 </script>
 
 <!-- Dagens besked kl. 09:02 (liste + effekt) — selvstændige filer, rører ikke scriptet ovenfor -->
+<script src="la2-fane.js"></script>
 <script src="dagens-besked.js"></script>
 <script src="dagens-besked-effekt.js"></script>
 

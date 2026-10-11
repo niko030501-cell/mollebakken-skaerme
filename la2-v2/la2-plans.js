@@ -600,9 +600,14 @@ window.LA2Plans = (function(){
         dirty = false;
         o.onHistory(row);
       } }));
-      if(!arkiveret && row.status !== 'udkast'){
+      if(!arkiveret){
         rad.appendChild(el('button', { type: 'button', class: 'knap knap-sekundaer', text: 'Arkivér', onclick: function(){
-          if(!window.confirm('Arkivér planen? Den kan gendannes fra Historik.')) return;
+          var spoerg = row.status === 'udkast'
+            ? 'Arkivér udkastet? Det kan gendannes fra Historik.'
+            : 'Arkivér planen? Den kan gendannes fra Historik.';
+          if(dirty) spoerg += ' Ændringer, du ikke har gemt, går tabt.';
+          if(!window.confirm(spoerg)) return;
+          dirty = false;
           laas(true);
           o.onArchive(row).catch(function(e){
             kast(e, ctx);

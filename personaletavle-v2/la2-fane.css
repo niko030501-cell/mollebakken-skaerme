@@ -1,0 +1,183 @@
+/* ==================================================================
+   LA2-fane på infoskærmen. Lyst "Tavle"-tema, nu-block som markering.
+   Bygger på ../shared/tokens.css. Trykflader min. 48 px, så fanen
+   også virker med touch og mus.
+   ================================================================== */
+
+#la2{ padding:20px; }
+
+#la2Indhold{
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+
+.la2Kolonner{
+  flex:1;
+  min-height:0;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:32px;
+}
+
+.la2Kolonne{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+}
+
+.la2Overskrift{
+  font-family:'Archivo', sans-serif;
+  font-size:20px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--blaek);
+  padding-bottom:10px;
+  margin-bottom:10px;
+  border-bottom:2px solid var(--blaek);
+}
+
+.la2Liste{
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+
+.la2Punkt{
+  border-bottom:1px solid var(--streg-svag);
+}
+
+.la2Punkt[hidden]{ display:none; }
+
+.la2Linje{
+  display:block;
+  width:100%;
+  min-height:56px;
+  padding:10px 12px;
+  margin:0;
+  border:none;
+  border-radius:4px;
+  background:transparent;
+  color:var(--blaek);
+  font-family:'Archivo', sans-serif;
+  font-size:24px;
+  font-weight:600;
+  line-height:1.3;
+  text-align:left;
+  cursor:pointer;
+}
+
+.la2Linje:focus-visible{ outline:3px solid var(--brand); outline-offset:-3px; }
+
+/* Nu-block: omvendt kontrast = "se her" (hændelser <24 t, overskredne frister) */
+.la2Linje.la2Nu{
+  background:var(--blaek);
+  color:#fff;
+  font-weight:700;
+}
+
+.la2Tag{
+  display:inline-block;
+  padding:2px 9px;
+  border-radius:3px;
+  background:#374151;
+  color:#fff;
+  font-size:.8em;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  vertical-align:.05em;
+}
+
+.la2Detalje{
+  padding:6px 12px 12px;
+  font-size:18px;
+  color:var(--tekst-2);
+}
+
+.la2Pager{
+  flex-shrink:0;
+  min-height:48px;
+  margin-top:8px;
+  border:none;
+  border-radius:4px;
+  background:var(--flade);
+  color:var(--tekst-2);
+  font-family:'Archivo', sans-serif;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.la2Pager[hidden]{ display:none; }
+
+.la2Rolig{
+  padding:12px;
+  font-size:24px;
+  font-weight:600;
+  color:var(--tom);
+}
+
+/* Rolig fuldskærmsbesked (ikke logget ind / ingen forbindelse) */
+.la2Besked{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  text-align:center;
+}
+
+.la2BeskedTekst{
+  font-family:'Archivo', sans-serif;
+  font-size:30px;
+  font-weight:700;
+  color:var(--tekst-2);
+}
+
+.la2Knap{
+  min-height:48px;
+  padding:0 20px;
+  border:none;
+  border-radius:4px;
+  background:var(--brand);
+  color:#fff;
+  font-family:'Archivo', sans-serif;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.la2KnapSvag{ background:var(--flade); color:var(--tekst-2); }
+
+.la2Login{
+  align-self:center;
+  margin:auto;
+  width:min(520px, 100%);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.la2LoginTitel{ font-size:22px; font-weight:800; }
+
+.la2Login label{ display:flex; flex-direction:column; gap:4px; font-size:14px; font-weight:700; color:var(--label); }
+
+.la2Login input{
+  min-height:48px;
+  padding:0 12px;
+  border:1px solid var(--streg);
+  border-radius:4px;
+  font-family:'Archivo', sans-serif;
+  font-size:20px;
+}
+
+.la2LoginFejl{ color:var(--kritisk); font-weight:700; }
+
+@media (max-width:900px){
+  .la2Kolonner{ grid-template-columns:1fr; gap:20px; }
+}
