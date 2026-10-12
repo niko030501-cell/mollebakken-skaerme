@@ -29,6 +29,7 @@
     tryghed: 'Tryghedsplanen',
     laering: 'Læringsplanen',
     mestring: 'Mestringsplanen',
+    trivselsoeer: 'Trivselsøerne',
     haab_droem: 'Håb og drømme-planen'
   };
 
@@ -174,6 +175,13 @@
   // Afledte lister
   // ---------------------------------------------------------------
 
+  // TIP-planer (perspektivet 'din') hedder "TIP-tryghedsplanen" osv.
+  function planTekst(r){
+    var navn = PLAN_NAVN[r.plan_type] || 'Planen';
+    if(r.perspective === 'din') return 'TIP-' + navn.charAt(0).toLowerCase() + navn.slice(1);
+    return navn;
+  }
+
   function aktivTid(r){
     return new Date(r.last_active_at || r.updated_at);
   }
@@ -189,7 +197,7 @@
       // andre planer pr. beboer og plantype
       var nøgle = r.plan_type === 'laering' && r.episode_group_id
         ? 'e:' + r.episode_group_id
-        : 'p:' + r.resident_name + ':' + r.plan_type;
+        : 'p:' + r.resident_name + ':' + r.plan_type + ':' + (r.perspective === 'din' ? 'din' : 'andet');
       var g = grupper[nøgle];
       if(!g || tid > g.tid){
         grupper[nøgle] = { r: r, tid: tid, ny: false };
@@ -211,10 +219,10 @@
         før = 'Ny læringsplan for';
         efter = '(' + relativ(g.tid, nu) + ')';
       }else if(min < 60){
-        før = (PLAN_NAVN[r.plan_type] || 'Planen') + ' for';
+        før = planTekst(r) + ' for';
         efter = 'er lige blevet opdateret';
       }else{
-        før = (PLAN_NAVN[r.plan_type] || 'Planen') + ' for';
+        før = planTekst(r) + ' for';
         var af = r.last_active_by ? ' af ' + r.last_active_by : '';
         efter = (g.ny ? 'er oprettet' : 'er opdateret') + af + ' (' + relativ(g.tid, nu) + ')';
       }
@@ -234,7 +242,7 @@
       if(r.plan_type === 'laering' || !r.review_due) return;   // læringsplaner revideres ikke
       var dage = dageMellem(i_dag, lokalDato(r.review_due));    // negativ = overskredet
       if(dage > REVIDER_DAGE) return;
-      var nøgle = r.resident_name + ':' + r.plan_type;
+      var nøgle = r.resident_name + ':' + r.plan_type + ':' + (r.perspective === 'din' ? 'din' : 'andet');
       var g = grupper[nøgle];
       if(!g || dage < g.dage) grupper[nøgle] = { r: r, dage: dage };
     });
@@ -250,7 +258,7 @@
       else if(g.dage === 0) efter = 'skal revurderes i dag';
       else efter = 'skal revurderes inden ' + kortDato(frist) + ' (om ' + dagTekst(g.dage) + ')';
       return {
-        før: (PLAN_NAVN[r.plan_type] || 'Planen') + ' for',
+        før: planTekst(r) + ' for',
         efter: efter, navn: r.resident_name, farve: r.resident_color,
         nu: g.dage < 0,
         detalje: 'Revisionsfrist: ' + UGEDAGE[frist.getDay()] + ' ' + frist.getDate() + '. ' + MAANEDER[frist.getMonth()] + ' ' + frist.getFullYear()

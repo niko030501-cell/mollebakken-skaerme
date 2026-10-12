@@ -28,6 +28,39 @@ Planer **slettes ikke**. De arkiveres (`status = 'arkiv'`) og kan gendannes unde
 
 ---
 
+## LA2, LA2u og TIP
+
+Hver beboer har to indstillinger (under "Indstillinger for [Navn]" på beboersiden):
+
+| Indstilling | Betydning |
+|---|---|
+| **Hvordan laves [Navn]s egen plan?** | *Med ord (LA2)* eller *Med ord og billeder (LA2u)*. Bestemmer, hvordan **Min**-planen ser ud. |
+| **Bruger vi også TIP?** | Ja/Nej. TIP er personalets tilstræbte indefra-perspektiv (**Din**-planer). |
+
+En beboer kan have flere på én gang: fx LA2u + TIP + fagprofessionel. Perspektivknappen på planen viser "[Navn]s ord", "TIP · tilstræbt" (kun ved TIP) og "Fagprofessionel".
+
+## Planernes opbygning og udskrift
+
+Planerne tegnes af **én funktion i to tilstande** (`rediger` og `print`, se `byggPlanKrop` og `byggPlanTop` i `la2-plans.js`). Der er ingen separat print-opbygning at holde ens. "Vis som udskrift" viser print-tilstanden på skærmen, og "Print" åbner printdialogen.
+
+- **Trivselsplan** (liggende): tre niveauer (1 Trivsel, 2 Sårbar trivsel, 3 Mistrivsel) som barometer med fire kolonner.
+- **Tryghedsplan** (stående): "Udløsende årsager", affektkurve og tre faser (Optrapning, Kaos, Stabilisering).
+- **Læringsplan** (liggende), **Mestringsplan** (liggende, med ansigter) og **Trivselsøer** (liggende, op til 5 øer).
+- Svar fra planernes gamle opbygning røres ikke. De vises under "Fra tidligere version".
+
+## Billeder (LA2u)
+
+Billedsættet ligger i `la2u-billeder.js` (SVG i egen stil). Billeder vælges i planerne med "Vælg billede":
+**Billeder** (vores sæt) eller **Eget foto** (skaleres til højst 1200 px og gemmes i den private bucket `la2-billeder`).
+
+- Hvilket billede der står ved et spørgsmål, rettes i `billeder` pr. plan i `la2-templates.js` (nøgle = spørgsmålets id, fx `gor`, eller `række.spørgsmål`, fx `forloeb.q1`).
+- Hvilke spørgsmål der har ansigter at vælge mellem, står i `foelelser`.
+- Ret aldrig eksisterende felt-id'er. Billeder gemmes under `<felt>~billede` og `<felt>~foelelse` i planens indhold.
+- **Udskift billedsættet** (fx hvis vi får lov til at bruge Sopras billeder): ret kun `la2u-billeder.js`. Resten af koden bruger `la2uBillede(nøgle, størrelse)`. Hold nøglerne (fx `foelelse_glad`, `aktivitet_musik`), så gemte planer stadig virker.
+- Fotos ligger i bucketen som `<resident_id>/<id>.jpg`. Kun `editor` kan læse og uploade; `anon` og `screen` har ingen adgang. Billederne slettes ikke af appen.
+
+---
+
 ## Ret spørgsmålene (`la2-templates.js`)
 
 Alle plantyper og spørgsmål ligger i **én fil**: `la2-v2/la2-templates.js`. Resten af koden skal ikke røres.
@@ -179,6 +212,8 @@ la2-v2/
   la2-sammenlign.js   Sammenlign: Tabel, Tre bunker, Kurver, Mødevisning, Print
   la2-templates.js    SPØRGSMÅL (ret her)
   la2-print.js/.css   udskrift (A4; også Sammenlign)
+  la2u-billeder.js    eget billedsæt (SVG) og la2uBillede()
+  la2u-felter.js      billedstøtte i felterne: billedvælger, foto-upload, følelser
   la2-om.js           "Om LA2"-siden (layout)
   om-la2.js           "Om LA2"-teksterne (ret her)
   la2-ikoner.js       ikoner og fasedata
@@ -193,6 +228,7 @@ shared/
   la2-haerdning.sql     hærdning af funktioner (kør efter godkendelse)
   la2-sammenlign-schema.sql  mødedata: noter og fælles punkter
   la2-sammenlign-test.sql    SQL-test af mødedata-tabellerne (rulles tilbage)
+  la2-indstillinger-billeder.sql  indefra_form, bruger_tip, plantype trivselsoeer og billedbucket
   la2-rls-test.mjs      test af adgangsregler, inkl. Sammenlign (se nedenfor)
 ```
 

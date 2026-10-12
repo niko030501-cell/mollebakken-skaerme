@@ -402,7 +402,7 @@
     ]));
   }
 
-  var TABS = ['trivsel', 'tryghed', 'laering', 'mestring', 'haab_droem'];
+  var TABS = ['trivsel', 'tryghed', 'laering', 'mestring', 'trivselsoeer', 'haab_droem'];
   var aktuelHash = location.hash || '#/';
   var gendanner = false;
 
@@ -551,6 +551,7 @@
 
   var EKSTRA_TABS = [
     { id: 'mestring', label: 'Mestringsplan' },
+    { id: 'trivselsoeer', label: 'Trivselsøer' },
     { id: 'haab_droem', label: 'Håb og drømme' }
   ];
 
@@ -664,7 +665,7 @@
 
     function tegnMeta(){
       while(metaLinje.firstChild) metaLinje.removeChild(metaLinje.firstChild);
-      metaLinje.appendChild(el('span', { class: 'variant-maerke', text: r.variant }));
+      metaLinje.appendChild(el('span', { class: 'variant-maerke', text: (r.indefra_form === 'LA2u' ? 'LA2u' : 'LA2') + (r.bruger_tip ? ' + TIP' : '') }));
       if((r.contact_persons || '').trim()){
         metaLinje.appendChild(el('span', { text: 'Kontaktperson: ' + r.contact_persons.trim() }));
       }
@@ -678,12 +679,19 @@
     }
 
     var printKnap = el('button', { type: 'button', class: 'knap knap-lys', text: 'Print', disabled: true });
+    var visKnap = el('button', { type: 'button', class: 'knap knap-lys', text: 'Vis som udskrift', disabled: true });
     var historikKnap = el('button', { type: 'button', class: 'knap knap-lys', text: 'Historik', disabled: true });
     var sammenlignHref = '#/beboer/' + rid + '/' + tab + (tab === 'laering' && groupId && groupId !== 'ny' ? '/' + groupId : '') + '/sammenlign';
-    var sammenlignKnap = el('a', { class: 'knap knap-lys', href: sammenlignHref, text: 'Sammenlign' });
+    var sammenlignKnap = tab === 'trivselsoeer'
+      ? el('button', { type: 'button', class: 'knap knap-lys', text: 'Sammenlign', disabled: true,
+          title: 'Trivselsøer kan ikke sammenlignes endnu' })
+      : el('a', { class: 'knap knap-lys', href: sammenlignHref, text: 'Sammenlign' });
     var nyKnap = el('a', { class: 'knap knap-guld', href: '#/beboer/' + rid + '/laering/ny', text: '+ Ny episode' });
     printKnap.addEventListener('click', function(){
       if(bs.handl && bs.handl.print) bs.handl.print();
+    });
+    visKnap.addEventListener('click', function(){
+      if(bs.handl && bs.handl.visUdskrift) bs.handl.visUdskrift();
     });
     historikKnap.addEventListener('click', function(){
       if(bs.handl && bs.handl.historik) bs.handl.historik();
@@ -691,6 +699,7 @@
 
     function opdaterKnapper(){
       printKnap.disabled = !(bs.handl && bs.handl.print);
+      visKnap.disabled = !(bs.handl && bs.handl.visUdskrift);
       historikKnap.disabled = !(bs.handl && bs.handl.historik);
     }
 
@@ -700,7 +709,7 @@
         el('h1', { class: 'beboer-navn', text: navn }),
         metaLinje
       ]),
-      el('div', { class: 'beboer-handlinger' }, [printKnap, historikKnap, sammenlignKnap, nyKnap])
+      el('div', { class: 'beboer-handlinger' }, [visKnap, printKnap, historikKnap, sammenlignKnap, nyKnap])
     ]);
 
     // ---- Faseforløb ----
@@ -770,7 +779,7 @@
         if(!g[k]) g[k] = { group: k, titel: p.title, dato: p.episode_date, oprettet: new Date(p.created_at), pers: [] };
         var o = new Date(p.created_at);
         if(o < g[k].oprettet) g[k].oprettet = o;
-        g[k].pers.push(p.perspective === 'fagprofessionel' ? 'Fagprofessionel' : (p.perspective === 'din' ? 'Din' : 'Min'));
+        g[k].pers.push(p.perspective === 'fagprofessionel' ? 'Fagprofessionel' : (p.perspective === 'din' ? 'TIP' : 'Min'));
       });
       return Object.keys(g).map(function(k){ return g[k]; })
         .sort(function(a, b){ return (b.dato || '').localeCompare(a.dato || ''); });
@@ -822,7 +831,7 @@
 
     function revisionKort(){
       var kort = el('section', { class: 'side-kort' }, [kortHoved('Revision')]);
-      var typer = ['trivsel', 'tryghed', 'mestring', 'haab_droem'].indexOf(tab) !== -1 ? [tab] : ['trivsel', 'tryghed'];
+      var typer = ['trivsel', 'tryghed', 'mestring', 'trivselsoeer', 'haab_droem'].indexOf(tab) !== -1 ? [tab] : ['trivsel', 'tryghed'];
       var rows = [];
       typer.forEach(function(t){ rows = rows.concat(planRows(t)); });
       rows = rows.filter(function(x){ return x.review_due; });
@@ -960,11 +969,19 @@
     }
 
     // ---- Indstillinger ----
-    var variant = el('select', { id: 'variantValg' }, [
-      el('option', { value: 'LA2', text: 'LA2 — borgerens eget perspektiv ("Min")' }),
-      el('option', { value: 'LA2u', text: 'LA2u — tilstræbt perspektiv ("Din")' })
+    function genitivNavn(n){ return /[sxz]$/i.test(n) ? n + "'" : n + 's'; }
+
+    var indefraForm = el('select', { id: 'indefraFormValg' }, [
+      el('option', { value: 'LA2', text: 'Med ord (LA2)' }),
+      el('option', { value: 'LA2u', text: 'Med ord og billeder (LA2u)' })
     ]);
-    variant.value = r.variant;
+    indefraForm.value = r.indefra_form === 'LA2u' ? 'LA2u' : 'LA2';
+
+    var tipValg = el('select', { id: 'tipValg' }, [
+      el('option', { value: 'nej', text: 'Nej' }),
+      el('option', { value: 'ja', text: 'Ja' })
+    ]);
+    tipValg.value = r.bruger_tip ? 'ja' : 'nej';
 
     var kontakt = el('textarea', { id: 'kontaktPersoner', maxlength: '500',
       placeholder: 'Fx navne på kontaktpersoner' });
@@ -975,13 +992,16 @@
     gem.addEventListener('click', function(){
       gem.disabled = true;
       status.hidden = true;
+      var nyTip = tipValg.value === 'ja';
       D.updateResident(r.id, {
-        variant: variant.value,
+        indefra_form: indefraForm.value,
+        bruger_tip: nyTip,
         contact_persons: kontakt.value.trim()
       }).then(function(rows){
         if(!rows.length) throw new Error('Ikke gemt');
-        var variantÆndret = r.variant !== variant.value;
-        r.variant = variant.value;
+        var variantÆndret = r.indefra_form !== indefraForm.value || !!r.bruger_tip !== nyTip;
+        r.indefra_form = indefraForm.value;
+        r.bruger_tip = nyTip;
         r.contact_persons = kontakt.value.trim();
         status.className = 'besked ok';
         status.textContent = variantÆndret && harUgemt()
@@ -1013,7 +1033,10 @@
     mål.appendChild(el('div', { class: 'beboer-grid' }, [planer, sidepanel]));
     mål.appendChild(el('details', { class: 'boks indstillinger' }, [
       el('summary', { text: 'Indstillinger for ' + navn }),
-      el('label', { class: 'felt' }, [el('span', { text: 'Variant' }), variant]),
+      el('label', { class: 'felt' }, [el('span', { text: 'Hvordan laves ' + genitivNavn(navn) + ' egen plan?' }), indefraForm]),
+      el('label', { class: 'felt' }, [el('span', { text: 'Bruger vi også tilstræbt indefra-perspektiv (TIP)?' }), tipValg]),
+      el('p', { class: 'indstilling-hjaelp',
+        text: 'TIP er personalets forsøg på at sætte sig i ' + genitivNavn(navn) + ' sted, når ' + navn + ' ikke kan sætte ord på alt selv.' }),
       el('label', { class: 'felt' }, [el('span', { text: 'Kontaktpersoner' }), kontakt]),
       status,
       gem

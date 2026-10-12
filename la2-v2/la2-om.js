@@ -142,7 +142,7 @@ window.LA2Om = (function(){
     // Tilstræbt indefra: stiplet pil fra personalet og ind mod personen
     s.appendChild(svg('path', { d: 'M470 80 Q400 90 340 140', fill: 'none', stroke: '#1e3937', 'stroke-width': 3, 'stroke-dasharray': '7 6', 'stroke-linecap': 'round', 'marker-end': 'url(#omPil2)' }));
     s.appendChild(svgTekst(520, 70, 'Tilstræbt indefra', { 'font-size': 15, 'font-weight': 800, fill: '#1e3937' }));
-    s.appendChild(svgTekst(520, 90, '"Din"', { 'font-size': 13, fill: '#5a6b66' }));
+    s.appendChild(svgTekst(520, 90, '"Din" (TIP)', { 'font-size': 13, fill: '#5a6b66' }));
 
     // Udefra: pil udefra mod personen
     s.appendChild(svg('path', { d: 'M470 205 Q410 205 358 185', fill: 'none', stroke: '#1e3937', 'stroke-width': 3, 'stroke-linecap': 'round', 'marker-end': 'url(#omPil2)' }));
@@ -190,30 +190,46 @@ window.LA2Om = (function(){
       persp
     ]));
 
-    // 4. Barometeret
-    var baro = el('div', { class: 'om-baro' });
-    T.barometer.niveauer.forEach(function(n){
-      var klasse = n.nr === 1 ? 'groen' : (n.nr === 2 ? 'gul' : 'roed');
-      baro.appendChild(el('div', { class: 'om-baro-kol baro-' + klasse }, [
+    // 4a. Trivselsplanens tre niveauer
+    var niv = el('div', { class: 'om-baro' });
+    T.trivselsniveauer.niveauer.forEach(function(n){
+      niv.appendChild(el('div', { class: 'om-baro-kol baro-' + n.klasse }, [
         el('div', { class: 'om-baro-hoved' }, [
           el('span', { class: 'baro-nr', text: String(n.nr) }),
-          el('div', null, [
-            el('div', { class: 'baro-navn', text: n.navn }),
-            el('div', { class: 'om-baro-overskrift', text: n.overskrift })
-          ])
+          el('div', null, [el('div', { class: 'baro-navn', text: n.navn })])
         ]),
-        el('div', { class: 'baro-gruppe-navn', text: T.barometer.forklaring[0].navn }),
-        el('div', { class: 'om-boble', text: n.tegn }),
-        el('div', { class: 'baro-gruppe-navn', text: T.barometer.forklaring[1].navn }),
-        el('div', { class: 'om-boble', text: n.handling }),
-        el('div', { class: 'om-eksempel', text: T.barometer.eksempelMaerke })
+        el('div', { class: 'baro-gruppe-navn', text: T.trivselsniveauer.kolonner[0] }),
+        el('div', { class: 'om-boble', text: n.gor }),
+        el('div', { class: 'baro-gruppe-navn', text: T.trivselsniveauer.kolonner[1] }),
+        el('div', { class: 'om-boble', text: n.strategi }),
+        el('div', { class: 'baro-gruppe-navn', text: T.trivselsniveauer.kolonner[2] }),
+        el('div', { class: 'om-boble', text: n.tilgang }),
+        el('div', { class: 'om-eksempel', text: T.trivselsniveauer.eksempelMaerke })
       ]));
     });
-    var forkl = el('ul', { class: 'om-forklaring' });
-    T.barometer.forklaring.forEach(function(f){
-      forkl.appendChild(el('li', null, [el('strong', { text: f.navn + ': ' }), f.tekst]));
+    side.appendChild(sektion('', T.trivselsniveauer.overskrift, T.trivselsniveauer.under, [niv]));
+
+    // 4b. Tryghedsplanens tre faser med en lille affektkurve
+    var kurveBoks = el('figure', { class: 'om-diagram' });
+    if(window.LA2Plans && window.LA2Plans.tegnAffektKurve){
+      kurveBoks.appendChild(window.LA2Plans.tegnAffektKurve());
+    }
+    var faseKort3 = el('div', { class: 'om-fase3' });
+    T.tryghedsfaser.faser.forEach(function(f){
+      faseKort3.appendChild(el('div', { class: 'om-fase3-kort om-fase3-' + f.id }, [
+        el('div', { class: 'om-fase3-hoved' }, [
+          el('span', { class: 'om-fase3-form om-fase3-form-' + f.id, 'aria-hidden': 'true' }),
+          el('span', { class: 'om-fase3-nr', text: String(f.nr) }),
+          el('span', { class: 'om-fase3-navn', text: f.navn })
+        ]),
+        el('p', { class: 'om-fase3-tekst', text: f.tekst })
+      ]));
     });
-    side.appendChild(sektion('', T.barometer.overskrift, T.barometer.under, [baro, forkl]));
+    side.appendChild(sektion('', T.tryghedsfaser.overskrift, T.tryghedsfaser.under, [
+      kurveBoks,
+      faseKort3,
+      el('p', { class: 'om-forklaring-tekst', text: T.tryghedsfaser.felter })
+    ]));
 
     // 5. Otte principper
     var gitter = el('div', { class: 'om-principper' });
@@ -235,25 +251,22 @@ window.LA2Om = (function(){
     });
     side.appendChild(sektion('', T.principper.overskrift, '', [gitter]));
 
-    // 6. LA2 og LA2u (beboere hentes fra la2_residents)
-    var avatarSlot = el('div', { class: 'om-la2u-avatarer' }, [
-      el('span', { class: 'tom-tilstand', text: 'Henter…' })
-    ]);
-    side.appendChild(sektion('om-la2u', T.la2u.overskrift, '', [
-      el('div', { class: 'om-la2u-raekke' }, [
-        el('div', { class: 'om-la2u-kort' }, [
-          el('span', { class: 'variant-maerke', text: 'LA2' }),
-          el('p', { text: T.la2u.la2 })
-        ]),
-        el('div', { class: 'om-la2u-kort' }, [
-          el('span', { class: 'variant-maerke', text: 'LA2u' }),
-          el('p', { text: T.la2u.la2u })
-        ])
-      ]),
-      el('div', { class: 'om-la2u-beboere' }, [
-        el('div', { class: 'baro-gruppe-navn', text: T.la2u.beboereOverskrift }),
-        avatarSlot
-      ])
+    // 6. LA2, LA2u og TIP (beboere hentes fra la2_residents)
+    var F = T.former;
+    var slots = {
+      la2: el('div', { class: 'om-la2u-avatarer' }, [el('span', { class: 'tom-tilstand', text: 'Henter…' })]),
+      la2u: el('div', { class: 'om-la2u-avatarer' }, [el('span', { class: 'tom-tilstand', text: 'Henter…' })]),
+      tip: el('div', { class: 'om-la2u-avatarer' }, [el('span', { class: 'tom-tilstand', text: 'Henter…' })])
+    };
+    function formKort(noegle){
+      return el('div', { class: 'om-la2u-kort' }, [
+        el('span', { class: 'variant-maerke', text: F[noegle].navn }),
+        el('p', { text: F[noegle].tekst }),
+        slots[noegle]
+      ]);
+    }
+    side.appendChild(sektion('om-la2u', F.overskrift, F.beboereOverskrift, [
+      el('div', { class: 'om-former' }, [formKort('la2'), formKort('la2u'), formKort('tip')])
     ]));
 
     // 7. Sådan bruger vi det
@@ -285,29 +298,35 @@ window.LA2Om = (function(){
 
     ctx.visIRod(side);
 
-    // Avatarer for beboere sat til LA2u
+    // Avatarer: hvem bruger LA2, LA2u og TIP
     window.LA2Data.residents().then(function(rows){
-      while(avatarSlot.firstChild) avatarSlot.removeChild(avatarSlot.firstChild);
-      var u = rows.filter(function(r){ return r.variant === 'LA2u'; });
-      if(!u.length){
-        avatarSlot.appendChild(el('span', { class: 'tom-tilstand', text: T.la2u.ingen }));
-        return;
+      function fyld(slot, liste){
+        while(slot.firstChild) slot.removeChild(slot.firstChild);
+        if(!liste.length){
+          slot.appendChild(el('span', { class: 'tom-tilstand', text: F.ingen }));
+          return;
+        }
+        liste.forEach(function(r){
+          var navn = r.beboere ? r.beboere.navn : 'Ukendt';
+          var farve = r.beboere ? r.beboere.farve : '';
+          var a = el('span', { class: 'avatar avatar-48', text: navn.charAt(0) });
+          a.setAttribute('aria-hidden', 'true');
+          a.style.background = U().erFarve(farve) ? farve : '#374151';
+          slot.appendChild(el('a', { class: 'om-avatar', href: '#/beboer/' + r.resident_id }, [
+            a,
+            el('span', { class: 'om-avatar-navn', text: navn })
+          ]));
+        });
       }
-      u.forEach(function(r){
-        var navn = r.beboere ? r.beboere.navn : 'Ukendt';
-        var farve = r.beboere ? r.beboere.farve : '';
-        var a = el('span', { class: 'avatar avatar-48', text: navn.charAt(0) });
-        a.setAttribute('aria-hidden', 'true');
-        a.style.background = U().erFarve(farve) ? farve : '#374151';
-        avatarSlot.appendChild(el('a', { class: 'om-avatar', href: '#/beboer/' + r.resident_id }, [
-          a,
-          el('span', { class: 'om-avatar-navn', text: navn })
-        ]));
-      });
+      fyld(slots.la2, rows.filter(function(r){ return r.indefra_form !== 'LA2u'; }));
+      fyld(slots.la2u, rows.filter(function(r){ return r.indefra_form === 'LA2u'; }));
+      fyld(slots.tip, rows.filter(function(r){ return !!r.bruger_tip; }));
     }).catch(function(e){
-      while(avatarSlot.firstChild) avatarSlot.removeChild(avatarSlot.firstChild);
+      Object.keys(slots).forEach(function(k){
+        while(slots[k].firstChild) slots[k].removeChild(slots[k].firstChild);
+      });
       if(U().erSessionFejl(e)){ ctx.onSessionError(); return; }
-      avatarSlot.appendChild(el('span', { class: 'tom-tilstand', text: 'Kunne ikke hente beboerne.' }));
+      slots.la2.appendChild(el('span', { class: 'tom-tilstand', text: 'Kunne ikke hente beboerne.' }));
     });
 
     return { opdater: function(){ return Promise.resolve(); } };

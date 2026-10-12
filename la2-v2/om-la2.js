@@ -37,18 +37,18 @@ window.LA2OmTekster = {
   // 3. De tre perspektiver
   perspektiver: {
     overskrift: 'De tre perspektiver',
-    under: 'Vi ser på det samme fra tre sider. Det er derfor hver plan findes i to udgaver: borgerens og fagprofessionel.',
-    diagramBeskrivelse: 'Diagram: en person i midten. En pil går indefra og ud (indefra), en stiplet pil fra personalet peger ind mod personen (tilstræbt indefra), og en pil udefra peger mod personen (udefra).',
+    under: 'Vi ser på det samme fra tre sider. Derfor findes hver plan i op til tre udgaver: borgerens egen, TIP og fagprofessionel.',
+    diagramBeskrivelse: 'Diagram: en person i midten. En pil går indefra og ud (indefra), en stiplet pil fra personalet peger ind mod personen (tilstræbt indefra, TIP), og en pil udefra peger mod personen (udefra).',
     kort: [
       {
         navn: 'Indefra',
-        ord: '"Min"',
-        tekst: 'Borgerens egne ord og oplevelse. Det er her, vi helst vil starte.'
+        ord: '"Min" (LA2 og LA2u)',
+        tekst: 'Borgerens egne ord og oplevelse. Det er her, vi helst vil starte. I LA2u understøtter vi planen med billeder.'
       },
       {
         navn: 'Tilstræbt indefra',
-        ord: '"Din" (LA2u)',
-        tekst: 'Når borgeren har begrænset sprog, forsøger vi at sætte os i borgerens sted og beskriver, hvad vi tror, borgeren oplever.'
+        ord: '"Din" (TIP)',
+        tekst: 'Personalets forsøg på at sætte sig i borgerens sted ud fra kropssprog, lyde, adfærd og erfaringer, når borgeren ikke selv kan sætte ord på alt.'
       },
       {
         navn: 'Udefra',
@@ -58,20 +58,30 @@ window.LA2OmTekster = {
     ]
   },
 
-  // 4. Barometeret
-  barometer: {
-    overskrift: 'Barometeret i Tryghedsplanen',
-    under: 'Det svære deles op i tre niveauer. Til hvert niveau skriver vi to ting.',
+  // 4a. Trivselsplanens tre niveauer (barometer)
+  trivselsniveauer: {
+    overskrift: 'Trivselsplanens tre niveauer',
+    under: 'Planen læses nedefra og op, som et barometer. Mellem niveauerne går to linjer: "Linje for sårbar trivsel" og "Linje for mistrivsel".',
     eksempelMaerke: 'Eksempel',
-    forklaring: [
-      { navn: 'Tegn', tekst: 'Hvad kan vi se og mærke, når borgeren er på det her niveau?' },
-      { navn: 'Hvad gør vi', tekst: 'Hvad hjælper, og hvad gør vi, så alle gør det samme?' }
-    ],
+    kolonner: ['Vi ser, borgeren gør', 'Borgerens strategier', 'Fælles faglige tilgange'],
     niveauer: [
-      { nr: 1, navn: 'Grøn', overskrift: 'Jeg har det godt', tegn: 'Smiler, snakker, søger kontakt', handling: 'Fortsæt det, der virker, og vær nærværende' },
-      { nr: 2, navn: 'Gul', overskrift: 'Jeg er ved at blive urolig', tegn: 'Går rundt, bliver stille eller høj', handling: 'Giv ro og plads, og tal roligt' },
-      { nr: 3, navn: 'Rød', overskrift: 'Det er blevet for svært', tegn: 'Kan ikke tage imod kontakt', handling: 'Skab tryghed, og undgå krav' }
+      { nr: 3, navn: 'Mistrivsel', klasse: 'roed', gor: 'Kan ikke tage imod kontakt', strategi: 'Trækker sig og søger ro', tilgang: 'Skab tryghed, og undgå krav' },
+      { nr: 2, navn: 'Sårbar trivsel', klasse: 'gul', gor: 'Går rundt, bliver stille eller høj', strategi: 'Går en tur, hører musik', tilgang: 'Giv ro og plads, og tal roligt' },
+      { nr: 1, navn: 'Trivsel', klasse: 'groen', gor: 'Smiler, snakker, søger kontakt', strategi: 'Er sammen med dem, borgeren kender', tilgang: 'Fortsæt det, der virker, og vær nærværende' }
     ]
+  },
+
+  // 4b. Tryghedsplanens tre faser
+  tryghedsfaser: {
+    overskrift: 'Tryghedsplanens tre faser',
+    under: 'En episode følger en affektkurve: den stiger, topper og falder. Planen beskriver, hvad vi gør i hver fase.',
+    diagramBeskrivelse: 'Affektkurve: affektniveauet stiger i optrapningsfasen, topper i kaosfasen og falder i stabiliseringsfasen.',
+    faser: [
+      { nr: 1, id: 'optrapning', navn: 'Optrapning', tekst: 'Uroen vokser. Her kan vi stadig nå borgeren, så vi gør mere af det, der hjælper.' },
+      { nr: 2, id: 'kaos', navn: 'Kaos', tekst: 'Højeste affekt. Vi gør kun det nødvendige: tryghed, ro og sikkerhed.' },
+      { nr: 3, id: 'stabilisering', navn: 'Stabilisering', tekst: 'Det falder til ro igen. Vi er nærværende og stiller ikke krav.' }
+    ],
+    felter: 'I hver fase skriver vi, hvad borgeren gør og mærker, hvad vi gør mere af og lader være med, og hvad borgeren kan.'
   },
 
   // 5. De otte principper
@@ -89,13 +99,14 @@ window.LA2OmTekster = {
     ]
   },
 
-  // 6. LA2 og LA2u
-  la2u: {
-    overskrift: 'LA2 og LA2u',
-    la2: 'LA2 bruges, når borgeren selv kan fortælle om sin oplevelse.',
-    la2u: 'LA2u er til borgere med udviklingshæmning, kognitive udfordringer og/eller uden verbalt sprog. Her bruger vi visuelle samtaleark og det tilstræbte indefra-perspektiv.',
-    beboereOverskrift: 'Hos os er sat til LA2u',
-    ingen: 'Ingen beboere er sat til LA2u endnu.'
+  // 6. LA2, LA2u og TIP
+  former: {
+    overskrift: 'LA2, LA2u og TIP',
+    la2: { navn: 'LA2', tekst: 'Borgeren fortæller selv om sin oplevelse, med ord.' },
+    la2u: { navn: 'LA2u', tekst: 'Som LA2, men med billeder og enkelt sprog. Til borgere med udviklingshæmning, kognitive udfordringer og/eller uden verbalt sprog.' },
+    tip: { navn: 'TIP', tekst: 'Tilstræbt indefra-perspektiv: personalets bedste bud på borgerens oplevelse. Bruges ud over LA2 eller LA2u, når borgeren ikke selv kan sætte ord på alt.' },
+    beboereOverskrift: 'Hvem bruger hvad hos os',
+    ingen: 'Ingen beboere endnu.'
   },
 
   // 7. Sådan bruger vi det på Møllebakken

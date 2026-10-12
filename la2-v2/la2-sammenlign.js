@@ -28,7 +28,7 @@ window.LA2Sammenlign = (function(){
   ];
   var PLAN_NAVN = {
     trivsel: 'Trivselsplan', tryghed: 'Tryghedsplan', laering: 'Læringsplan',
-    mestring: 'Mestringsplan', haab_droem: 'Håb og drømme'
+    mestring: 'Mestringsplan', trivselsoeer: 'Trivselsøer', haab_droem: 'Håb og drømme'
   };
 
   var S = null;        // tilstand for den åbne sammenligning
@@ -54,14 +54,18 @@ window.LA2Sammenlign = (function(){
 
   function tom(n){ while(n.firstChild) n.removeChild(n.firstChild); }
 
-  function borgerKey(){ return S.resident.variant === 'LA2u' ? 'din' : 'min'; }
+  // Spørgsmålsteksten følger venstre side: TIP-planer bruger "Din"-teksterne
+  function borgerKey(){
+    var lp = S && S.leftValg ? planMedId(S.leftValg.planId) : null;
+    return lp && lp.perspective === 'din' ? 'din' : 'min';
+  }
 
   function erFag(plan){ return !!plan && plan.perspective === 'fagprofessionel'; }
 
   function planNavn(plan){
     if(!plan) return 'Ingen plan';
     if(erFag(plan)) return 'Fagprofessionel';
-    if(plan.perspective === 'din') return 'Tilstræbt indefra (Din)';
+    if(plan.perspective === 'din') return 'TIP · tilstræbt indefra';
     return genitiv(S.navn) + ' ord (Min)';
   }
 
@@ -109,7 +113,16 @@ window.LA2Sammenlign = (function(){
       return r;
     }
 
+    if(tpl.kind === 'faser'){
+      // Udløsende årsager først, derefter pr. fase og felt
+      var uq = tpl.udloesende.question;
+      r.push({ key: tpl.udloesende.id + '.' + uq.id, type: uq.type || 'text',
+               sektion: T.tekst(tpl.udloesende.heading, key) || '', felt: tekst(uq),
+               fase: 'tryghed', niveau: null });
+    }
+    var niveauNr = 0;
     tpl.sections.forEach(function(sec, i){
+      if(sec.level) niveauNr++;
       sec.questions.forEach(function(q){
         var tryghed = !!sec.level;
         r.push({
@@ -118,7 +131,7 @@ window.LA2Sammenlign = (function(){
           sektion: tryghed ? sec.levelLabel : (T.tekst(sec.heading, key) || ''),
           felt: tryghed ? (q.gruppe || tekst(q)) : tekst(q),
           fase: S.tab === 'tryghed' ? 'tryghed' : 'trivsel',
-          niveau: tryghed ? { nr: i + 1, level: sec.level } : null
+          niveau: tryghed ? { nr: niveauNr, level: sec.level } : null
         });
       });
     });
@@ -188,11 +201,31 @@ window.LA2Sammenlign = (function(){
     });
   }
 
+  // Kurverne kan vise op til tre perspektiver: den tredje plan i samme episode
+  function indlaesTredje(){
+    S.tredje = null;
+    if(S.tab !== 'laering' || !S.left || !S.right || !S.gruppe) return Promise.resolve();
+    var brugte = {};
+    [S.leftValg, S.rightValg].forEach(function(v){
+      var plan = v ? planMedId(v.planId) : null;
+      brugte[perspAf(plan)] = true;
+    });
+    var kandidat = S.planer.filter(function(p){
+      return p.episode_group_id === S.gruppe && !brugte[perspAf(p)];
+    })[0];
+    if(!kandidat) return Promise.resolve();
+    var valg = standardVersion(kandidat.id);
+    if(!valg) return Promise.resolve();
+    return hentIndhold(valg).then(function(side){
+      if(side) S.tredje = { side: side, valg: valg };
+    });
+  }
+
   function indlaesValg(){
     return Promise.all([hentIndhold(S.leftValg), hentIndhold(S.rightValg)]).then(function(r){
       S.left = r[0];
       S.right = r[1];
-      return indlaesNoter().then(indlaesFaelles);
+      return indlaesNoter().then(indlaesFaelles).then(indlaesTredje);
     });
   }
 
@@ -305,7 +338,7 @@ window.LA2Sammenlign = (function(){
     }
     if(!plan) return { hoved: erVenstre ? 'Indefra' : 'Udefra', under: 'Ingen plan endnu', ikon: null };
     if(erFag(plan)) return { hoved: 'Fagprofessionelle', under: 'Udefra · ' + v, ikon: 'gruppe' };
-    if(plan.perspective === 'din') return { hoved: 'Tilstræbt indefra', under: 'Indefra · ' + v, ikon: 'avatar' };
+    if(plan.perspective === 'din') return { hoved: 'TIP · tilstræbt indefra', under: 'Indefra · ' + v, ikon: 'avatar' };
     return { hoved: genitiv(S.navn) + ' egne ord', under: 'Indefra · ' + v, ikon: 'avatar' };
   }
 
@@ -324,8 +357,24 @@ window.LA2Sammenlign = (function(){
     return hoved;
   }
 
-  function sideNode(poster, klasse){
+  // Billede og følelse, som er valgt til feltet i en LA2u-plan (eller null)
+  function sideBilleder(side, r, px){
+    if(!side || !side.content || !side.content.a || !window.LA2uFelter) return null;
+    var a = side.content.a;
+    var dele = [];
+    var f = a[r.key + '~foelelse'];
+    if(typeof f === 'string' && f){
+      var ansigt = window.la2uBillede(f, px, window.LA2Billeder.tekst(f));
+      if(ansigt) dele.push(el('span', { class: 'sam-billede' }, [ansigt]));
+    }
+    var b = window.LA2uFelter.billedeNode(a[r.key + '~billede'], px);
+    if(b) dele.push(el('span', { class: 'sam-billede' }, [b]));
+    return dele.length ? el('div', { class: 'sam-billeder' }, dele) : null;
+  }
+
+  function sideNode(poster, klasse, billeder){
     var kolonne = el('div', { class: 'sam-side ' + klasse });
+    if(billeder) kolonne.appendChild(billeder);
     if(!poster.length){
       kolonne.appendChild(el('div', { class: 'sam-tom', text: 'Intet skrevet her · forskel' }));
       return kolonne;
@@ -417,11 +466,11 @@ window.LA2Sammenlign = (function(){
     node.appendChild(forste);
     node.appendChild(el('div', { class: 'sam-celle' }, [
       el('div', { class: 'sam-celle-label', text: 'Indefra' }),
-      sideNode(venstre, 'sam-venstre')
+      sideNode(venstre, 'sam-venstre', sideBilleder(S.left, r, 44))
     ]));
     node.appendChild(el('div', { class: 'sam-celle' }, [
       el('div', { class: 'sam-celle-label', text: 'Udefra' }),
-      sideNode(hoejre, 'sam-hoejre')
+      sideNode(hoejre, 'sam-hoejre', sideBilleder(S.right, r, 44))
     ]));
     node.appendChild(tilMoedet);
     node.setAttribute('data-key', r.key);
@@ -539,7 +588,7 @@ window.LA2Sammenlign = (function(){
     var plan = planMedId(v.planId);
     return {
       tekst: 'Ændringer i ' + genitiv(S.navn) + ' egen plan laves sammen med ' + S.navn + '.',
-      label: 'Åbn ' + (plan && plan.perspective === 'din' ? 'Din' : 'Min') + '-planen',
+      label: 'Åbn ' + (plan && plan.perspective === 'din' ? 'TIP' : 'Min') + '-planen',
       href: planHref(false)
     };
   }
@@ -622,6 +671,7 @@ window.LA2Sammenlign = (function(){
     if(S.leftValg && S.rightValg && S.leftValg.planId === S.rightValg.planId) return 'version ' + valg.versionNo;
     var plan = planMedId(valg.planId);
     if(!plan) return '';
+    if(plan.perspective === 'din') return 'TIP';
     return erFag(plan) ? 'personalet' : S.navn;
   }
 
@@ -951,6 +1001,8 @@ window.LA2Sammenlign = (function(){
       el('span', { text: 'Kun ' + venstreOrd }),
       el('span', { class: 'sam-bunke-antal', text: bunkeTal(data.kunL.length) })
     ]));
+    var billedeV = sideBilleder(S.left, r, 44);
+    if(billedeV) kv.appendChild(billedeV);
     if(!data.kunL.length) kv.appendChild(el('div', { class: 'sam-tom', text: S.left && punkter(S.left, r).length ? 'Alle punkter er flyttet til midten.' : 'Intet skrevet her · forskel' }));
     data.kunL.forEach(function(p){
       kv.appendChild(bunkeKort({
@@ -980,6 +1032,8 @@ window.LA2Sammenlign = (function(){
       el('span', { text: 'Kun ' + hoejreOrd }),
       el('span', { class: 'sam-bunke-antal', text: bunkeTal(data.kunR.length) })
     ]));
+    var billedeH = sideBilleder(S.right, r, 44);
+    if(billedeH) kh.appendChild(billedeH);
     if(!data.kunR.length) kh.appendChild(el('div', { class: 'sam-tom', text: S.right && punkter(S.right, r).length ? 'Alle punkter er flyttet til midten.' : 'Intet skrevet her · forskel' }));
     data.kunR.forEach(function(p){
       kh.appendChild(bunkeKort({
@@ -1225,27 +1279,71 @@ window.LA2Sammenlign = (function(){
     });
   }
 
-  // Hvilken side er "indefra" (fuld streg, prikker) og hvilken "udefra" (stiplet, firkanter)
-  function kurveStil(){
-    var lp = S.leftValg ? planMedId(S.leftValg.planId) : null;
-    var rp = S.rightValg ? planMedId(S.rightValg.planId) : null;
-    var lFag = erFag(lp), rFag = erFag(rp);
-    if(lFag && !rFag) return { left: 'ude', right: 'inde' };
-    return { left: 'inde', right: 'ude' };
+  // Perspektivet for en plan: 'min' | 'tip' | 'fag'
+  function perspAf(plan){
+    if(!plan) return 'min';
+    if(erFag(plan)) return 'fag';
+    return plan.perspective === 'din' ? 'tip' : 'min';
   }
+
+  // Stil pr. perspektiv: Min = beboerens farve, fuld streg, prikker. TIP = blå,
+  // prikket streg, trekanter. Fagprofessionel = --blaek, stiplet streg, firkanter.
+  var KURVE_STILE = ['min', 'tip', 'fag'];
 
   function kurveFarve(){
     if(KURVE_SORT) return '#000';
     return U().erFarve(S.farve) ? S.farve : '#374151';
   }
 
+  function kurveSerieNavn(p, version, flere){
+    var n;
+    if(p === 'min') n = genitiv(S.navn) + ' ord (indefra)';
+    else if(p === 'tip') n = 'TIP (tilstræbt indefra)';
+    else n = 'Fagprofessionel (udefra)';
+    if(flere && version) n += ' · version ' + version;
+    return n;
+  }
+
+  // Serierne i grafen: venstre, højre og evt. den tredje plan i samme episode
+  function kurveSerier(curve){
+    var liste = [];
+    function tilfoej(side, valg){
+      if(!side || !valg) return;
+      var plan = planMedId(valg.planId);
+      liste.push({ p: perspAf(plan), version: valg.versionNo, values: kurveVaerdier(side, curve) });
+    }
+    tilfoej(S.left, S.leftValg);
+    tilfoej(S.right, S.rightValg);
+    if(S.tredje) tilfoej(S.tredje.side, S.tredje.valg);
+
+    var flere = liste.some(function(a, i){
+      return liste.some(function(b, j){ return j !== i && b.p === a.p; });
+    });
+    var brugteStile = {};
+    liste.forEach(function(x, i){
+      x.id = x.p + (flere ? '_' + (i + 1) : '');
+      // samme perspektiv to gange (to versioner): giv hver sin stil
+      var stil = x.p;
+      if(brugteStile[stil]){
+        stil = KURVE_STILE.filter(function(k){ return !brugteStile[k]; })[0] || stil;
+      }
+      brugteStile[stil] = true;
+      x.stil = stil;
+      x.navn = kurveSerieNavn(x.p, x.version, flere);
+    });
+    return liste;
+  }
+
   // Lille tegn til forklaringen
   function kurveTegn(stil){
     var s = svgNode('svg', { width: '44', height: '16', viewBox: '0 0 44 16', 'aria-hidden': 'true', focusable: 'false' });
-    if(stil === 'inde'){
+    if(stil === 'min'){
       s.appendChild(svgNode('line', { x1: '2', x2: '42', y1: '8', y2: '8', stroke: kurveFarve(), 'stroke-width': '4', 'stroke-linecap': 'round' }));
       s.appendChild(svgNode('circle', { cx: '22', cy: '8', r: '6', fill: kurveFarve(), stroke: '#fff', 'stroke-width': '2' }));
-    }else if(stil === 'ude'){
+    }else if(stil === 'tip'){
+      s.appendChild(svgNode('line', { x1: '2', x2: '42', y1: '8', y2: '8', 'class': 'kurve-linje-tip', 'stroke-width': '4', 'stroke-dasharray': '2 6', 'stroke-linecap': 'round' }));
+      s.appendChild(svgNode('path', { d: 'M22 1 L30 15 L14 15 Z', 'class': 'kurve-trekant', 'stroke-width': '2' }));
+    }else if(stil === 'fag'){
       s.appendChild(svgNode('line', { x1: '2', x2: '42', y1: '8', y2: '8', 'class': 'kurve-linje-ude', 'stroke-width': '4', 'stroke-dasharray': '8 5' }));
       s.appendChild(svgNode('rect', { x: '15', y: '1', width: '14', height: '14', 'class': 'kurve-firkant', 'stroke-width': '2' }));
     }else{
@@ -1254,12 +1352,13 @@ window.LA2Sammenlign = (function(){
     return s;
   }
 
-  function kurveGraf(curve, vL, vR, stil, navnL, navnR){
+  // Grafen. serier: synlige serier; par: [A, B] hvis værdier forskellen regnes mellem
+  function kurveGraf(curve, serier, par){
     var W = 720, H = 360, pl = 104, pr = 28, pt = 40, pb = 70;
     var n = curve.points.length;
     var lo = curve.min, hi = curve.max;
     var svg = svgNode('svg', { viewBox: '0 0 ' + W + ' ' + H, 'class': 'kurve-sam-svg', role: 'img',
-      'aria-label': 'Kurver: ' + navnL + ' og ' + navnR + ' lagt oven på hinanden. Tallene står i tabellen under grafen.' });
+      'aria-label': 'Kurver lagt oven på hinanden. Tallene står i tabellen under grafen.' });
 
     function x(i){ return pl + i * (W - pl - pr) / (n - 1); }
     function y(v){ return pt + (hi - v) * (H - pt - pb) / (hi - lo); }
@@ -1286,12 +1385,12 @@ window.LA2Sammenlign = (function(){
       });
     });
 
-    // Forskelle på 2 trin eller mere: guldbånd bag kurverne
+    // Forskelle på 2 trin eller mere (mellem de to valgte): guldbånd bag kurverne
     var stoerst = 0;
     var forskelle = [];
     for(var i = 0; i < n; i++){
-      if(vL[i] !== null && vR[i] !== null){
-        var f = Math.abs(vL[i] - vR[i]);
+      if(par && par[0].values[i] !== null && par[1].values[i] !== null){
+        var f = Math.abs(par[0].values[i] - par[1].values[i]);
         forskelle.push(f);
         if(f > stoerst) stoerst = f;
       }else{
@@ -1310,8 +1409,10 @@ window.LA2Sammenlign = (function(){
       'class': 'kurve-episode', 'stroke-width': 3, 'stroke-dasharray': '7 5' }));
     svg.appendChild(tekst('Episoden', { x: x(epi), y: pt - 24, 'text-anchor': 'middle', 'class': 'kurve-episode-tekst' }));
 
-    // Serierne: forskudt et par pixel, så to ens værdier begge kan ses
-    function serie(vaerdier, st, forskyd){
+    // Serierne: forskudt et par pixel, så ens værdier alle kan ses
+    var FORSKYD = { min: -7, tip: 0, fag: 7 };
+    function serie(se){
+      var vaerdier = se.values, st = se.stil, forskyd = FORSKYD[st] || 0;
       var seg = [];
       function flush(){
         if(seg.length > 1){
@@ -1319,7 +1420,8 @@ window.LA2Sammenlign = (function(){
             points: seg.map(function(i){ return (x(i) + forskyd) + ',' + y(vaerdier[i]); }).join(' '),
             fill: 'none', 'stroke-width': 4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
           });
-          if(st === 'inde'){ l.setAttribute('stroke', kurveFarve()); }
+          if(st === 'min'){ l.setAttribute('stroke', kurveFarve()); }
+          else if(st === 'tip'){ l.setAttribute('class', 'kurve-linje-tip'); l.setAttribute('stroke-dasharray', '2 8'); }
           else{ l.setAttribute('class', 'kurve-linje-ude'); l.setAttribute('stroke-dasharray', '10 6'); l.setAttribute('stroke-linecap', 'butt'); }
           svg.appendChild(l);
         }
@@ -1332,15 +1434,18 @@ window.LA2Sammenlign = (function(){
       for(var j = 0; j < n; j++){
         if(vaerdier[j] === null) continue;
         var cx = x(j) + forskyd, cy = y(vaerdier[j]);
-        if(st === 'inde'){
+        if(st === 'min'){
           svg.appendChild(svgNode('circle', { cx: cx, cy: cy, r: 8, fill: kurveFarve(), stroke: '#fff', 'stroke-width': 2 }));
+        }else if(st === 'tip'){
+          svg.appendChild(svgNode('path', { d: 'M' + cx + ' ' + (cy - 10) + ' L' + (cx + 9) + ' ' + (cy + 7) + ' L' + (cx - 9) + ' ' + (cy + 7) + ' Z',
+            'class': 'kurve-trekant', 'stroke-width': 2 }));
         }else{
           svg.appendChild(svgNode('rect', { x: cx - 7, y: cy - 7, width: 14, height: 14, 'class': 'kurve-firkant', 'stroke-width': 2 }));
         }
       }
     }
-    serie(vR, stil.right, stil.right === 'inde' ? -4 : 4);
-    serie(vL, stil.left, stil.left === 'inde' ? -4 : 4);
+    // tegnes i omvendt rækkefølge, så Min ligger øverst
+    serier.slice().reverse().forEach(serie);
 
     return { svg: svg, forskelle: forskelle, stoerst: stoerst };
   }
@@ -1409,40 +1514,81 @@ window.LA2Sammenlign = (function(){
       return;
     }
 
-    var vL = kurveVaerdier(S.left, curve);
-    var vR = kurveVaerdier(S.right, curve);
-    var stil = kurveStil();
-    var navnL = sideNavn(S.leftValg) || 'venstre';
-    var navnR = sideNavn(S.rightValg) || 'højre';
-    var tekstL = navnL + (stil.left === 'inde' ? ' (indefra)' : ' (udefra)');
-    var tekstR = navnR + (stil.right === 'inde' ? ' (indefra)' : ' (udefra)');
+    var alle = kurveSerier(curve);
+    if(!S.kurveSkjult) S.kurveSkjult = {};
+    var synlige = alle.filter(function(se){ return !S.kurveSkjult[se.id]; });
 
-    var harNogen = vL.concat(vR).some(function(v){ return v !== null; });
+    // Største forskel regnes mellem to serier: standard Min mod Fagprofessionel
+    function findSerie(id){ return alle.filter(function(se){ return se.id === id; })[0] || null; }
+    var parIds = S.kurvePar && findSerie(S.kurvePar[0]) && findSerie(S.kurvePar[1]) ? S.kurvePar : null;
+    if(!parIds){
+      var min = alle.filter(function(se){ return se.p === 'min'; })[0];
+      var fag = alle.filter(function(se){ return se.p === 'fag'; })[0];
+      if(min && fag) parIds = [min.id, fag.id];
+      else parIds = [alle[0].id, (alle[1] || alle[0]).id];
+    }
+    var A = findSerie(parIds[0]), B = findSerie(parIds[1]);
 
-    // Titel + forklaring
+    var harNogen = alle.some(function(se){ return se.values.some(function(v){ return v !== null; }); });
+
+    // Titel + forklaring (med til/fra pr. kurve)
     maal.appendChild(el('div', { class: 'sam-kurve-hoved' }, [
       el('h2', { class: 'sam-kurve-titel', text: curve.title }),
       el('p', { class: 'sam-kurve-hint', text: curve.hint })
     ]));
 
     var forklaring = el('div', { class: 'sam-kurve-forklaring' });
-    [[stil.left, tekstL], [stil.right, tekstR], ['episode', 'Episoden']].forEach(function(f){
-      forklaring.appendChild(el('span', { class: 'sam-tegn' }, [kurveTegn(f[0]), el('span', { text: f[1] })]));
+    alle.forEach(function(se){
+      var linje = el('span', { class: 'sam-tegn' }, [kurveTegn(se.stil), el('span', { text: se.navn })]);
+      if(laes){
+        if(S.kurveSkjult[se.id]) return;
+        forklaring.appendChild(linje);
+      }else{
+        var cb = el('input', { type: 'checkbox', 'aria-label': 'Vis ' + se.navn });
+        cb.checked = !S.kurveSkjult[se.id];
+        cb.addEventListener('change', function(){
+          S.kurveSkjult[se.id] = !cb.checked;
+          tegnIndhold();
+        });
+        forklaring.appendChild(el('label', { class: 'sam-tegn sam-kurve-til' }, [cb, linje]));
+      }
     });
+    forklaring.appendChild(el('span', { class: 'sam-tegn' }, [kurveTegn('episode'), el('span', { text: 'Episoden' })]));
     maal.appendChild(forklaring);
 
     if(!harNogen){
       maal.appendChild(el('p', { class: 'tom-tilstand',
-        text: 'Ingen af de to planer har udfyldt kurven endnu.' }));
+        text: 'Ingen af planerne har udfyldt kurven endnu.' }));
       kurveNoteSlut(maal, laes);
       return;
     }
 
-    var graf = kurveGraf(curve, vL, vR, stil, navnL, navnR);
+    var graf = kurveGraf(curve, synlige, [A, B]);
     maal.appendChild(el('div', { class: 'sam-kurve-graf' }, [graf.svg]));
 
-    // Det systemet kan måle: forskel i trin og tomme tidspunkter
+    // Det systemet kan måle: forskel i trin mellem de to valgte serier
     var resume = el('div', { class: 'sam-kurve-resume' });
+
+    if(!laes && alle.length > 2){
+      var selA = el('select', { 'aria-label': 'Første kurve' });
+      var selB = el('select', { 'aria-label': 'Anden kurve' });
+      alle.forEach(function(se){
+        selA.appendChild(el('option', { value: se.id, text: se.navn }));
+        selB.appendChild(el('option', { value: se.id, text: se.navn }));
+      });
+      selA.value = A.id; selB.value = B.id;
+      function skift(){
+        if(selA.value === selB.value) return;
+        S.kurvePar = [selA.value, selB.value];
+        tegnIndhold();
+      }
+      selA.addEventListener('change', skift);
+      selB.addEventListener('change', skift);
+      resume.appendChild(el('div', { class: 'sam-kurve-par' }, [
+        el('span', { class: 'sam-kurve-stoerst-titel', text: 'Største forskel mellem' }), selA, el('span', { text: 'og' }), selB
+      ]));
+    }
+
     if(graf.stoerst >= KURVE_FORSKEL){
       var stoerste = [];
       graf.forskelle.forEach(function(f, i){ if(f === graf.stoerst) stoerste.push(i); });
@@ -1450,18 +1596,18 @@ window.LA2Sammenlign = (function(){
       stoerste.forEach(function(i){
         resume.appendChild(el('div', { class: 'sam-kurve-stoerst' }, [
           el('strong', { text: curve.points[i].label + ': ' + graf.stoerst + ' trin' }),
-          el('span', { text: ' · ' + navnL + ' ' + vL[i] + ', ' + navnR + ' ' + vR[i] })
+          el('span', { text: ' · ' + A.navn + ' ' + A.values[i] + ', ' + B.navn + ' ' + B.values[i] })
         ]));
       });
     }else{
       resume.appendChild(el('div', { class: 'sam-kurve-stoerst-ingen',
-        text: 'Ingen tidspunkter, hvor kurverne ligger ' + KURVE_FORSKEL + ' trin eller mere fra hinanden.' }));
+        text: 'Ingen tidspunkter, hvor de to kurver ligger ' + KURVE_FORSKEL + ' trin eller mere fra hinanden.' }));
     }
 
     var kunEn = [];
     curve.points.forEach(function(p, i){
-      if((vL[i] === null) !== (vR[i] === null)){
-        kunEn.push(p.label + ' (kun ' + (vL[i] !== null ? navnL : navnR) + ')');
+      if((A.values[i] === null) !== (B.values[i] === null)){
+        kunEn.push(p.label + ' (kun ' + (A.values[i] !== null ? A.navn : B.navn) + ')');
       }
     });
     if(kunEn.length){
@@ -1471,22 +1617,20 @@ window.LA2Sammenlign = (function(){
 
     // Tallene som tabel (kan læses uden farver og på telefon)
     var tabel = el('table', { class: 'sam-kurve-tabel' });
-    tabel.appendChild(el('thead', null, [el('tr', null, [
-      el('th', { scope: 'col', text: 'Tidspunkt' }),
-      el('th', { scope: 'col', text: tekstL }),
-      el('th', { scope: 'col', text: tekstR }),
-      el('th', { scope: 'col', text: 'Forskel' })
-    ])]));
+    var hovedRaekke = el('tr', null, [el('th', { scope: 'col', text: 'Tidspunkt' })]);
+    alle.forEach(function(se){ hovedRaekke.appendChild(el('th', { scope: 'col', text: se.navn })); });
+    hovedRaekke.appendChild(el('th', { scope: 'col', text: 'Forskel' }));
+    tabel.appendChild(el('thead', null, [hovedRaekke]));
     var tb = el('tbody');
     curve.points.forEach(function(p, i){
       var f = graf.forskelle[i];
       var stor = f !== null && f >= KURVE_FORSKEL;
-      tb.appendChild(el('tr', { class: stor ? 'sam-kurve-stor' : null }, [
-        el('th', { scope: 'row', text: p.label }),
-        el('td', { text: vL[i] !== null ? String(vL[i]) : '–' }),
-        el('td', { text: vR[i] !== null ? String(vR[i]) : '–' }),
-        el('td', { text: f !== null ? String(f) : '–' })
-      ]));
+      var raekke = el('tr', { class: stor ? 'sam-kurve-stor' : null }, [el('th', { scope: 'row', text: p.label })]);
+      alle.forEach(function(se){
+        raekke.appendChild(el('td', { text: se.values[i] !== null ? String(se.values[i]) : '–' }));
+      });
+      raekke.appendChild(el('td', { text: f !== null ? String(f) : '–' }));
+      tb.appendChild(raekke);
     });
     tabel.appendChild(tb);
     maal.appendChild(el('div', { class: 'sam-kurve-tabel-wrap' }, [tabel]));
@@ -1531,13 +1675,14 @@ window.LA2Sammenlign = (function(){
     return el('div', { class: 'mv-note' }, kids);
   }
 
-  function mvKolonne(klasse, titel, antal, kort, tomTekst){
+  function mvKolonne(klasse, titel, antal, kort, tomTekst, billeder){
     var k = el('section', { class: 'mv-kol ' + klasse }, [
       el('h3', { class: 'mv-kol-titel' }, [
         el('span', { text: titel }),
         el('span', { class: 'mv-kol-antal', text: String(antal) })
       ])
     ]);
+    if(billeder) k.appendChild(billeder);
     if(!kort.length && tomTekst) k.appendChild(el('div', { class: 'mv-tom', text: tomTekst }));
     kort.forEach(function(x){ k.appendChild(x); });
     return k;
@@ -1580,9 +1725,9 @@ window.LA2Sammenlign = (function(){
     slide.appendChild(el('div', { class: 'mv-sektion', text: r.sektion }));
     slide.appendChild(el('h2', { class: 'mv-felt', text: r.felt }));
     slide.appendChild(el('div', { class: 'mv-kolonner' }, [
-      mvKolonne('mv-kol-v', 'Kun ' + vOrd, venstre.length, venstre, harV ? 'Alt er flyttet til midten' : 'Intet skrevet her'),
+      mvKolonne('mv-kol-v', 'Kun ' + vOrd, venstre.length, venstre, harV ? 'Alt er flyttet til midten' : 'Intet skrevet her', sideBilleder(S.left, r, 64)),
       mvKolonne('mv-kol-m', 'Begge er enige', midt.length, midt, 'Intet er flyttet hertil endnu'),
-      mvKolonne('mv-kol-h', 'Kun ' + hOrd, hoejre.length, hoejre, harH ? 'Alt er flyttet til midten' : 'Intet skrevet her')
+      mvKolonne('mv-kol-h', 'Kun ' + hOrd, hoejre.length, hoejre, harH ? 'Alt er flyttet til midten' : 'Intet skrevet her', sideBilleder(S.right, r, 64))
     ]));
     var note = noteLaes(r.key);
     if(note) slide.appendChild(note);
@@ -1802,8 +1947,8 @@ window.LA2Sammenlign = (function(){
           el('div', { class: 'sp-sektion', text: r.sektion }),
           el('div', { class: 'sp-feltnavn', text: r.felt })
         ]),
-        el('td', null, [printListe(punkter(S.left, r), 'Intet skrevet her')]),
-        el('td', null, [printListe(punkter(S.right, r), 'Intet skrevet her')]),
+        el('td', null, [sideBilleder(S.left, r, 28), printListe(punkter(S.left, r), 'Intet skrevet her')]),
+        el('td', null, [sideBilleder(S.right, r, 28), printListe(punkter(S.right, r), 'Intet skrevet her')]),
         celleNote
       ]));
     });
@@ -2127,6 +2272,8 @@ window.LA2Sammenlign = (function(){
     });
     function bedst(fag){
       var liste = kandidater.filter(function(p){ return erFag(p) === fag; });
+      // Min foretrækkes frem for TIP som standardvalg til venstre
+      liste.sort(function(x, y){ return (x.perspective === 'din' ? 1 : 0) - (y.perspective === 'din' ? 1 : 0); });
       var levende = liste.filter(function(p){ return p.status !== 'arkiv'; });
       return (levende[0] || liste[0]) || null;
     }
@@ -2138,6 +2285,12 @@ window.LA2Sammenlign = (function(){
 
   function vis(ctx, rid, tab, gruppe){
     mvLuk();
+    if(T.plans[tab] && T.plans[tab].kind === 'oeer'){
+      ctx.visIRod(el('div', { class: 'sammenlign' }, [
+        el('p', { class: 'tom-tilstand', text: 'Trivselsøer kan ikke sammenlignes endnu.' })
+      ]));
+      return { opdater: function(){ return Promise.resolve(); } };
+    }
     if(S && S.timer) gemAlt();           // aflever evt. afventende gem fra forrige sammenligning
     var rod = el('div', { class: 'sammenlign' }, [el('div', { class: 'indlaeser', text: 'Henter planer…' })]);
     ctx.visIRod(rod);

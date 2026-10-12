@@ -287,7 +287,7 @@ window.LA2Overblik = (function(){
         el('div', { class: 'kort-navn', text: b.navn }),
         kontakt ? el('div', { class: 'kort-kontakt', text: 'Kontakt: ' + kontakt }) : null
       ]),
-      el('span', { class: 'variant-maerke', text: b.r.variant })
+      el('span', { class: 'variant-maerke', text: (b.r.indefra_form === 'LA2u' ? 'LA2u' : 'LA2') + (b.r.bruger_tip ? ' + TIP' : '') })
     ]);
 
     var raekker = el('div', { class: 'fase-raekker' });
@@ -401,7 +401,7 @@ window.LA2Overblik = (function(){
       sektion.appendChild(el('p', { class: 'tom-tilstand', text: 'Ingen beboere er sat op til LA2 endnu.' }));
     }
     m.beboere.forEach(function(b){
-      var under = [b.r.variant];
+      var under = [(b.r.indefra_form === 'LA2u' ? 'LA2u' : 'LA2') + (b.r.bruger_tip ? ' + TIP' : '')];
       if(b.rader.laering.tilstand === 'ny') under.push('ny læringsplan');
       else if(b.rader.trivsel.tilstand === 'ny' || b.rader.tryghed.tilstand === 'ny') under.push('opdateret i dag');
 
@@ -538,7 +538,7 @@ window.LA2Overblik = (function(){
         var nyligt = g.rows.some(function(p){ return new Date(p.created_at) >= new Date(t.getTime() - 24 * 3600000); });
         var aktiv = g.rows.some(function(p){ return p.status === 'aktiv'; });
         var chips = g.rows.map(function(p){
-          var navn = p.perspective === 'fagprofessionel' ? 'Fagprofessionel' : (p.perspective === 'din' ? 'Din' : 'Min');
+          var navn = p.perspective === 'fagprofessionel' ? 'Fagprofessionel' : (p.perspective === 'din' ? 'TIP' : 'Min');
           return el('span', { class: 'chip chip-' + p.status, text: navn + ' · ' + (p.status === 'aktiv' ? 'aktiv' : 'udkast') });
         });
         var alder = dato ? U().dageMellem(dato, iDag) : -1;
@@ -585,8 +585,8 @@ window.LA2Overblik = (function(){
   // Revision: alle planer med frist, mest overskredne først
   // ---------------------------------------------------------------
 
-  var TAB_FOR = { trivsel: 'trivsel', tryghed: 'tryghed', mestring: 'mestring', haab_droem: 'haab_droem' };
-  var PLAN_TEKST = { trivsel: 'Trivselsplan', tryghed: 'Tryghedsplan', mestring: 'Mestringsplan', haab_droem: 'Håb og drømme' };
+  var TAB_FOR = { trivsel: 'trivsel', tryghed: 'tryghed', mestring: 'mestring', trivselsoeer: 'trivselsoeer', haab_droem: 'haab_droem' };
+  var PLAN_TEKST = { trivsel: 'Trivselsplan', tryghed: 'Tryghedsplan', mestring: 'Mestringsplan', trivselsoeer: 'Trivselsøer', haab_droem: 'Håb og drømme' };
 
   function revision(ctx){
     var maal = el('div', { id: 'revisionIndhold', class: 'indlaeser', text: 'Henter planer…' });

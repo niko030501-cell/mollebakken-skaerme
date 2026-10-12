@@ -79,7 +79,7 @@ window.LA2Data = (function(){
     // ---- Beboere (indstillinger + navn/farve) ----
     residents: function(){
       return client.from('la2_residents')
-        .select('id,resident_id,botilbud_id,variant,contact_persons,beboere(navn,farve,sortering)')
+        .select('id,resident_id,botilbud_id,variant,indefra_form,bruger_tip,contact_persons,beboere(navn,farve,sortering)')
         .then(unwrap)
         .then(function(rows){
           return rows.sort(function(a, b){
@@ -177,6 +177,29 @@ window.LA2Data = (function(){
 
     commonDelete: function(id){
       return client.from('la2_compare_common').delete().eq('id', id).select('id').then(unwrap);
+    },
+
+    // ---- Billeder (privat bucket 'la2-billeder', kun editor) ----
+    // Filnavnet er <resident_id>/<tilfældigt id>.jpg. Billeder overskrives ikke.
+    uploadFoto: function(residentId, blob){
+      var id = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : String(Date.now()) + '-' + Math.floor(Math.random() * 1e9);
+      var sti = residentId + '/' + id + '.jpg';
+      return client.storage.from('la2-billeder')
+        .upload(sti, blob, { contentType: 'image/jpeg', upsert: false })
+        .then(function(res){
+          if(res.error) throw res.error;
+          return sti;
+        });
+    },
+
+    // Kortvarigt signeret link (vises kun, gemmes ikke)
+    signeretUrl: function(sti, sekunder){
+      return client.storage.from('la2-billeder').createSignedUrl(sti, sekunder || 300).then(function(res){
+        if(res.error) throw res.error;
+        return res.data.signedUrl;
+      });
     },
 
     // ---- Feedet (samme som infoskærmen): metadata for AKTIVE planer ----

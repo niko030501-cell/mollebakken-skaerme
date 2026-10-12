@@ -2695,3 +2695,718 @@ html.mv-aaben, html.mv-aaben body{ overflow:hidden; }
 .mv-kurve .sam-kurve-graf{ max-width:1100px; }
 
 @media print{ .mv{ display:none; } }
+
+/* ==================================================================
+   Perspektiver: LA2 / LA2u / TIP
+   ================================================================== */
+
+/* lille mærke i perspektivknappen: LA2 eller LA2u */
+.segment-maerke{
+  display:inline-block;
+  margin-left:8px;
+  padding:1px 6px;
+  border:1.5px solid currentColor;
+  border-radius:6px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.06em;
+  vertical-align:middle;
+}
+
+.tip-forklaring{
+  margin:0 0 14px;
+  padding:10px 14px;
+  border-left:6px solid var(--fase-laering);
+  background:var(--fase-laering-lys);
+  border-radius:0 12px 12px 0;
+  font-size:15px;
+}
+
+.tip-ark{ margin-top:18px; }
+.tip-ark > summary{ cursor:pointer; font-weight:800; min-height:44px; display:flex; align-items:center; }
+.tip-ark-hjaelp{ margin:4px 0 12px; font-size:14px; color:var(--tekst-2); }
+.tip-ark-hint{ margin:-6px 0 14px; font-size:13px; color:var(--tekst-2); }
+
+.indstilling-hjaelp{ margin:0 0 12px; font-size:13px; color:var(--tekst-2); }
+
+/* ==================================================================
+   Trivselsplan: tre niveauer som barometer (nedefra og op)
+   Niveauer kan skelnes uden farver: nummer, navn og kantstil
+   (Trivsel fuld tynd · Sårbar trivsel stiplet · Mistrivsel tyk).
+   ================================================================== */
+
+.tb{
+  --tb-1:#2f7d4f; --tb-1-lys:#f1f8f3;
+  --tb-2:#8a6212; --tb-2-streg:#d89b2b; --tb-2-lys:#fbf5e6;
+  --tb-3:#9a3632; --tb-3-lys:#fbf0ef;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.tb-hoved{ display:none; }
+
+.tb-niveau{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+  border-radius:14px;
+  border:2px solid var(--tb-1);
+  border-left-width:10px;
+  background:var(--tb-1-lys);
+}
+
+.tb-n2{ border:3px dashed var(--tb-2-streg); background:var(--tb-2-lys); }
+.tb-n3{ border:5px solid var(--tb-3); background:var(--tb-3-lys); }
+
+.tb-kol{ min-width:0; }
+.tb-kol-label{
+  margin-bottom:4px;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--label);
+}
+
+/* barometeret: på telefon en smal bånd over kortet */
+.tb-baro{
+  order:-1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:6px 10px;
+  border-radius:10px;
+  background:var(--tb-1);
+  color:#fff;
+  font-weight:800;
+}
+
+.tb-n2 .tb-baro{ background:var(--tb-2); }
+.tb-n3 .tb-baro{ background:var(--tb-3); }
+
+.tb-baro-nr{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  background:#fff;
+  color:#000;
+  font-size:16px;
+}
+
+.tb-baro-navn{ font-size:15px; }
+
+.tb-graense{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--tekst-2);
+}
+
+.tb-graense::before, .tb-graense::after{
+  content:'';
+  flex:1;
+  border-top:2px dashed #7b8986;
+}
+
+.tb .liste-felt, .tb .felt{ margin-bottom:8px; }
+
+@media (min-width:960px){
+  .tb-hoved, .tb-niveau{
+    display:grid;
+    grid-template-columns:minmax(0, 1.2fr) 96px minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
+    column-gap:14px;
+    align-items:stretch;
+  }
+
+  .tb-hoved{ padding:0 17px; }
+  .tb-hoved-kol{
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--label);
+  }
+
+  .tb-kol-label{ display:none; }
+
+  /* søjlen: afrundet foroven på Mistrivsel, forneden på Trivsel */
+  .tb-baro{
+    order:0;
+    flex-direction:column;
+    justify-content:center;
+    text-align:center;
+    padding:10px 4px;
+    border-radius:0;
+  }
+  .tb-n3 .tb-baro{ border-radius:28px 28px 0 0; }
+  .tb-n1 .tb-baro{ border-radius:0 0 28px 28px; }
+  .tb-baro-nr{ width:38px; height:38px; font-size:20px; }
+  .tb-baro-navn{ font-size:13px; line-height:1.2; }
+}
+
+/* ---------- Fra tidligere version ---------- */
+
+.legacy{ margin-top:18px; }
+.legacy > summary{ cursor:pointer; font-weight:800; min-height:44px; display:flex; align-items:center; }
+.legacy-hjaelp{ margin:0 0 10px; font-size:13px; color:var(--tekst-2); }
+.legacy-post{ padding:8px 0; border-top:1px solid var(--streg-svag); }
+.legacy-label{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--label); }
+.legacy-liste{ margin:4px 0 0; padding-left:20px; }
+
+/* planer, der skal bruge hele bredden (fx barometer): sidepanelet kommer under */
+@media (min-width:1000px){ .beboer-grid.beboer-grid-bred{ grid-template-columns:minmax(0, 1fr); } }
+
+/* ==================================================================
+   Tryghedsplan: tre faser i en episode (Optrapning · Kaos · Stabilisering)
+   Faserne kan skelnes uden farver: nummer, navn og stregstil
+   (fuld · tyk · stiplet).
+   ================================================================== */
+
+.tf{
+  --f-optrapning:#8a6212; --f-optrapning-lys:#fbf5e6;
+  --f-kaos:#9a3632;       --f-kaos-lys:#fbf0ef;
+  --f-stabilisering:#34507a; --f-stabilisering-lys:#eef2f8;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.tf-aarsager{
+  padding:12px 14px;
+  background:#fff;
+  border:1.5px solid var(--streg);
+  border-radius:12px;
+}
+
+.tf-aarsager .felt{ margin:0; }
+
+.tf-kurve{
+  margin:0;
+  padding:8px;
+  background:#fff;
+  border:1px solid var(--streg-svag);
+  border-radius:14px;
+}
+
+.affekt-svg{ display:block; width:100%; max-width:760px; height:auto; margin:0 auto; }
+
+/* faneknapper (kun telefon) */
+.tf-faner{ display:flex; }
+.tf-faner .segment{ flex:1; min-width:0; padding:0 4px; }
+
+.tf-skema{ display:flex; flex-direction:column; gap:14px; }
+.tf-raekke.tf-hoved{ display:none; }
+.tf-raekke{ display:flex; flex-direction:column; gap:8px; }
+
+.tf-gruppe-navn{
+  margin:0;
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--blaek);
+}
+
+.tf-celle{ display:none; min-width:0; padding:12px; border-radius:12px; border-top:6px solid var(--f-optrapning); background:var(--f-optrapning-lys); }
+.tf-celle-fase{ margin-bottom:6px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--label); }
+
+.tf-f-kaos{ border-top-color:var(--f-kaos); background:var(--f-kaos-lys); border-top-width:10px; }
+.tf-f-stabilisering{ border-top-color:var(--f-stabilisering); background:var(--f-stabilisering-lys); border-top-style:dashed; }
+
+.tf-aktiv-optrapning .tf-f-optrapning,
+.tf-aktiv-kaos .tf-f-kaos,
+.tf-aktiv-stabilisering .tf-f-stabilisering{ display:block; }
+
+.tf .felt, .tf .liste-felt{ margin-bottom:10px; }
+
+@media (min-width:900px){
+  .tf-faner{ display:none; }
+  .tf-celle-fase{ display:none; }
+
+  .tf-raekke{
+    display:grid;
+    grid-template-columns:56px repeat(3, minmax(0, 1fr));
+    gap:12px;
+    align-items:stretch;
+  }
+
+  .tf-celle{ display:block !important; }
+
+  .tf-raekke.tf-hoved{ display:grid; }
+  .tf-hoved .tf-celle{ padding:8px 12px; display:flex !important; align-items:center; gap:10px; }
+  .tf-fase-nr{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:50%; background:#fff; color:#000; font-weight:800;
+  }
+  .tf-fase-navn{ font-size:15px; font-weight:800; }
+
+  /* gruppenavnet står lodret i en smal lysegrå kolonne */
+  .tf-raekke:not(.tf-hoved) .tf-gruppe-navn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 4px;
+    border-radius:12px;
+    background:#e9ecea;
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    text-align:center;
+  }
+}
+
+/* sammenlign: faserne som baggrund på rækker */
+.sam-raekke.niveau-optrapning{ background:#fbf5e6; }
+.sam-raekke.niveau-kaos{ background:#fbf0ef; }
+.sam-raekke.niveau-stabilisering{ background:#eef2f8; }
+.sam-chip-optrapning:not(.valgt){ border-left:6px solid #8a6212; }
+.sam-chip-kaos:not(.valgt){ border-left:10px solid #9a3632; }
+.sam-chip-stabilisering:not(.valgt){ border-left:6px dashed #34507a; }
+
+/* ==================================================================
+   Mestringsplan (genbruger barometer-opbygningen fra Trivselsplanen)
+   ================================================================== */
+
+.la2u-billede{ display:block; flex:none; }
+.tb-baro-ansigt{ display:inline-flex; }
+
+.tb-mestring .tb-kol-label{ display:flex; align-items:center; gap:6px; }
+
+.tb-hoved-ikon{ display:flex; align-items:center; gap:8px; }
+
+/* LA2u: store ansigter ved barometeret */
+.tb-smiley .tb-baro{ padding:10px 14px; }
+.tb-smiley .tb-baro-navn{ font-size:17px; }
+
+@media (min-width:960px){
+  .tb-mestring .tb-hoved, .tb-mestring .tb-niveau{
+    grid-template-columns:150px repeat(3, minmax(0, 1fr));
+  }
+  .tb-mestring .tb-kol-label{ display:none; }
+  .tb-baro-ansigt{ margin-bottom:8px; }
+  .tb-smiley .tb-hoved, .tb-smiley .tb-niveau{ grid-template-columns:190px repeat(3, minmax(0, 1fr)); }
+}
+
+/* ==================================================================
+   Trivselsøer: runde øer + refleksion
+   ================================================================== */
+
+.oe{ display:flex; flex-direction:column; gap:16px; }
+.oe-intro{ margin:0; max-width:70ch; font-size:15px; }
+.oe-liste{ display:grid; grid-template-columns:minmax(0, 1fr); gap:16px; }
+
+@media (min-width:900px){
+  .oe-liste{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+
+.oe-kort{
+  padding:16px;
+  background:var(--fase-trivsel-lys);
+  border:3px solid var(--fase-trivsel);
+  border-radius:32px;
+}
+
+.oe-kort[hidden]{ display:none; }
+
+.oe-hoved{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+.oe-hoved-tekst{ flex:1; min-width:0; }
+.oe-hoved-tekst .felt{ margin:0; }
+
+.oe-billede{
+  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:96px;
+  height:96px;
+  border-radius:50%;
+  background:#fff;
+  border:3px solid var(--fase-trivsel);
+}
+
+.oe-nr{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:var(--label); }
+
+.oe-besoeg{ margin:8px 0 0; padding:10px 12px; border:1.5px solid var(--streg); border-radius:14px; background:#fff; }
+.oe-besoeg legend{ padding:0 6px; font-size:13px; font-weight:800; }
+.oe-afkryds{ display:flex; align-items:center; gap:10px; min-height:44px; font-size:15px; font-weight:700; cursor:pointer; }
+.oe-afkryds input{ width:22px; height:22px; accent-color:var(--brand); }
+
+.oe-tilfoej{ align-self:flex-start; }
+
+.oe-refleksion{ padding:16px; background:#fff; border:1.5px solid var(--streg); border-radius:18px; }
+.oe-spoergsmaal{ margin:0 0 12px; padding-left:22px; font-size:15px; }
+.oe-spoergsmaal li{ margin-bottom:4px; }
+
+/* ==================================================================
+   Planbladet: samme opbygning på skærm (rediger) og papir (print)
+   - .pt  toppen (fasemærker, ring, plannavn, faktaboks)
+   - .pf  print-tilstand: svar i bobler, skrivelinjer, ingen knapper
+   ================================================================== */
+
+.plan-kontrol{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:0 0 12px; }
+
+.pt{ margin:0 0 16px; }
+
+.pt-oeverst{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  padding-bottom:10px;
+  border-bottom:3px solid var(--blaek);
+}
+
+.pt-brand{ display:flex; align-items:center; gap:10px; }
+.pt-lms{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:44px; padding:3px 8px;
+  border:2px solid var(--brand); border-radius:8px;
+  color:var(--brand); font-weight:800; font-size:16px;
+}
+.pt-brand-navn{ font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+.pt-brand-sted{ font-size:12px; color:#4a5b58; }
+
+.pt-faser{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.pt-pil{ color:#4a5b58; font-weight:800; }
+.pt-fase{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 10px;
+  border:1px solid #b5bfba; border-radius:8px;
+  font-size:12px; font-weight:800; color:#4a5b58; background:#fff;
+}
+.pt-fase-nr{ font-weight:800; }
+.pt-fase.aktiv{ border-width:2px; }
+.pt-fase.pt-f-trivsel.aktiv{ color:var(--fase-trivsel); border-color:var(--fase-trivsel); background:var(--fase-trivsel-lys); }
+.pt-fase.pt-f-tryghed.aktiv{ color:var(--fase-tryghed); border-color:var(--fase-tryghed); background:var(--fase-tryghed-lys); }
+.pt-fase.pt-f-laering.aktiv{ color:var(--fase-laering); border-color:var(--fase-laering); background:var(--fase-laering-lys); }
+
+.pt-id{ display:flex; align-items:center; gap:14px; margin:14px 0 12px; }
+.pt-ring{
+  flex:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:64px; height:64px; border-radius:50%;
+  border:4px solid #374151; background:#fff;
+  font-size:30px; font-weight:800; color:var(--blaek);
+}
+.pt-id-tekst{ min-width:0; }
+.pt-label{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.pt-label.pt-f-trivsel{ color:var(--fase-trivsel); }
+.pt-label.pt-f-tryghed{ color:var(--fase-tryghed); }
+.pt-label.pt-f-laering{ color:var(--fase-laering); }
+.pt-label-ikon{ display:inline-flex; }
+.pt-navn{ margin:2px 0 0; font-size:34px; font-weight:800; text-transform:uppercase; line-height:1.1; }
+
+.pt-fakta{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  border:1px solid #b5bfba;
+  border-radius:8px;
+  background:#fff;
+}
+.pt-fakta-celle{ padding:8px 12px; border-right:1px solid #b5bfba; border-bottom:1px solid #b5bfba; margin:0 -1px -1px 0; min-width:0; }
+.pt-fakta-label{ font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#4a5b58; margin-bottom:2px; }
+.pt-fakta-vaerdi{ font-size:15px; font-weight:700; min-height:22px; overflow-wrap:anywhere; }
+.pt-fakta-streg{ display:block; height:20px; border-bottom:1px solid #8d9a95; }
+
+/* rediger: en lille lys baggrund i det felt, man skriver i */
+.pt-rediger .pt-fakta input, .pt-rediger .pt-fakta select{
+  width:100%; min-height:40px; padding:0 8px;
+  border:1px solid var(--streg); border-radius:8px; background:var(--la2-kort);
+  font-size:15px;
+}
+
+/* ---------- print-tilstand ---------- */
+
+.pf-felt .felt-label{ display:block; margin-bottom:4px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#4a5b58; }
+.pf-bobler{ display:flex; flex-direction:column; gap:6px; }
+.pf-boble{
+  padding:6px 10px;
+  background:#fff;
+  border:1px solid #cdd5d0;
+  border-radius:8px;
+  font-size:13px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.pf-linjer{ padding-top:2px; }
+.pf-linje{ height:22px; border-bottom:1px solid #8d9a95; }
+.pf-boks{ font-size:20px; line-height:1; }
+.pf-afkryds{ min-height:0; }
+.pf-kurve-svg{ max-width:620px; }
+.pf-kurve-tabel{ width:100%; border-collapse:collapse; margin-top:6px; font-size:12px; }
+.pf-kurve-tabel th, .pf-kurve-tabel td{ border:1px solid #8d9a95; padding:3px 6px; text-align:center; }
+
+/* print-tilstanden bruger altid papirets kolonner, uanset skærmbredden */
+.pf .tb-niveau{ break-inside:avoid; }
+.pf .tb-hoved, .pf .tb-niveau{
+  display:grid;
+  grid-template-columns:minmax(0, 1.2fr) 96px minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
+  column-gap:14px;
+  align-items:stretch;
+}
+.pf .tb-hoved{ padding:0 17px; }
+.pf .tb-hoved-kol{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:#4a5b58; }
+.pf .tb-kol-label{ display:none; }
+.pf .tb-baro{ order:0; flex-direction:column; justify-content:center; text-align:center; padding:10px 4px; border-radius:0; }
+.pf .tb-n3 .tb-baro{ border-radius:28px 28px 0 0; }
+.pf .tb-n1 .tb-baro{ border-radius:0 0 28px 28px; }
+.pf .tb-baro-nr{ width:38px; height:38px; font-size:20px; }
+.pf .tb-baro-navn{ font-size:13px; line-height:1.2; }
+.pf .tb-mestring .tb-hoved, .pf .tb-mestring .tb-niveau{ grid-template-columns:150px repeat(3, minmax(0, 1fr)); }
+.pf .tb-mestring .tb-baro-ansigt{ margin-bottom:8px; }
+
+.pf .tf-celle{ display:block !important; break-inside:avoid; }
+.pf .tf-celle-fase{ display:none; }
+.pf .tf-raekke{ display:grid; grid-template-columns:56px repeat(3, minmax(0, 1fr)); gap:12px; align-items:stretch; break-inside:avoid; }
+.pf .tf-raekke.tf-hoved{ display:grid; }
+.pf .tf-hoved .tf-celle{ padding:8px 12px; display:flex !important; align-items:center; gap:10px; }
+.pf .tf-fase-nr{ display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:#fff; color:#000; font-weight:800; }
+.pf .tf-fase-navn{ font-size:15px; font-weight:800; }
+.pf .tf-raekke:not(.tf-hoved) .tf-gruppe-navn{
+  display:flex; align-items:center; justify-content:center;
+  padding:10px 4px; border-radius:12px; background:#e9ecea;
+  writing-mode:vertical-rl; transform:rotate(180deg); text-align:center;
+}
+
+.pf .oe-liste{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.pf .oe-kort{ break-inside:avoid; }
+
+.sp-plan *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+.print-dokument.sp-plan{ font-size:12px; line-height:1.35; }
+
+@media print{
+  .pt, .pf .laering-raekke, .pf .plan-sektion, .pf .tb-niveau, .pf .oe-kort{ break-inside:avoid; }
+}
+
+/* ==================================================================
+   LA2u: billedstøtte
+   ================================================================== */
+
+.la2u .felt-label, .la2u .felt > span{ font-size:18px; }
+.la2u textarea, .la2u input[type=text]{ font-size:20px; }
+.la2u .sektion-titel{ font-size:22px; }
+
+.la2u-felt{ display:flex; align-items:flex-start; gap:14px; margin-bottom:12px; }
+.la2u-spoergsmaal-billede{
+  flex:none;
+  display:flex; align-items:center; justify-content:center;
+  width:104px; height:104px;
+  border-radius:18px; background:#fff; border:2px solid var(--streg);
+}
+.la2u-felt-krop{ flex:1; min-width:0; }
+.la2u-felt .felt{ margin-bottom:8px; }
+
+.la2u-foelelser{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+.la2u-foelelse{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  min-width:72px; padding:6px 8px;
+  border:3px solid transparent; border-radius:16px;
+  background:#fff; cursor:pointer; color:var(--blaek);
+}
+.la2u-foelelse:disabled{ cursor:default; opacity:1; }
+.la2u-foelelse.valgt{ border-color:var(--guld); background:var(--niveau-gul-lys); }
+.la2u-foelelse-tekst{ font-size:12px; font-weight:800; }
+
+.la2u-svarbillede{ display:flex; align-items:center; gap:10px; margin:6px 0 0; }
+.la2u-svarbillede-ramme{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:4px; border-radius:14px; background:#fff; border:2px solid var(--streg);
+}
+.la2u-foto{ display:block; object-fit:cover; border-radius:10px; }
+
+.kurve-knapper button .la2u-billede{ display:block; margin:0 auto; }
+.kurve-tal{ display:block; font-size:12px; font-weight:800; }
+
+.oe-billede-kol{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:none; }
+
+/* billedvælger */
+.bv{
+  position:fixed; inset:0; z-index:3000;
+  display:flex; align-items:flex-start; justify-content:center;
+  padding:16px; overflow:auto;
+  background:rgba(20,30,28,.6);
+}
+.bv:focus{ outline:none; }
+.bv-boks{ width:100%; max-width:760px; margin:auto; padding:16px; background:#fff; border-radius:18px; }
+.bv-hoved{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.bv-titel{ margin:0; font-size:22px; font-weight:800; }
+.bv-faner{ margin-bottom:12px; }
+.bv-gruppe{ margin-bottom:16px; }
+.bv-gruppe-navn{ margin:0 0 8px; font-size:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--label); }
+.bv-gitter{ display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:10px; }
+.bv-billede{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  min-height:128px; padding:8px;
+  border:2px solid var(--streg); border-radius:16px; background:#fff; cursor:pointer; color:var(--blaek);
+}
+.bv-billede.valgt{ border-color:var(--guld); border-width:4px; background:var(--niveau-gul-lys); }
+.bv-billede-tekst{ font-size:13px; font-weight:800; text-align:center; }
+.bv-foto{ padding:8px 0; }
+.bv-advarsel{ font-weight:800; color:var(--niveau-roed); }
+.bv-fil-knap{ display:inline-flex; align-items:center; cursor:pointer; }
+.bv-fil{ position:absolute; width:1px; height:1px; opacity:0; }
+.bv-bund{ margin-top:12px; padding-top:12px; border-top:1px solid var(--streg-svag); }
+
+@media (max-width:620px){
+  .la2u-felt{ flex-direction:column; }
+  .la2u-spoergsmaal-billede{ width:88px; height:88px; }
+}
+
+.pf .la2u-spoergsmaal-billede{ width:60px; height:60px; border-radius:12px; }
+.pf .la2u .felt-label{ font-size:14px; }
+
+/* LA2u i smalle kolonner: billedet står over spørgsmålet */
+.laering-celle .la2u-felt, .tb-kol .la2u-felt, .tf-celle .la2u-felt, .oe-kort .la2u-felt{
+  flex-direction:column;
+  gap:8px;
+}
+.laering-celle .la2u-spoergsmaal-billede, .tb-kol .la2u-spoergsmaal-billede,
+.tf-celle .la2u-spoergsmaal-billede, .oe-kort .la2u-spoergsmaal-billede{ width:80px; height:80px; }
+.la2u .felt-label, .la2u .felt > span{ font-size:15px; letter-spacing:.03em; }
+.la2u-foelelse{ min-width:64px; }
+
+.laering-celle .la2u-felt, .tb-kol .la2u-felt, .tf-celle .la2u-felt, .oe-kort .la2u-felt{ align-items:stretch; }
+.laering-celle .la2u-spoergsmaal-billede, .tb-kol .la2u-spoergsmaal-billede,
+.tf-celle .la2u-spoergsmaal-billede, .oe-kort .la2u-spoergsmaal-billede{ align-self:flex-start; }
+.la2u-felt-krop{ width:100%; }
+
+/* ==================================================================
+   Nye udskrifter (fase 5): hvid side, lidt blæk, tydeligt i sort-hvid
+   ================================================================== */
+
+.print-dokument.sp-plan{
+  --label:#4a5b58;
+  --tekst-2:#4a5b58;
+  font-family:'Archivo', sans-serif;
+  color:#000;
+  background:#fff;
+}
+
+/* ---------- sidehoved (gentages på hver side) og sidefod ---------- */
+
+.sp-plan .print-sidehoved{
+  padding:0 0 2mm;
+  font-size:9pt;
+  color:#4a5b58;
+  border-bottom:0.5pt solid #b5bfba;
+  margin-bottom:3mm;
+}
+
+.sp-plan .print-fod-2{ display:block; }
+.sp-plan .print-fod-linje{ display:flex; justify-content:space-between; gap:6mm; flex-wrap:wrap; }
+.sp-plan .print-fod-lille{ margin-top:1mm; font-size:8pt; color:#4a5b58; }
+.sp-plan .print-fortroligt{ font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+
+/* ---------- toppen ---------- */
+
+.sp-plan .pt-undertitel{ margin-top:2px; font-size:11pt; color:#4a5b58; font-weight:700; }
+.sp-plan .pt-oeverst{ border-bottom:3px solid #000; }
+.sp-plan .pt-ring{ border-width:4px; background:#fff; }
+.sp-plan .pt-fakta{ border:1px solid #b5bfba; }
+.sp-plan .pt-fakta-celle{ border-color:#b5bfba; }
+
+.print-staaende.sp-plan .pt-navn{ font-size:38px; }
+.print-liggende.sp-plan .pt-navn{ font-size:28px; }
+
+/* liggende: navn til venstre, faktaboks til højre */
+.print-liggende.sp-plan .pt{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr);
+  column-gap:8mm;
+  align-items:center;
+}
+.print-liggende.sp-plan .pt-oeverst{ grid-column:1 / -1; }
+.print-liggende.sp-plan .pt-id{ margin:8px 0; }
+.print-liggende.sp-plan .tip-forklaring{ grid-column:1 / -1; }
+.print-liggende.sp-plan .pt-fakta{ margin:8px 0; }
+
+/* ---------- barometer: lette felter med tyk kant, ikke store mørke flader ---------- */
+
+.pf .tb-baro{ color:#000; border:3px solid #2f7d4f; background:#f1f8f3; }
+.pf .tb-n2 .tb-baro{ border-color:#8a6212; background:#fbf5e6; }
+.pf .tb-n3 .tb-baro{ border-color:#9a3632; background:#fbf0ef; border-width:5px; }
+.pf .tb-baro-nr{ border:2px solid #000; }
+.pf .tb-baro-navn{ color:#000; font-weight:800; }
+
+/* ---------- tryghed: former ved faserne (cirkel, trekant, firkant) ---------- */
+
+.tf-form{ display:inline-block; width:16px; height:16px; background:currentColor; flex:none; }
+.tf-form-optrapning{ border-radius:50%; color:#8a6212; }
+.tf-form-kaos{ clip-path:polygon(50% 0, 100% 100%, 0 100%); color:#9a3632; }
+.tf-form-stabilisering{ color:#34507a; }
+
+/* ---------- tekst: aldrig under 9 px labels og 11 px brødtekst ---------- */
+
+.pf .pf-boble{ font-size:12px; }
+.pf .la2u .pf-boble{ font-size:15px; }
+.pf .felt-label, .pf .pf-felt .felt-label{ font-size:11px; }
+.pf .tb-hoved-kol{ font-size:11px; }
+
+/* ---------- sider: intet deles midt i en boks ---------- */
+
+@media print{
+  .sp-plan .pt, .sp-plan .pt-fakta, .pf .tb-niveau, .pf .tf-raekke, .pf .tf-celle, .pf .oe-kort,
+  .pf .laering-raekke, .pf .plan-sektion, .pf .kurve, .pf .pf-felt{ break-inside:avoid; page-break-inside:avoid; }
+  .pf .oe-refleksion{ break-before:page; page-break-before:always; }
+  .print-sidehoved{ display:block; }
+}
+
+/* print: kompakte øer, kurve i hele bredden, mindre affektkurve på stående side */
+.pf .pf-kurve-svg{ max-width:100%; width:100%; max-height:230px; }
+.pf .oe-kort{ padding:10px 12px; }
+.pf .oe-kort .pf-linjer .pf-linje:nth-child(n+3){ display:none; }
+.pf .oe-hoved{ margin-bottom:6px; }
+.pf .oe-billede{ width:72px; height:72px; }
+.pf .oe-liste{ gap:10px; }
+.print-staaende.sp-plan .affekt-svg{ max-width:540px; }
+.tf-fase-nr, .tf-form{ flex:none; }
+
+.pf .tf-fase-navn{ font-size:13px; line-height:1.15; overflow-wrap:anywhere; }
+.pf .tf-hoved .tf-celle{ gap:6px; padding:8px 8px; }
+
+/* ---------- Om LA2: former og tryghedsfaser ---------- */
+
+.om-former{ display:grid; grid-template-columns:1fr; gap:12px; }
+@media (min-width:900px){ .om-former{ grid-template-columns:repeat(3, 1fr); } }
+
+.om-fase3{ display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px; }
+@media (min-width:760px){ .om-fase3{ grid-template-columns:repeat(3, 1fr); } }
+
+.om-fase3-kort{ padding:14px; border-radius:12px; border-top:6px solid #8a6212; background:#fbf5e6; }
+.om-fase3-kaos{ border-top-color:#9a3632; border-top-width:10px; background:#fbf0ef; }
+.om-fase3-stabilisering{ border-top-color:#34507a; border-top-style:dashed; background:#eef2f8; }
+.om-fase3-hoved{ display:flex; align-items:center; gap:10px; font-weight:800; }
+.om-fase3-nr{ display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:#fff; }
+.om-fase3-navn{ font-size:17px; }
+.om-fase3-tekst{ margin:8px 0 0; font-size:15px; line-height:1.45; color:var(--tekst-2); }
+.om-fase3-form{ display:inline-block; width:16px; height:16px; background:#8a6212; border-radius:50%; }
+.om-fase3-form-kaos{ background:#9a3632; border-radius:0; clip-path:polygon(50% 0, 100% 100%, 0 100%); }
+.om-fase3-form-stabilisering{ background:#34507a; border-radius:0; }
+.om-forklaring-tekst{ margin:12px 0 0; font-size:15px; color:var(--tekst-2); }
+
+/* ---------- Sammenlign: tre kurver og billeder ---------- */
+
+.kurve-linje-tip{ stroke:#34507a; fill:none; }
+.kurve-trekant{ fill:#34507a; stroke:#fff; }
+.sp-kurver .kurve-linje-tip{ stroke:#000; }
+.sp-kurver .kurve-trekant{ fill:#000; stroke:#fff; }
+
+.sam-kurve-til{ cursor:pointer; min-height:44px; display:inline-flex; align-items:center; gap:8px; }
+.sam-kurve-til input{ width:22px; height:22px; accent-color:var(--brand); }
+.sam-kurve-par{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.sam-kurve-par select{ min-height:44px; padding:0 8px; border:1px solid var(--streg); border-radius:8px; background:#fff; }
+
+.sam-billeder{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+.sam-billede{ display:inline-flex; padding:3px; background:#fff; border:1px solid var(--streg); border-radius:10px; }
+.sam-billede img{ display:block; border-radius:6px; object-fit:cover; }
+.mv .sam-billede{ padding:6px; }
