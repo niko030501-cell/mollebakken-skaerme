@@ -677,3 +677,52 @@ insert into public.ovelser (slug, navn, beskrivelse, billede_sti, billede2_sti, 
  ('benloeft-bagud',       'Benløft bagud',         'Stå på hænder og knæ. Stræk det ene ben bagud, og sænk det igen.', 'beboer-v2/ovelser/benloeft-bagud-1.jpg', 'beboer-v2/ovelser/benloeft-bagud-2.jpg', 'styrke', 250, 'free-exercise-db'),
  ('benloeft-til-siden',   'Benløft til siden',     'Hold fast i en stol. Løft det ene ben ud til siden, og sænk det igen.', 'beboer-v2/ovelser/benloeft-til-siden-1.jpg', 'beboer-v2/ovelser/benloeft-til-siden-2.jpg', 'balance', 260, 'free-exercise-db')
 on conflict (slug) do nothing;
+
+-- ---------- Fase 3: beboerens egen dagsplan (læser ugeplaner via token) ----------
+create or replace function public.beboer_min_dag(p_token text)
+returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_beboer uuid := _beboer_fra_token(p_token);
+  v_navn text;
+begin
+  select navn into v_navn from beboere where id = v_beboer;
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+             'ugedag', ugedag, 'tid', tid, 'aktivitet', aktivitet, 'instruktion', instruktion))
+      from ugeplaner where beboer = v_navn), '[]'::jsonb);
+end;
+$$;
+
+revoke execute on function public.beboer_min_dag(text) from public;
+grant execute on function public.beboer_min_dag(text) to anon, authenticated;
+
+-- ---------- Fase 5: statistik (én række pr. dag og program, hele historikken) ----------
+-- En "træning" = en dag + et program med mindst ét færdigt sæt.
+create or replace function public.beboer_traeninger(p_token text)
+returns jsonb
+language plpgsql security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_beboer uuid := _beboer_fra_token(p_token);
+begin
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+             'lokal_dato', lokal_dato, 'program_id', program_id,
+             'saet_antal', n, 'sidste_tid', t) order by lokal_dato)
+      from (
+        select lokal_dato, program_id, count(*) as n, max(faerdig_tid) as t
+          from traening_log
+         where beboer_id = v_beboer
+         group by lokal_dato, program_id
+         order by lokal_dato desc
+         limit 5000
+      ) x), '[]'::jsonb);
+end;
+$$;
+
+revoke execute on function public.beboer_traeninger(text) from public;
+grant execute on function public.beboer_traeninger(text) to anon, authenticated;

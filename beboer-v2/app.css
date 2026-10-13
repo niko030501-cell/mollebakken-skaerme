@@ -1,0 +1,362 @@
+/* Beboerapp — standard-tema. Farver ligger som variabler, så temaer (fase 6)
+   kun skal skifte variabler. */
+
+:root{
+  color-scheme: light;
+  --bg:      #F4F2EE;
+  --kort:    #FFFFFF;
+  --ink:     #1B1B1F;
+  --ink-2:   #55555C;
+  --streg:   #DDD9D2;
+  --accent:  #C9F27B;
+  --accent-ink: #1B1B1F;
+  --fare:    #B3261E;
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-body: 'Archivo', system-ui, sans-serif;
+  --display-vaegt: 800;
+  --knap-bg: #1B1B1F;  --knap-fg: #F4F2EE;
+  --bund-bg: #1B1B1F;  --bund-fg: #F4F2EE;
+  --nu-bg:   #1B1B1F;  --nu-fg:   #F4F2EE;
+  --ikon-bg: #1B1B1F;  --ikon-fg: #C9F27B;
+  --fare-tekst: #B3261E;
+  --stop-kant: #1B1B1F;
+}
+
+*{ box-sizing:border-box; }
+
+html, body{ margin:0; padding:0; }
+
+body{
+  font-family: var(--font-body);
+  font-size: 19px;
+  line-height: 1.4;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+}
+
+#rod{
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: calc(20px + env(safe-area-inset-top)) 18px calc(104px + env(safe-area-inset-bottom));
+}
+
+h1, h2, h3{ font-family: var(--font-display); margin:0; font-weight: var(--display-vaegt); line-height:1.15; }
+
+button{ font-family: inherit; font-size: inherit; cursor:pointer; border:none; }
+input{ font-family: inherit; font-size: 22px; }
+
+:focus-visible{ outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* ---- Knapper (min. 56 px høje) ---- */
+.knap{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; min-height:60px; padding:14px 20px;
+  border-radius:16px; font-weight:800; font-size:21px;
+  background: var(--knap-bg); color: var(--knap-fg);
+}
+.knap.accent{ background: var(--accent); color: var(--accent-ink); }
+.knap.lys{ background: var(--kort); color: var(--ink); border:2px solid var(--ink); }
+.knap:disabled{ opacity:.5; cursor:default; }
+
+/* ---- Login ---- */
+.login{ padding-top: 8vh; }
+.login h1{ font-size: 38px; margin-bottom: 8px; }
+.login p{ color: var(--ink-2); margin: 0 0 28px; }
+.felt{ display:block; margin-bottom: 20px; }
+.felt span{ display:block; font-weight:700; margin-bottom:8px; }
+.felt input{
+  width:100%; min-height:60px; padding:12px 16px;
+  border:2px solid var(--ink); border-radius:14px; background: var(--kort); color: var(--ink);
+}
+.felt input.kode{ letter-spacing: .5em; text-align:center; font-weight:800; }
+.fejl{ color: var(--fare-tekst); font-weight:700; margin: 0 0 16px; }
+
+/* ---- Skærmhoved ---- */
+.hoved{ margin-bottom: 20px; }
+.hoved h1{ font-size: 36px; }
+.hoved .dato{ color: var(--ink-2); margin-top:4px; }
+.offline{
+  background: var(--accent); color: var(--accent-ink); font-weight:700;
+  padding:10px 14px; border-radius:12px; margin-bottom:16px; font-size:16px;
+}
+
+/* ---- Kort ---- */
+.sektion{ margin-bottom: 26px; }
+.sektion > h2{ font-size: 22px; margin-bottom: 12px; }
+.kort{
+  background: var(--kort); border-radius: 20px; padding: 18px;
+  border: 1px solid var(--streg);
+}
+.kort + .kort{ margin-top: 12px; }
+.traeningKort h3{ font-size: 24px; margin-bottom: 6px; }
+.meta{ color: var(--ink-2); font-size:17px; margin-bottom: 14px; }
+.tom{ color: var(--ink-2); }
+
+/* ---- På arbejde nu ---- */
+.personer{ display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:12px; }
+.person{ text-align:center; }
+.person .foto{
+  width:84px; height:84px; margin:0 auto 8px; border-radius:50%;
+  background: var(--streg); overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:26px; color: var(--ink-2);
+}
+.person .foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+.person .navn{ font-weight:800; font-size:19px; }
+.person .rolle{ color: var(--ink-2); font-size:15px; }
+
+/* ---- Min dag ---- */
+.dagsliste{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+.dagsrække{
+  display:flex; gap:14px; align-items:baseline;
+  padding:14px 16px; border-radius:16px;
+  background: var(--kort); border:1px solid var(--streg);
+}
+.dagsrække .tid{ font-weight:800; min-width:56px; font-variant-numeric: tabular-nums; }
+.dagsrække.forbi{ opacity:.55; }
+.dagsrække.nu{
+  background: var(--nu-bg); color: var(--nu-fg); border-color: var(--nu-bg);
+  box-shadow: inset 6px 0 0 var(--accent);
+}
+.dagsrække .nuMaerke{
+  display:inline-block; margin-left:8px; padding:2px 10px; border-radius:999px;
+  background: var(--accent); color: var(--accent-ink); font-size:14px; font-weight:800;
+}
+
+/* ---- Træning-fane ---- */
+.ovelsesliste{ list-style:none; margin:12px 0 0; padding:0; display:grid; gap:6px; }
+.ovelsesliste li{ display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--streg); }
+.ovelsesliste li span:last-child{ color: var(--ink-2); white-space:nowrap; }
+.dagechips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.dagechip{ padding:4px 10px; border-radius:999px; background: var(--streg); font-size:15px; font-weight:700; }
+.dagechip.idag{ background: var(--knap-bg); color: var(--knap-fg); }
+
+/* ---- Bundmenu ---- */
+.bund{
+  position:fixed; left:0; right:0; bottom:0; z-index:10;
+  background: var(--bund-bg); color: var(--bund-fg);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bund .inder{ max-width:560px; margin:0 auto; display:grid; grid-template-columns: repeat(4, 1fr); }
+.bund button{
+  background:transparent; color: var(--bund-fg); min-height:68px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  font-size:14px; font-weight:700; opacity:.75;
+}
+.bund button.aktiv{ opacity:1; color: var(--accent); }
+.bund svg{ width:28px; height:28px; }
+
+@media (prefers-reduced-motion: no-preference){
+  .side{ animation: ind .18s ease-out; }
+  @keyframes ind{ from{ opacity:0; transform: translateY(6px);} to{ opacity:1; transform:none;} }
+}
+
+/* ---- Træningsflow ---- */
+.flow{ display:flex; flex-direction:column; gap:14px; }
+.flowTop{ position:sticky; top:0; z-index:5; background: var(--bg); padding:6px 0 10px; }
+.flowRække{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.flowTaeller{ font-weight:800; font-size:22px; }
+.stopKnap{
+  min-height:56px; min-width:92px; padding:0 20px; border-radius:16px;
+  background: var(--kort); color: var(--ink); border:2px solid var(--stop-kant); font-weight:800; font-size:20px;
+}
+.bjaelke{ height:16px; border-radius:999px; background: var(--streg); overflow:hidden; }
+.bjaelkeFyld{ height:100%; background: var(--ink); border-radius:999px; transition: width .3s ease; }
+
+.flowBillede{
+  width:100%; aspect-ratio: 16 / 10; max-height:32vh; border-radius:20px; overflow:hidden;
+  background: var(--streg); display:flex; align-items:center; justify-content:center;
+}
+.flowBillede img{ width:100%; height:100%; object-fit:cover; display:block; }
+.flowBillede.udenBillede{ background: var(--ikon-bg); color: var(--ikon-fg); }
+.flowBillede.udenBillede svg{ width:45%; height:45%; }
+
+.flowTitel{ font-size:34px; }
+.flowMaal{ font-size:26px; font-weight:800; }
+.flowSaetTekst{ font-size:20px; color: var(--ink-2); font-weight:700; margin-top:-8px; }
+.flowBeskr{ font-size:21px; line-height:1.45; margin:0; }
+.flowNaeste{ font-size:22px; font-weight:800; }
+
+.saetCirkler{ display:flex; gap:10px; flex-wrap:wrap; }
+.saetCirkel{
+  width:44px; height:44px; border-radius:50%; border:3px solid var(--ink);
+  display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:22px;
+}
+.saetCirkel.faerdig{ background: var(--accent); border-color: var(--ink); color: var(--accent-ink); }
+.saetCirkel.nu{ background: var(--kort); box-shadow: 0 0 0 4px var(--accent); }
+
+.knap.flowStor{ min-height:84px; font-size:26px; border-radius:20px; margin-top:6px; }
+
+.pauseTal{
+  font-family: var(--font-display); font-weight:800; font-size:128px; line-height:1;
+  text-align:center; font-variant-numeric: tabular-nums;
+}
+.flow .flowMaal + .kort{ margin-top:6px; }
+.flowFaerdig{ text-align:center; display:flex; flex-direction:column; gap:16px; padding-top:6vh; }
+.flowStjerne{ font-size:96px; color: var(--ink); line-height:1; }
+.flowFaerdig .flowTitel{ font-size:38px; }
+.flow .knap.flowStor{ position:sticky; bottom: calc(12px + env(safe-area-inset-bottom)); box-shadow: 0 0 0 10px var(--bg); }
+
+/* ---- Statistik og medaljer ---- */
+.statTal{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:26px; }
+.statTal .kort{ margin-top:0; text-align:center; padding:20px 12px; }
+.statStor{ font-family: var(--font-display); font-weight:800; font-size:72px; line-height:1; font-variant-numeric: tabular-nums; }
+.statLabel{ font-size:18px; font-weight:700; color: var(--ink-2); margin-top:8px; }
+
+.ugeDage{ display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
+.ugeDag{
+  background: var(--kort); border:2px solid var(--streg); border-radius:14px;
+  padding:8px 0; text-align:center; min-height:84px;
+}
+.ugeDag.idag{ border-color: var(--ink); }
+.ugeDag.med{ background: var(--accent); border-color: var(--ink); }
+.ugeDagNavn{ font-weight:800; font-size:15px; }
+.ugeDagMaerke{ font-size:28px; font-weight:800; line-height:1.5; min-height:42px; }
+
+.soejler{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; align-items:end; }
+.soejle{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.soejleTal{ font-weight:800; font-size:22px; font-variant-numeric: tabular-nums; }
+.soejlePlads{ width:100%; height:140px; display:flex; align-items:flex-end; }
+.soejleBar{ width:100%; background: var(--streg); border-radius:10px 10px 4px 4px; }
+.soejle.denne .soejleBar{ background: var(--ink); }
+.soejleLabel{ font-size:14px; font-weight:700; color: var(--ink-2); }
+
+.medaljer{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+.medalje{
+  border-radius:20px; padding:16px 10px; text-align:center;
+  border:3px solid var(--ink); background: var(--accent); color: var(--accent-ink);
+}
+.medalje.ikkeOptjent{ background: transparent; border:3px dashed var(--ink-2); color: var(--ink-2); }
+.medaljeIkon svg{ width:56px; height:56px; }
+.medaljeTitel{ font-weight:800; font-size:20px; margin-top:6px; }
+.medaljeStatus{ font-size:17px; font-weight:700; margin-top:2px; }
+
+/* ==================================================================
+   TEMAER — skifter kun farver, fonte og pynt. Kontrast er kontrolleret:
+   brødtekst ≥ 7:1, sekundær tekst ≥ 4,5:1, knaptekst ≥ 6:1.
+   ================================================================== */
+
+/* ---- Zombie / Japan ---- */
+:root[data-tema="zombie"]{
+  color-scheme: dark;
+  --bg:      #0E0F0C;
+  --kort:    #181A14;
+  --ink:     #EEF1E6;
+  --ink-2:   #B2BAA2;
+  --streg:   #2C3024;
+  --accent:  #8BE04E;
+  --accent-ink: #0E0F0C;
+  --fare:    #E5383B;
+  --fare-tekst: #FF6B6E;
+  --font-display: 'Dela Gothic One', 'Archivo', system-ui, sans-serif;
+  --display-vaegt: 400;
+  --knap-bg: #2C3024;  --knap-fg: #EEF1E6;
+  --bund-bg: #181A14;  --bund-fg: #EEF1E6;
+  --nu-bg:   #8BE04E;  --nu-fg:   #0E0F0C;
+  --ikon-bg: #181A14;  --ikon-fg: #8BE04E;
+  --stop-kant: #E5383B;
+}
+:root[data-tema="zombie"] body::before{
+  content: '力';
+  position: fixed; right: -8vw; top: 4vh; z-index: 0;
+  font-family: 'Dela Gothic One', 'Archivo', sans-serif;
+  font-size: min(90vw, 520px); line-height: 1;
+  color: rgba(139, 224, 78, .08);
+  pointer-events: none; user-select: none;
+}
+:root[data-tema="zombie"] #rod{ position: relative; z-index: 1; }
+:root[data-tema="zombie"] .bund{ border-top: 2px solid #E5383B; }
+:root[data-tema="zombie"] .kort{ border-color: #2C3024; }
+:root[data-tema="zombie"] .bjaelkeFyld{ background: #E5383B; }
+:root[data-tema="zombie"] .saetCirkel{ border-color: #8BE04E; }
+:root[data-tema="zombie"] .saetCirkel.faerdig{ background: #8BE04E; color: #0E0F0C; }
+:root[data-tema="zombie"] .saetCirkel.nu{ background: transparent; box-shadow: 0 0 0 4px #E5383B; }
+:root[data-tema="zombie"] .soejle.denne .soejleBar{ background: #8BE04E; }
+:root[data-tema="zombie"] .soejleBar{ background: #2C3024; }
+:root[data-tema="zombie"] .ugeDag.idag{ border-color: #E5383B; }
+:root[data-tema="zombie"] .medalje.optjent{ border-color: #8BE04E; }
+:root[data-tema="zombie"] .flowStjerne{ color: #E5383B; }
+
+/* ---- Bowling ---- */
+:root[data-tema="bowling"]{
+  --bg:      #F7EBD3;
+  --kort:    #FFFAEC;
+  --ink:     #1C2541;
+  --ink-2:   #4A5270;
+  --streg:   #E2D3B3;
+  --accent:  #2EC4B6;
+  --accent-ink: #1C2541;
+  --fare:    #D7263D;
+  --fare-tekst: #B01E31;
+  --font-display: 'Bungee', 'Archivo', system-ui, sans-serif;
+  --display-vaegt: 400;
+  --knap-bg: #1C2541;  --knap-fg: #F7EBD3;
+  --bund-bg: #1C2541;  --bund-fg: #F7EBD3;
+  --nu-bg:   #1C2541;  --nu-fg:   #F7EBD3;
+  --ikon-bg: #1C2541;  --ikon-fg: #2EC4B6;
+  --stop-kant: #D7263D;
+}
+:root[data-tema="bowling"] .bund{ border-top: 4px solid #D7263D; }
+:root[data-tema="bowling"] .saetCirkel.nu{ box-shadow: 0 0 0 4px #D7263D; }
+:root[data-tema="bowling"] .soejle.denne .soejleBar{ background: #D7263D; }
+:root[data-tema="bowling"] .ugeDag.med{ background: #2EC4B6; }
+:root[data-tema="bowling"] .medalje.optjent{ background: #2EC4B6; }
+
+/* ---- Temavælger (Mere) ---- */
+.temaTitel{ font-size:22px; margin-bottom:12px; }
+.temaGruppe{ display:grid; gap:10px; }
+.temaKnap{
+  display:flex; align-items:center; gap:14px; width:100%; min-height:72px;
+  padding:12px 14px; border-radius:16px; text-align:left;
+  background: var(--kort); color: var(--ink); border:3px solid var(--streg);
+}
+.temaKnap.valgt{ border-color: var(--ink); }
+.temaFarver{ display:flex; flex:0 0 auto; }
+.temaPrik{ width:22px; height:44px; border:1px solid rgba(0,0,0,.25); }
+.temaPrik:first-child{ border-radius:10px 0 0 10px; }
+.temaPrik:last-child{ border-radius:0 10px 10px 0; }
+.temaTekst{ flex:1; display:flex; flex-direction:column; }
+.temaNavn{ font-weight:800; font-size:21px; }
+.temaBeskr{ color: var(--ink-2); font-size:16px; }
+.temaValgt{ font-weight:800; font-size:16px; background: var(--accent); color: var(--accent-ink); padding:4px 12px; border-radius:999px; }
+
+.medaljeKrit{ font-size:15px; font-weight:700; opacity:.85; }
+
+/* ---- Bowling: kegler og STRIKE ---- */
+.kegler{ display:flex; justify-content:center; gap:2px; flex-wrap:wrap; padding:6px 0; }
+.kegle{ display:inline-block; width:30px; height:76px; color: var(--ink); transform-origin: 50% 100%; }
+.kegle svg{ width:100%; height:100%; fill: var(--kort); stroke: var(--ink); }
+.kegle:nth-child(odd) svg{ fill: var(--kort); }
+.kegle svg path:first-child{ fill: var(--kort); }
+@media (prefers-reduced-motion: no-preference){
+  .kegler.vaelt .kegle{ animation: kegleVaelt .55s ease-in forwards; animation-delay: calc(var(--i) * 45ms); }
+}
+@media (prefers-reduced-motion: reduce){
+  .kegler.vaelt .kegle{ transform: rotate(80deg); opacity:.4; }
+}
+@keyframes kegleVaelt{
+  0%   { transform: rotate(0); opacity:1; }
+  100% { transform: rotate(82deg) translateY(10px); opacity:.35; }
+}
+.strike{
+  font-family: var(--font-display); font-size:56px; line-height:1; text-align:center;
+  color: var(--fare-tekst); letter-spacing:.04em;
+}
+.strike[hidden]{ display:none; }
+@media (prefers-reduced-motion: no-preference){
+  .strike{ animation: strikeInd .3s ease-out; }
+  @keyframes strikeInd{ from{ transform: scale(.6); opacity:0; } to{ transform:none; opacity:1; } }
+}
+
+/* ---- Bowling: scorekort ---- */
+.scorekort{ display:grid; grid-template-columns: repeat(5, 1fr); border:3px solid var(--ink); border-radius:12px; overflow:hidden; }
+.skRamme{ text-align:center; border-left:3px solid var(--ink); background: var(--kort); }
+.skRamme:first-child{ border-left:none; }
+.skRamme.denne{ background: var(--accent); color: var(--accent-ink); }
+.skUge{ font-weight:800; font-size:14px; padding:6px 0; border-bottom:3px solid var(--ink); background: var(--ink); color: var(--bg); }
+.skKast{ font-family: var(--font-display); font-size:44px; line-height:1.4; font-variant-numeric: tabular-nums; }
+.skSum{ font-weight:800; font-size:18px; padding:4px 0 6px; border-top:2px solid var(--ink); font-variant-numeric: tabular-nums; }
+.skForklaring{ margin:12px 0 0; font-size:15px; }
