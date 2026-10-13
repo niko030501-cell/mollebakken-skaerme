@@ -778,6 +778,32 @@
   }
   .tmMenuPunkt:hover{ background:var(--baggrund); }
   .tmMenuPunkt.aktiv{ font-weight:600; border-left-color:var(--guld); }
+  /* ---- Træning (programbygger til beboer-v2) ---- */
+  .trRække{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .trProgramNavn{ font-weight:700; font-size:17px; }
+  .trMeta{ font-size:13px; color:var(--tekst-svag); line-height:1.5; }
+  .trChips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .trChip{ min-width:52px; min-height:46px; padding:8px 10px; border:1px solid #d1d9d6; background:#fff; color:var(--mørk); font-weight:600; font-size:15px; }
+  .trChip.til{ background:var(--mørk); color:#fff; border-color:var(--mørk); }
+  .trBillede{ width:64px; height:64px; flex:0 0 64px; border-radius:8px; overflow:hidden; background:#e8eeeb; display:flex; align-items:center; justify-content:center; color:var(--tekst-svag); }
+  .trBillede img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .trSoegListe{ display:grid; gap:8px; max-height:360px; overflow:auto; margin-top:10px; }
+  .trOvelse{ display:flex; gap:12px; align-items:center; padding:8px; border:1px solid #e1e7e4; border-radius:10px; background:#fff; }
+  .trOvelse .trTekst{ flex:1; min-width:0; }
+  .trOvelse .trBeskr{ font-size:13px; color:var(--tekst-svag); }
+  .trValgt{ display:block; padding:12px; border:1px solid #e1e7e4; border-radius:10px; background:#fff; margin-bottom:10px; }
+  .trValgtHoved{ display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+  .trTal{ display:flex; gap:10px; flex-wrap:wrap; }
+  .trTal label{ font-size:12px; font-weight:600; color:var(--tekst-svag); display:flex; flex-direction:column; gap:3px; }
+  .trTal input{ width:84px; }
+  .trKnapRække{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .trKnap{ min-height:46px; padding:10px 16px; font-size:15px; font-weight:600; }
+  .trKnap.sekundaer{ background:#e8eeeb; color:var(--mørk); }
+  .trFejl{ color:var(--rød); font-size:14px; margin:8px 0; }
+  .trFelt{ display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+  .trFelt input{ min-height:46px; }
+  .sidehovedKnap[hidden]{ display:none; }
+  .trPrik{ display:inline-block; width:14px; height:14px; border-radius:50%; vertical-align:middle; margin-right:8px; }
 </style>
 </head>
 
@@ -1240,6 +1266,18 @@
     </div>
   </div>
 
+  <!-- ============ TRÆNING ============ -->
+  <div id="traening" class="side">
+    <header class="sidehoved">
+      <div>
+        <h2 class="sidehovedTitel">Træning</h2>
+        <p class="sidehovedSub">Lav træningsprogrammer til beboerne</p>
+      </div>
+      <button type="button" class="sidehovedKnap" id="trNytKnap" onclick="trNytProgram()" hidden><span data-ikon="plus"></span>Nyt program</button>
+    </header>
+    <div id="trIndhold"><div class="loading">Henter …</div></div>
+  </div>
+
   <!-- ============ ADMIN ============ -->
   <div id="admin" class="side">
     <header class="sidehoved">
@@ -1274,6 +1312,7 @@
     <button class="skjultPaaForside skjultPaaValg" id="navRengoring" onclick="visSide('rengoring')"><span class="ikon" data-ikon="rengoering" data-storrelse="20"></span>Rengøring</button>
     <button class="skjultPaaForside skjultPaaValg mereFane" id="navP104" onclick="visSide('paragraf104')"><span class="ikon" data-ikon="p104" data-storrelse="20"></span>§104</button>
     <button class="skjultPaaForside skjultPaaValg mereFane" id="navPersonalemoede" onclick="visSide('personalemoede')"><span class="ikon" data-ikon="pmoede" data-storrelse="20"></span>P-møde</button>
+    <button class="skjultPaaForside skjultPaaValg mereFane" id="navTraening" onclick="visSide('traening')"><span class="ikon" data-ikon="aktivitet" data-storrelse="20"></span>Træning</button>
     <button class="skjultPaaForside skjultPaaValg mereFane" id="navSkaerm" onclick="visSide('skaerm')"><span class="ikon" data-ikon="skaerm" data-storrelse="20"></span>Skærm</button>
     <button class="skjultPaaValg" id="navMere" onclick="åbnMereArk()" aria-haspopup="dialog" aria-expanded="false"><span class="ikon" data-ikon="mere" data-storrelse="20"></span>Mere</button>
   </div>
@@ -1436,6 +1475,7 @@ const sideTitler = {
   rengoring: 'Rengøring',
   paragraf104: '§104',
   personalemoede: 'Personalemøde',
+  traening: 'Træning',
   skaerm: 'Beboerskærm',
   admin: 'Admin'
 };
@@ -1443,7 +1483,7 @@ const sideTitler = {
 const navKnapPerSide = {
   forside: 'navForside', opgaver: 'navOpgaver', program: 'navProgram',
   la2: 'navLa2', sammenMed: 'navSammenMed', rengoring: 'navRengoring', paragraf104: 'navP104',
-  personalemoede: 'navPersonalemoede', skaerm: 'navSkaerm'
+  personalemoede: 'navPersonalemoede', traening: 'navTraening', skaerm: 'navSkaerm'
 };
 
 let aktuelSide = 'valg';
@@ -1477,6 +1517,7 @@ function visSide(side){
   if(side === 'admin'){ hentIndstillingerAdmin(); hentSkaermIndstillinger(); }
   if(side === 'rengoring') hentRengoring();
   if(side === 'personalemoede') visMoedeMode();
+  if(side === 'traening') trVis(); else trStop();
   if(side === 'skaerm') visSkaerm();
 }
 
@@ -1497,7 +1538,8 @@ const MERE_FANER = [
   { side: 'la2',            fane: 'la2',            ikon: 'la2',    titel: 'LA2-planer' },
   { side: 'paragraf104',    fane: 'paragraf104',    ikon: 'p104',   titel: '§104' },
   { side: 'personalemoede', fane: 'personalemoede', ikon: 'pmoede', titel: 'Personalemøde' },
-  { side: 'skaerm',         fane: 'skaerm',         ikon: 'skaerm', titel: 'Beboerskærm' }
+  { side: 'traening',       fane: 'traening',       ikon: 'aktivitet', titel: 'Træning' },
+  { side: 'skaerm',        fane: 'skaerm',         ikon: 'skaerm', titel: 'Beboerskærm' }
 ];
 let mereFokusFør = null;
 
@@ -1678,6 +1720,7 @@ const FEATURE_KORT = [
   { fane: 'rengøring',      side: 'rengoring' },
   { fane: 'paragraf104',    side: 'paragraf104' },
   { fane: 'personalemoede', side: 'personalemoede' },
+  { fane: 'traening',       side: 'traening' },
   { fane: 'skaerm',         side: 'skaerm' }
 ];
 
@@ -4220,6 +4263,681 @@ async function skaermVisIgen(i){
     skaermTravl = false;
     hentSkaerm();
   }
+}
+
+// ==================================================================
+// TRÆNING — programbygger til beboerappen (beboer-v2)
+// ==================================================================
+// Al adgang går gennem personale_*-funktionerne (shared/beboer-traening-schema.sql).
+// Personalekoden veksles til en token ved login; kun tokenen gemmes lokalt.
+// Alt tekst sættes med textContent / DOM-metoder (ingen HTML-strenge med brugerinput).
+
+const TR_TOKEN_NOEGLE = 'tr_personale_token';
+const TR_DAGE_KORT = { Mandag:'Man', Tirsdag:'Tir', Onsdag:'Ons', Torsdag:'Tor', Fredag:'Fre', Lørdag:'Lør', Søndag:'Søn' };
+
+let trToken = null;
+let trOvelser = [];
+let trProgrammer = [];
+let trStatus = [];
+let trKladde = null;       // program under redigering
+let trMode = 'programmer'; // programmer | log | beboere | editor
+let trFilterBeboer = '';   // beboer-id eller '' = alle
+let trPoll = null;
+let trFejlTekst = '';
+
+function trEl(tag, klasse, tekst){
+  const e = document.createElement(tag);
+  if(klasse) e.className = klasse;
+  if(tekst != null) e.textContent = tekst;
+  return e;
+}
+
+function trKnap(tekst, klasse, handler){
+  const k = trEl('button', 'knap trKnap ' + (klasse || ''), tekst);
+  k.type = 'button';
+  k.addEventListener('click', handler);
+  return k;
+}
+
+function trLaesToken(){
+  try { return localStorage.getItem(TR_TOKEN_NOEGLE); } catch(e){ return null; }
+}
+
+function trGemToken(t){
+  trToken = t || null;
+  try {
+    if(t) localStorage.setItem(TR_TOKEN_NOEGLE, t); else localStorage.removeItem(TR_TOKEN_NOEGLE);
+  } catch(e){ /* ignorer */ }
+}
+
+function trMitNavn(){
+  const felt = document.getElementById('trMitNavn');
+  const v = felt ? felt.value.trim() : '';
+  if(v){
+    try { localStorage.setItem('pm_mit_navn', v); } catch(e){ /* ignorer */ }
+    return v;
+  }
+  try { return (localStorage.getItem('pm_mit_navn') || '').trim(); } catch(e){ return ''; }
+}
+
+function trBeboerNavn(id){
+  const b = beboereListe.find(x => x.id === id);
+  return b ? b.navn : '';
+}
+
+function trOvelseById(id){
+  return trOvelser.find(o => o.id === id) || null;
+}
+
+async function trKald(navn, args){
+  if(!sb) return { fejl: 'Ingen forbindelse til databasen.' };
+  const res = await sb.rpc(navn, Object.assign({ p_token: trToken }, args || {}));
+  if(res.error){
+    const msg = res.error.message || '';
+    if(res.error.code === '28000' || msg.indexOf('ikke logget ind') >= 0){
+      trGemToken(null);
+      trFejlTekst = 'Du er logget ud. Log ind igen med personalekoden.';
+      trTegn();
+      return { fejl: trFejlTekst };
+    }
+    return { fejl: msg || 'Noget gik galt.' };
+  }
+  return { data: res.data };
+}
+
+function trVis(){
+  trToken = trLaesToken();
+  if(!trToken){ trTegn(); return; }
+  trHentAlt();
+  trStop();
+  trPoll = setInterval(function(){
+    if(aktuelSide === 'traening' && trMode === 'log' && !document.hidden) trOpdaterLog();
+  }, 60000);
+}
+
+function trStop(){
+  if(trPoll){ clearInterval(trPoll); trPoll = null; }
+}
+
+async function trHentAlt(){
+  const rod = document.getElementById('trIndhold');
+  if(rod && !rod.firstChild) rod.appendChild(trEl('div', 'loading', 'Henter …'));
+  const svar = await Promise.all([
+    trKald('personale_hent_ovelser'),
+    trKald('personale_hent_programmer'),
+    trKald('personale_beboer_status')
+  ]);
+  if(!trToken) return;   // blev logget ud under hentningen
+  const fejl = svar.find(s => s.fejl);
+  if(fejl){ trFejlTekst = fejl.fejl; }
+  else {
+    trFejlTekst = '';
+    trOvelser = svar[0].data || [];
+    trProgrammer = svar[1].data || [];
+    trStatus = svar[2].data || [];
+  }
+  trTegn();
+}
+
+// ---------- Log ind ----------
+
+async function trLogind(){
+  const felt = document.getElementById('trKodeInput');
+  const kode = felt ? felt.value : '';
+  if(!kode){ trFejlTekst = 'Skriv personalekoden.'; trTegn(); return; }
+  const res = await sb.rpc('personale_login', { p_kode: kode });
+  if(res.error){ trFejlTekst = 'Kunne ikke logge ind. Prøv igen.'; trTegn(); return; }
+  const d = res.data || {};
+  if(!d.ok){
+    trFejlTekst = d.fejl === 'laast' ? 'For mange forsøg. Vent 15 minutter og prøv igen.' : 'Forkert kode.';
+    trTegn();
+    return;
+  }
+  trGemToken(d.token);
+  trFejlTekst = '';
+  trMode = 'programmer';
+  trVis();
+}
+
+async function trLogud(){
+  if(trToken && sb) await sb.rpc('personale_logud', { p_token: trToken });
+  trGemToken(null);
+  trStop();
+  trTegn();
+}
+
+// ---------- Tegn ----------
+
+function trTegn(){
+  const rod = document.getElementById('trIndhold');
+  if(!rod) return;
+  rod.textContent = '';
+  document.getElementById('trNytKnap').hidden = !(trToken && trMode !== 'editor');
+
+  if(!trToken){
+    const kort = trEl('div', 'kort');
+    kort.appendChild(trEl('h3', null, 'Personalekode'));
+    kort.appendChild(trEl('p', 'trMeta', 'Skriv koden for at lave og se træningsprogrammer. Du skal kun gøre det én gang på denne enhed.'));
+    const række = trEl('div', 'trFelt');
+    const input = document.createElement('input');
+    input.type = 'password';
+    input.id = 'trKodeInput';
+    input.autocomplete = 'off';
+    input.setAttribute('aria-label', 'Personalekode');
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter') trLogind(); });
+    række.appendChild(input);
+    række.appendChild(trKnap('Log ind', 'knapGuld', trLogind));
+    kort.appendChild(række);
+    if(trFejlTekst) kort.appendChild(trEl('div', 'trFejl', trFejlTekst));
+    rod.appendChild(kort);
+    return;
+  }
+
+  // Navn + fane-vælger
+  const top = trEl('div', 'kort');
+  const navnRække = trEl('div', 'formRække');
+  const navnLabel = trEl('label', null, 'Dit navn (vises som afsender på programmerne)');
+  navnLabel.setAttribute('for', 'trMitNavn');
+  const navnInput = document.createElement('input');
+  navnInput.type = 'text';
+  navnInput.id = 'trMitNavn';
+  navnInput.autocomplete = 'off';
+  try { navnInput.value = localStorage.getItem('pm_mit_navn') || ''; } catch(e){ /* ignorer */ }
+  navnInput.addEventListener('input', function(){ trMitNavn(); });
+  navnRække.appendChild(navnLabel);
+  navnRække.appendChild(navnInput);
+  top.appendChild(navnRække);
+  rod.appendChild(top);
+
+  if(trMode !== 'editor'){
+    const vælger = document.createElement('select');
+    vælger.className = 'modeVælger';
+    vælger.setAttribute('aria-label', 'Visning');
+    [['programmer', 'Programmer'], ['log', 'Seneste træninger'], ['beboere', 'Koder og enheder']].forEach(function(p){
+      const o = document.createElement('option');
+      o.value = p[0];
+      o.textContent = p[1];
+      if(p[0] === trMode) o.selected = true;
+      vælger.appendChild(o);
+    });
+    vælger.addEventListener('change', function(){ trMode = vælger.value; trTegn(); });
+    rod.appendChild(vælger);
+  }
+
+  if(trFejlTekst) rod.appendChild(trEl('div', 'trFejl', trFejlTekst));
+
+  if(trMode === 'editor') trTegnEditor(rod);
+  else if(trMode === 'log') trTegnLog(rod);
+  else if(trMode === 'beboere') trTegnBeboere(rod);
+  else trTegnProgrammer(rod);
+
+  indsætIkoner(document.getElementById('traening'));
+}
+
+function trBeboerFilter(rod, ved){
+  const række = trEl('div', 'formRække');
+  const label = trEl('label', null, 'Beboer');
+  const sel = document.createElement('select');
+  const alle = document.createElement('option');
+  alle.value = '';
+  alle.textContent = 'Alle beboere';
+  sel.appendChild(alle);
+  beboereListe.forEach(function(b){
+    const o = document.createElement('option');
+    o.value = b.id;
+    o.textContent = b.navn;
+    if(b.id === trFilterBeboer) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', function(){ trFilterBeboer = sel.value; ved(); });
+  række.appendChild(label);
+  række.appendChild(sel);
+  rod.appendChild(række);
+}
+
+function trDageTekst(dage){
+  if(!dage || dage.length === 0) return 'Ingen dage valgt';
+  return UGEDAGE.filter(function(d){ return dage.indexOf(d) >= 0; }).map(function(d){ return TR_DAGE_KORT[d]; }).join(', ');
+}
+
+// ---------- Programmer ----------
+
+function trTegnProgrammer(rod){
+  trBeboerFilter(rod, trTegn);
+  const liste = trProgrammer.filter(function(p){ return !trFilterBeboer || p.beboer_id === trFilterBeboer; });
+  if(liste.length === 0){
+    const tom = trEl('div', 'kort');
+    tom.appendChild(trEl('p', 'trMeta', 'Der er ingen programmer endnu. Tryk "Nyt program" for at lave det første.'));
+    rod.appendChild(tom);
+    return;
+  }
+  liste.forEach(function(p){
+    const kort = trEl('div', 'kort');
+    const navn = trEl('div', 'trProgramNavn');
+    const prik = trEl('span', 'trPrik');
+    prik.style.background = farveForBeboer(trBeboerNavn(p.beboer_id));
+    navn.appendChild(prik);
+    navn.appendChild(document.createTextNode(trBeboerNavn(p.beboer_id) + ' · ' + p.navn));
+    kort.appendChild(navn);
+    const antal = (p.ovelser || []).length;
+    kort.appendChild(trEl('div', 'trMeta',
+      trDageTekst(p.dage) + ' · ' + antal + (antal === 1 ? ' øvelse' : ' øvelser') +
+      (p.aktiv ? '' : ' · Sat på pause') + ' · Af ' + p.oprettet_af));
+
+    const knapper = trEl('div', 'trKnapRække');
+    knapper.appendChild(trKnap('Rediger', 'knapGuld', function(){ trRediger(p); }));
+    knapper.appendChild(trKnap('Slet', 'knapFare', function(){ trSlet(p); }));
+    kort.appendChild(knapper);
+
+    // Kopiér til anden beboer
+    const kopi = trEl('div', 'trFelt');
+    kopi.style.marginTop = '10px';
+    const sel = document.createElement('select');
+    sel.setAttribute('aria-label', 'Kopiér til beboer');
+    beboereListe.filter(function(b){ return b.id !== p.beboer_id; }).forEach(function(b){
+      const o = document.createElement('option');
+      o.value = b.id;
+      o.textContent = b.navn;
+      sel.appendChild(o);
+    });
+    kopi.appendChild(sel);
+    kopi.appendChild(trKnap('Kopiér til beboer', 'sekundaer', function(){ trKopier(p, sel.value); }));
+    kort.appendChild(kopi);
+    rod.appendChild(kort);
+  });
+}
+
+async function trKopier(p, tilId){
+  const navn = trMitNavn();
+  if(!navn){ visToast('Skriv dit navn først'); return; }
+  if(!tilId){ visToast('Vælg en beboer'); return; }
+  const res = await trKald('personale_kopier_program', { p_program_id: p.id, p_til_beboer_id: tilId, p_oprettet_af: navn });
+  if(res.fejl){ visToast(res.fejl); return; }
+  visToast('Kopieret til ' + trBeboerNavn(tilId));
+  trHentAlt();
+}
+
+async function trSlet(p){
+  if(!window.confirm('Slet programmet "' + p.navn + '"? Beboerens tidligere træninger bliver gemt.')) return;
+  const res = await trKald('personale_slet_program', { p_program_id: p.id });
+  if(res.fejl){ visToast(res.fejl); return; }
+  visToast('Slettet');
+  trHentAlt();
+}
+
+// ---------- Editor ----------
+
+function trNytProgram(){
+  const startBeboer = trFilterBeboer || (beboereListe[0] ? beboereListe[0].id : null);
+  trKladde = { id: null, beboer_id: startBeboer, navn: '', dage: [], aktiv: true, ovelser: [], soeg: '' };
+  trMode = 'editor';
+  trFejlTekst = '';
+  trTegn();
+}
+
+function trRediger(p){
+  trKladde = {
+    id: p.id, beboer_id: p.beboer_id, navn: p.navn, dage: (p.dage || []).slice(), aktiv: p.aktiv,
+    ovelser: (p.ovelser || []).map(function(o){
+      return { ovelse_id: o.ovelse_id, saet: o.saet, gentagelser: o.gentagelser, pause_sek: o.pause_sek };
+    }),
+    soeg: ''
+  };
+  trMode = 'editor';
+  trFejlTekst = '';
+  trTegn();
+}
+
+function trBillede(ov){
+  const boks = trEl('div', 'trBillede');
+  if(ov && ov.billede_sti){
+    const img = document.createElement('img');
+    img.src = '../' + ov.billede_sti;
+    img.alt = '';
+    img.loading = 'lazy';
+    boks.appendChild(img);
+  } else {
+    boks.appendChild(moelleIkon('aktivitet', { stoerrelse: 28 }));
+  }
+  return boks;
+}
+
+function trTegnEditor(rod){
+  const k = trKladde;
+
+  // Grunddata
+  const kort = trEl('div', 'kort');
+  kort.appendChild(trEl('h3', null, k.id ? 'Rediger program' : 'Nyt program'));
+
+  const bRække = trEl('div', 'formRække');
+  bRække.appendChild(trEl('label', null, 'Beboer'));
+  const bSel = document.createElement('select');
+  beboereListe.forEach(function(b){
+    const o = document.createElement('option');
+    o.value = b.id;
+    o.textContent = b.navn;
+    if(b.id === k.beboer_id) o.selected = true;
+    bSel.appendChild(o);
+  });
+  bSel.addEventListener('change', function(){ k.beboer_id = bSel.value; });
+  bRække.appendChild(bSel);
+  kort.appendChild(bRække);
+
+  const nRække = trEl('div', 'formRække');
+  nRække.appendChild(trEl('label', null, 'Navn på programmet'));
+  const nInput = document.createElement('input');
+  nInput.type = 'text';
+  nInput.maxLength = 60;
+  nInput.value = k.navn;
+  nInput.placeholder = 'Fx Morgenøvelser';
+  nInput.addEventListener('input', function(){ k.navn = nInput.value; });
+  nRække.appendChild(nInput);
+  kort.appendChild(nRække);
+
+  const dRække = trEl('div', 'formRække');
+  dRække.appendChild(trEl('label', null, 'Hvilke dage gælder programmet?'));
+  const chips = trEl('div', 'trChips');
+  UGEDAGE.forEach(function(dag){
+    const chip = trEl('button', 'trChip' + (k.dage.indexOf(dag) >= 0 ? ' til' : ''), TR_DAGE_KORT[dag]);
+    chip.type = 'button';
+    chip.setAttribute('aria-pressed', k.dage.indexOf(dag) >= 0 ? 'true' : 'false');
+    chip.setAttribute('aria-label', dag);
+    chip.addEventListener('click', function(){
+      const i = k.dage.indexOf(dag);
+      if(i >= 0) k.dage.splice(i, 1); else k.dage.push(dag);
+      chip.classList.toggle('til', i < 0);
+      chip.setAttribute('aria-pressed', i < 0 ? 'true' : 'false');
+    });
+    chips.appendChild(chip);
+  });
+  dRække.appendChild(chips);
+  kort.appendChild(dRække);
+
+  const aRække = trEl('label', 'trRække');
+  const aBox = document.createElement('input');
+  aBox.type = 'checkbox';
+  aBox.checked = k.aktiv;
+  aBox.addEventListener('change', function(){ k.aktiv = aBox.checked; });
+  aRække.appendChild(aBox);
+  aRække.appendChild(document.createTextNode('Aktivt (vises for beboeren)'));
+  kort.appendChild(aRække);
+  rod.appendChild(kort);
+
+  // Valgte øvelser
+  const valgteKort = trEl('div', 'kort');
+  valgteKort.appendChild(trEl('h3', null, 'Øvelser i programmet'));
+  const valgteListe = trEl('div');
+  valgteListe.id = 'trValgteListe';
+  valgteKort.appendChild(valgteListe);
+  rod.appendChild(valgteKort);
+
+  // Søg og tilføj
+  const soegKort = trEl('div', 'kort');
+  soegKort.appendChild(trEl('h3', null, 'Tilføj øvelse'));
+  const soegInput = document.createElement('input');
+  soegInput.type = 'search';
+  soegInput.placeholder = 'Søg efter øvelse';
+  soegInput.setAttribute('aria-label', 'Søg efter øvelse');
+  soegInput.style.width = '100%';
+  soegInput.value = k.soeg;
+  soegInput.addEventListener('input', function(){ k.soeg = soegInput.value; trTegnSoeg(); });
+  soegKort.appendChild(soegInput);
+  const soegListe = trEl('div', 'trSoegListe');
+  soegListe.id = 'trSoegListe';
+  soegKort.appendChild(soegListe);
+  rod.appendChild(soegKort);
+
+  // Knapper
+  if(trFejlTekst) rod.appendChild(trEl('div', 'trFejl', trFejlTekst));
+  const knapper = trEl('div', 'trKnapRække');
+  knapper.appendChild(trKnap('Gem og send til beboer', 'knapGuld', trGem));
+  knapper.appendChild(trKnap('Annullér', 'sekundaer', function(){
+    trKladde = null; trMode = 'programmer'; trFejlTekst = ''; trTegn();
+  }));
+  rod.appendChild(knapper);
+
+  trTegnValgte();
+  trTegnSoeg();
+}
+
+function trTegnValgte(){
+  const rod = document.getElementById('trValgteListe');
+  if(!rod) return;
+  rod.textContent = '';
+  const k = trKladde;
+  if(k.ovelser.length === 0){
+    rod.appendChild(trEl('p', 'trMeta', 'Ingen øvelser endnu. Søg og tilføj nedenfor.'));
+    return;
+  }
+  k.ovelser.forEach(function(o, i){
+    const ov = trOvelseById(o.ovelse_id);
+    const boks = trEl('div', 'trValgt');
+    const hoved = trEl('div', 'trValgtHoved');
+    hoved.appendChild(trBillede(ov));
+    const tekst = trEl('div', 'trOvelse trTekst');
+    tekst.style.border = 'none';
+    tekst.style.padding = '0';
+    tekst.appendChild(trEl('div', 'trProgramNavn', (i + 1) + '. ' + (ov ? ov.navn : 'Ukendt øvelse')));
+    hoved.appendChild(tekst);
+    boks.appendChild(hoved);
+
+    const tal = trEl('div', 'trTal');
+    [['Sæt', 'saet', 1, 10, 1], ['Gentagelser', 'gentagelser', 1, 50, 1], ['Pause (sek.)', 'pause_sek', 0, 300, 5]].forEach(function(f){
+      const lab = trEl('label', null, f[0]);
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.inputMode = 'numeric';
+      inp.min = String(f[2]);
+      inp.max = String(f[3]);
+      inp.step = String(f[4]);
+      inp.value = String(o[f[1]]);
+      inp.addEventListener('change', function(){
+        let v = parseInt(inp.value, 10);
+        if(isNaN(v)) v = o[f[1]];
+        v = Math.max(f[2], Math.min(f[3], v));
+        o[f[1]] = v;
+        inp.value = String(v);
+      });
+      lab.appendChild(inp);
+      tal.appendChild(lab);
+    });
+    boks.appendChild(tal);
+
+    const rk = trEl('div', 'trKnapRække');
+    const op = trKnap('Op', 'sekundaer', function(){ trFlyt(i, -1); });
+    op.disabled = i === 0;
+    const ned = trKnap('Ned', 'sekundaer', function(){ trFlyt(i, 1); });
+    ned.disabled = i === k.ovelser.length - 1;
+    rk.appendChild(op);
+    rk.appendChild(ned);
+    rk.appendChild(trKnap('Fjern', 'knapFare', function(){ k.ovelser.splice(i, 1); trTegnValgte(); }));
+    boks.appendChild(rk);
+    rod.appendChild(boks);
+  });
+}
+
+function trFlyt(i, retning){
+  const k = trKladde;
+  const j = i + retning;
+  if(j < 0 || j >= k.ovelser.length) return;
+  const tmp = k.ovelser[i];
+  k.ovelser[i] = k.ovelser[j];
+  k.ovelser[j] = tmp;
+  trTegnValgte();
+}
+
+function trTegnSoeg(){
+  const rod = document.getElementById('trSoegListe');
+  if(!rod) return;
+  rod.textContent = '';
+  const k = trKladde;
+  const q = (k.soeg || '').trim().toLowerCase();
+  const fundet = trOvelser.filter(function(o){
+    if(!q) return true;
+    return o.navn.toLowerCase().indexOf(q) >= 0 || (o.beskrivelse || '').toLowerCase().indexOf(q) >= 0;
+  });
+  if(fundet.length === 0){
+    rod.appendChild(trEl('p', 'trMeta', 'Ingen øvelser matcher.'));
+    return;
+  }
+  fundet.forEach(function(o){
+    const række = trEl('div', 'trOvelse');
+    række.appendChild(trBillede(o));
+    const tekst = trEl('div', 'trTekst');
+    tekst.appendChild(trEl('div', 'trProgramNavn', o.navn));
+    tekst.appendChild(trEl('div', 'trBeskr', o.beskrivelse));
+    række.appendChild(tekst);
+    række.appendChild(trKnap('Tilføj', 'knapGuld', function(){
+      k.ovelser.push({ ovelse_id: o.id, saet: 3, gentagelser: 10, pause_sek: 30 });
+      trTegnValgte();
+      visToast(o.navn + ' tilføjet');
+    }));
+    rod.appendChild(række);
+  });
+}
+
+async function trGem(){
+  const k = trKladde;
+  const navn = trMitNavn();
+  let fejl = '';
+  if(!k.beboer_id) fejl = 'Vælg en beboer.';
+  else if(!k.navn.trim()) fejl = 'Giv programmet et navn.';
+  else if(k.dage.length === 0) fejl = 'Vælg mindst én dag.';
+  else if(k.ovelser.length === 0) fejl = 'Tilføj mindst én øvelse.';
+  else if(!navn) fejl = 'Skriv dit navn øverst.';
+  if(fejl){ trFejlTekst = fejl; trTegn(); window.scrollTo(0, document.body.scrollHeight); return; }
+
+  const res = await trKald('personale_gem_program', {
+    p_program_id: k.id,
+    p_beboer_id: k.beboer_id,
+    p_navn: k.navn.trim(),
+    p_dage: UGEDAGE.filter(function(d){ return k.dage.indexOf(d) >= 0; }),
+    p_aktiv: k.aktiv,
+    p_oprettet_af: navn,
+    p_ovelser: k.ovelser.map(function(o){
+      return { ovelse_id: o.ovelse_id, saet: o.saet, gentagelser: o.gentagelser, pause_sek: o.pause_sek };
+    })
+  });
+  if(res.fejl){ trFejlTekst = res.fejl; trTegn(); return; }
+  visToast('Gemt og sendt til ' + trBeboerNavn(k.beboer_id));
+  trFilterBeboer = k.beboer_id;
+  trKladde = null;
+  trMode = 'programmer';
+  trFejlTekst = '';
+  trHentAlt();
+}
+
+// ---------- Seneste træninger ----------
+
+let trLogData = null;
+
+function trDatoTekst(iso){
+  const d = iso.split('-');
+  const dato = new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]));
+  return FS_UGEDAGE[dato.getDay()].slice(0, 3) + ' ' + dato.getDate() + '/' + (dato.getMonth() + 1);
+}
+
+function trTegnLog(rod){
+  trBeboerFilter(rod, function(){ trOpdaterLog(); });
+  const boks = trEl('div');
+  boks.id = 'trLogListe';
+  rod.appendChild(boks);
+  if(trLogData) trTegnLogListe();
+  trOpdaterLog();
+}
+
+async function trOpdaterLog(){
+  const res = await trKald('personale_hent_log', { p_beboer_id: trFilterBeboer || null, p_antal: 40 });
+  if(res.fejl){ return; }
+  trLogData = res.data || [];
+  if(trMode === 'log') trTegnLogListe();
+}
+
+function trTegnLogListe(){
+  const rod = document.getElementById('trLogListe');
+  if(!rod) return;
+  rod.textContent = '';
+  if(!trLogData || trLogData.length === 0){
+    const tom = trEl('div', 'kort');
+    tom.appendChild(trEl('p', 'trMeta', 'Ingen træninger gennemført endnu.'));
+    rod.appendChild(tom);
+    return;
+  }
+  trLogData.forEach(function(r){
+    const kort = trEl('div', 'kort');
+    const navn = trEl('div', 'trProgramNavn');
+    const prik = trEl('span', 'trPrik');
+    prik.style.background = farveForBeboer(r.beboer);
+    navn.appendChild(prik);
+    navn.appendChild(document.createTextNode(r.beboer + ' · ' + trDatoTekst(r.lokal_dato)));
+    kort.appendChild(navn);
+    kort.appendChild(trEl('div', 'trMeta',
+      (r.program || 'Slettet program') + ' · ' + r.saet_antal + (r.saet_antal === 1 ? ' sæt' : ' sæt') +
+      ' · ' + r.ovelser_antal + (r.ovelser_antal === 1 ? ' øvelse' : ' øvelser')));
+    rod.appendChild(kort);
+  });
+}
+
+// ---------- Koder og enheder ----------
+
+function trTegnBeboere(rod){
+  const info = trEl('div', 'kort');
+  info.appendChild(trEl('p', 'trMeta',
+    'Beboeren logger ind i appen med fornavn og en kode på 4 cifre. Fortæl koden personligt. Den kan ikke ses bagefter, kun nulstilles.'));
+  rod.appendChild(info);
+
+  trStatus.forEach(function(s){
+    const kort = trEl('div', 'kort');
+    const navn = trEl('div', 'trProgramNavn');
+    const prik = trEl('span', 'trPrik');
+    prik.style.background = farveForBeboer(s.navn);
+    navn.appendChild(prik);
+    navn.appendChild(document.createTextNode(s.navn));
+    kort.appendChild(navn);
+    kort.appendChild(trEl('div', 'trMeta',
+      (s.har_kode ? 'Har en kode' : 'Ingen kode endnu') + ' · ' + s.enheder + (s.enheder === 1 ? ' enhed logget ind' : ' enheder logget ind')));
+
+    const række = trEl('div', 'trFelt');
+    række.style.marginTop = '10px';
+    const inp = document.createElement('input');
+    inp.type = 'password';
+    inp.inputMode = 'numeric';
+    inp.maxLength = 4;
+    inp.placeholder = '4 cifre';
+    inp.autocomplete = 'off';
+    inp.setAttribute('aria-label', 'Ny kode til ' + s.navn);
+    række.appendChild(inp);
+    række.appendChild(trKnap(s.har_kode ? 'Skift kode' : 'Sæt kode', 'knapGuld', function(){
+      trSaetKode(s, inp);
+    }));
+    const ud = trKnap('Log enheder ud', 'sekundaer', function(){ trLogEnhederUd(s); });
+    ud.disabled = s.enheder === 0;
+    række.appendChild(ud);
+    kort.appendChild(række);
+    rod.appendChild(kort);
+  });
+
+  const bund = trEl('div', 'trKnapRække');
+  bund.appendChild(trKnap('Lås Træning på denne enhed', 'sekundaer', trLogud));
+  rod.appendChild(bund);
+}
+
+async function trSaetKode(s, inp){
+  const kode = inp.value.trim();
+  if(!/^[0-9]{4}$/.test(kode)){ visToast('Koden skal være præcis 4 cifre'); return; }
+  const res = await trKald('personale_saet_beboer_kode', { p_beboer_id: s.beboer_id, p_kode: kode });
+  inp.value = '';
+  if(res.fejl){ visToast(res.fejl); return; }
+  visToast('Kode gemt til ' + s.navn);
+  trHentAlt();
+}
+
+async function trLogEnhederUd(s){
+  if(!window.confirm('Log ' + s.navn + ' ud på alle enheder?')) return;
+  const res = await trKald('personale_tilbagekald_enheder', { p_beboer_id: s.beboer_id });
+  if(res.fejl){ visToast(res.fejl); return; }
+  visToast('Enheder logget ud');
+  trHentAlt();
 }
 
 // ==================================================================
