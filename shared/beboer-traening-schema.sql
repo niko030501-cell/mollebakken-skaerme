@@ -16,6 +16,12 @@
 --
 -- Første personalekode sættes manuelt i Supabase SQL-editoren:
 --     select public.personale_saet_kode('<din-kode-min-8-tegn>');
+--
+-- Tilføjelser i andre filer:
+--   * shared/ovelser-personale-schema.sql — personalet kan oprette, rette og
+--     skjule egne øvelser (kategori 'maskine', bucket 'ovelse-billeder',
+--     personale_opret_ovelse / _ret_ovelse / _skjul_ovelse). Upload af billeder
+--     sker via edge-funktionen i shared/ovelse-billede-edge-function.ts.
 -- ====================================================================
 
 -- ---------- Tabeller ----------
