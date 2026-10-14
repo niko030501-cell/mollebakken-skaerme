@@ -1068,29 +1068,48 @@ function flowTop(side){
   side.appendChild(top);
 }
 
+// Fuld URL (billede uploadet af personalet) bruges direkte. En relativ sti
+// (de oprindelige øvelsesbilleder i repoet) får ../ foran.
+function ovelseBilledeUrl(sti){
+  if(!sti) return null;
+  return /^https?:\/\//i.test(sti) ? sti : '../' + sti;
+}
+
+function visPladsholder(boks){
+  boks.textContent = '';
+  boks.classList.add('udenBillede');
+  boks.appendChild(svgIkon(IKONER.traening, 1.6));
+}
+
 function oevelseBillede(ov){
   var boks = lav('div', 'flowBillede');
   var kilder = [];
-  if(ov.gif_sti) kilder.push(ov.gif_sti);
+  if(ov.gif_sti) kilder.push(ovelseBilledeUrl(ov.gif_sti));
   else {
-    if(ov.billede_sti) kilder.push(ov.billede_sti);
-    if(ov.billede2_sti) kilder.push(ov.billede2_sti);
+    if(ov.billede_sti) kilder.push(ovelseBilledeUrl(ov.billede_sti));
+    if(ov.billede2_sti) kilder.push(ovelseBilledeUrl(ov.billede2_sti));
   }
   if(kilder.length === 0){
-    boks.classList.add('udenBillede');
-    boks.appendChild(svgIkon(IKONER.traening, 1.6));
+    visPladsholder(boks);
     return boks;
   }
   var img = document.createElement('img');
   img.alt = ov.navn;
-  img.src = '../' + kilder[0];
+  // Billeder fra et andet domæne hentes med CORS, så service workeren kan gemme dem til offline brug
+  if(/^https?:\/\//i.test(kilder[0])) img.crossOrigin = 'anonymous';
+  // Kan billedet ikke hentes (offline første gang, slettet fil), vises pladsholderen i stedet
+  img.addEventListener('error', function(){
+    if(frameTimer){ clearInterval(frameTimer); frameTimer = null; }
+    visPladsholder(boks);
+  });
+  img.src = kilder[0];
   boks.appendChild(img);
   var reduceret = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(kilder.length > 1 && !reduceret){
     var i = 0;
     frameTimer = setInterval(function(){
       i = (i + 1) % kilder.length;
-      img.src = '../' + kilder[i];
+      img.src = kilder[i];
     }, 1200);
   }
   return boks;
