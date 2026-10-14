@@ -23,6 +23,7 @@ var S = {
   token: null, navn: '', tema: 'standard',
   fane: 'hjem',
   programmer: [], dagsplan: [], vagter: [], skjulte: [], traeninger: [],
+  madplan: {}, visMad: false,
   offline: false, indlaest: false, flow: null,
   fejl: '', loginBusy: false
 };
@@ -97,7 +98,10 @@ var IKONER = {
   hjem: ['M3 11l9-8 9 8', 'M5 10v10h5v-6h4v6h5V10'],
   traening: ['M6 7v10', 'M18 7v10', 'M3 10v4', 'M21 10v4', 'M6 12h12'],
   statistik: ['M5 20V10', 'M12 20V4', 'M19 20v-7'],
-  mere: ['M5 12h.01', 'M12 12h.01', 'M19 12h.01']
+  mere: ['M5 12h.01', 'M12 12h.01', 'M19 12h.01'],
+  bestik: ['M5 3v5a2 2 0 0 0 4 0V3', 'M7 10v11', 'M17 21V3c-2 1.5-3 4-3 7s1 4 3 4'],
+  tilbage: ['M15 5l-7 7 7 7'],
+  frem: ['M9 5l7 7-7 7']
 };
 
 // ---------- Temaer ----------
@@ -300,6 +304,8 @@ function logUdLokalt(besked){
   S.dagsplan = [];
   S.vagter = [];
   S.traeninger = [];
+  S.madplan = {};
+  S.visMad = false;
   S.fejl = besked || '';
   lagSkriv(NOEGLE_TOKEN, null);
   lagSkriv(NOEGLE_CACHE, null);
@@ -353,6 +359,8 @@ async function hentAlt(){
   var iGaar = new Date(nu); iGaar.setDate(iGaar.getDate() - 1);
   var iMorgen = new Date(nu); iMorgen.setDate(iMorgen.getDate() + 1);
 
+  var madUgeNoegler = madUgerAtHente(nu);
+
   var svar;
   try {
     svar = await Promise.all([
@@ -361,7 +369,10 @@ async function hentAlt(){
       sb.from('personaleskaerm_vagter').select('navn,rolle,start,slut,billede,tag,dag')
         .in('dag', [datoISO(iGaar), datoISO(nu), datoISO(iMorgen)]).order('start'),
       sb.from('skjult_personale').select('navn,dag,udloeber').gt('udloeber', nu.toISOString()),
-      rpc('beboer_traeninger', { p_token: S.token })
+      rpc('beboer_traeninger', { p_token: S.token }),
+      Promise.all(madUgeNoegler.map(function(iso){
+        return rpc('beboer_madplan', { p_token: S.token, p_uge_start: iso });
+      }))
     ]);
   } catch(e){
     S.offline = true;
@@ -387,8 +398,24 @@ async function hentAlt(){
     S.skjulte = svar[3].error ? [] : (svar[3].data || []);
     // Statistik: fejler hentningen, beholdes de senest kendte træninger.
     if(!svar[4].fejl) S.traeninger = svar[4].data || [];
+    // Madplan: kun de uger vi har brug for. Fejler en uge, beholdes den senest kendte.
+    var nyMad = {};
+    madUgeNoegler.forEach(function(iso, i){
+      var r = svar[5][i];
+      if(r && !r.fejl){
+        var perDag = {};
+        (r.data || []).forEach(function(p){
+          if(p && typeof p.dag === 'string' && typeof p.ret === 'string' && p.ret.trim()) perDag[p.dag] = p.ret.trim();
+        });
+        nyMad[iso] = perDag;
+      } else if(S.madplan[iso]){
+        nyMad[iso] = S.madplan[iso];
+      }
+    });
+    S.madplan = nyMad;
     lagSkriv(NOEGLE_CACHE, JSON.stringify({
-      navn: S.navn, tema: S.tema, programmer: S.programmer, dagsplan: S.dagsplan, traeninger: S.traeninger
+      navn: S.navn, tema: S.tema, programmer: S.programmer, dagsplan: S.dagsplan, traeninger: S.traeninger,
+      madplan: S.madplan
     }));
   }
   S.indlaest = true;
@@ -424,7 +451,8 @@ function tegn(){
   if(S.offline){
     side.appendChild(lav('div', 'offline', 'Ingen forbindelse. Du ser det, der sidst blev hentet.'));
   }
-  if(S.fane === 'hjem') tegnHjem(side);
+  if(S.visMad) tegnMadUge(side);
+  else if(S.fane === 'hjem') tegnHjem(side);
   else if(S.fane === 'traening') tegnTraening(side);
   else if(S.fane === 'statistik') tegnStatistik(side);
   else tegnMere(side);
@@ -496,7 +524,7 @@ function bundmenu(){
     if(S.fane === p[0]) k.setAttribute('aria-current', 'page');
     k.appendChild(svgIkon(IKONER[p[0]], p[0] === 'mere' ? 3 : 2));
     k.appendChild(lav('span', null, p[1]));
-    k.addEventListener('click', function(){ S.fane = p[0]; tegn(); window.scrollTo(0, 0); });
+    k.addEventListener('click', function(){ S.fane = p[0]; S.visMad = false; tegn(); window.scrollTo(0, 0); });
     inder.appendChild(k);
   });
   nav.appendChild(inder);
@@ -543,6 +571,29 @@ function tegnHjem(side){
     });
   }
   side.appendChild(tr);
+
+  // --- Dagens mad (hele kortet er en knap til ugens mad) ---
+  var madSektion = lav('section', 'sektion');
+  var uger = madUger(nu);
+  var dagensRet = (S.madplan[uger.kal] || {})[UGEDAGE[nu.getDay()]] || '';
+  var madKort = lav('button', 'kort madKort');
+  madKort.type = 'button';
+  madKort.setAttribute('aria-label', 'Dagens mad. Tryk for at se ugens mad.');
+  var madIkon = lav('span', 'madIkon');
+  madIkon.appendChild(svgIkon(IKONER.bestik, 2));
+  madKort.appendChild(madIkon);
+  var madTekst = lav('span', 'madTekst');
+  madTekst.appendChild(lav('span', 'madLabel', 'Dagens mad'));
+  madTekst.appendChild(lav('span', 'madRet' + (dagensRet ? '' : ' madTom'),
+    dagensRet || 'Madplanen er ikke klar endnu'));
+  var madMere = lav('span', 'madMere');
+  madMere.appendChild(lav('span', null, 'Se ugens mad'));
+  madMere.appendChild(svgIkon(IKONER.frem, 3));
+  madTekst.appendChild(madMere);
+  madKort.appendChild(madTekst);
+  madKort.addEventListener('click', function(){ S.visMad = true; tegn(); window.scrollTo(0, 0); });
+  madSektion.appendChild(madKort);
+  side.appendChild(madSektion);
 
   // --- På arbejde nu ---
   var pa = lav('section', 'sektion');
@@ -614,6 +665,59 @@ function tegnHjem(side){
     md.appendChild(liste);
   }
   side.appendChild(md);
+}
+
+// ---------- Madplan ----------
+// Ugen går mandag til søndag i enhedens lokale tid. "kal" er den kalenderuge vi er i
+// (dagens ret). "vis" er den uge personalet arbejder i: efter søndag kl. 20 regnes
+// næste uge som "denne uge" (samme regel som personaleskærmen og personaleappen).
+
+function madUger(nu){
+  var kal = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());
+  kal.setDate(kal.getDate() - ((kal.getDay() + 6) % 7));
+  var vis = new Date(kal);
+  if(nu.getDay() === 0 && nu.getHours() >= 20) vis.setDate(vis.getDate() + 7);
+  return { kal: datoISO(kal), vis: datoISO(vis) };
+}
+
+function madUgerAtHente(nu){
+  var u = madUger(nu);
+  return u.kal === u.vis ? [u.kal] : [u.kal, u.vis];
+}
+
+function tegnMadUge(side){
+  var nu = new Date();
+  var uger = madUger(nu);
+  var perDag = S.madplan[uger.vis] || {};
+
+  var tilbage = lav('button', 'knap lys madTilbage');
+  tilbage.type = 'button';
+  tilbage.appendChild(svgIkon(IKONER.tilbage, 3));
+  tilbage.appendChild(lav('span', null, 'Tilbage'));
+  tilbage.addEventListener('click', function(){ S.visMad = false; tegn(); window.scrollTo(0, 0); });
+  side.appendChild(tilbage);
+
+  var hoved = lav('header', 'hoved');
+  hoved.appendChild(lav('h1', null, 'Ugens mad'));
+  hoved.appendChild(lav('div', 'dato', 'Uge fra mandag den ' + lokalDato(uger.vis).getDate() + '. ' +
+    MAANEDER[lokalDato(uger.vis).getMonth()]));
+  side.appendChild(hoved);
+
+  var liste = lav('ul', 'dagsliste');
+  UGEDAGE_ORDEN.forEach(function(dag){
+    var erIdag = uger.vis === uger.kal && dag === UGEDAGE[nu.getDay()];
+    var ret = perDag[dag] || '';
+    var li = lav('li', 'dagsrække madRække' + (erIdag ? ' nu' : ''));
+    li.appendChild(lav('span', 'tid madDag', dag));
+    var tekst = lav('span', 'madRetTekst' + (ret ? '' : ' madTom'), ret || 'Ikke klar endnu');
+    if(erIdag){
+      tekst.appendChild(lav('span', 'nuMaerke', 'I dag'));
+      li.setAttribute('aria-current', 'date');
+    }
+    li.appendChild(tekst);
+    liste.appendChild(li);
+  });
+  side.appendChild(liste);
 }
 
 function tegnTraening(side){
@@ -874,6 +978,14 @@ function tegnMere(side){
   var hoved = lav('header', 'hoved');
   hoved.appendChild(lav('h1', null, 'Mere'));
   side.appendChild(hoved);
+
+  // --- Ugens mad ---
+  var madKnap = lav('button', 'knap lys madMereKnap');
+  madKnap.type = 'button';
+  madKnap.appendChild(svgIkon(IKONER.bestik, 2));
+  madKnap.appendChild(lav('span', null, 'Ugens mad'));
+  madKnap.addEventListener('click', function(){ S.visMad = true; tegn(); window.scrollTo(0, 0); });
+  side.appendChild(madKnap);
 
   // --- Tema ---
   var tk = lav('div', 'kort');
@@ -1353,6 +1465,7 @@ function start(){
     S.programmer = cache.programmer || [];
     S.dagsplan = cache.dagsplan || [];
     S.traeninger = cache.traeninger || [];
+    S.madplan = cache.madplan || {};
   }
 
   rpc('beboer_session_tjek', { p_token: S.token }).then(function(res){

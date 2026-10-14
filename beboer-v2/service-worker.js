@@ -4,7 +4,7 @@
 // Undtagelse: øvelsesbilleder uploadet af personalet (bucket ovelse-billeder).
 // Filnavnene er unikke (uuid) og ændres aldrig, så de caches "cache først".
 
-const CACHE_NAVN = 'beboer-v2-2';
+const CACHE_NAVN = 'beboer-v2-3';
 const BILLEDE_CACHE = 'beboer-v2-billeder';
 const BILLEDE_STI = '/storage/v1/object/public/ovelse-billeder/';
 const APP_SKAL = [

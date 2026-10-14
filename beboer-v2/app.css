@@ -126,6 +126,31 @@ input{ font-family: inherit; font-size: 22px; }
   background: var(--accent); color: var(--accent-ink); font-size:14px; font-weight:800;
 }
 
+/* ---- Madplan ---- */
+.madKort{
+  display:flex; align-items:center; gap:16px; width:100%; min-height:96px;
+  text-align:left; color: var(--ink); font-weight:inherit;
+}
+.madIkon{
+  flex:none; width:64px; height:64px; border-radius:18px;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--ikon-bg); color: var(--ikon-fg);
+}
+.madIkon svg{ width:36px; height:36px; }
+.madTekst{ display:flex; flex-direction:column; gap:4px; min-width:0; flex:1; }
+.madLabel{ font-size:17px; font-weight:700; color: var(--ink-2); }
+.madRet{ font-family: var(--font-display); font-weight: var(--display-vaegt); font-size:28px; line-height:1.15; overflow-wrap:anywhere; }
+.madRet.madTom, .madRetTekst.madTom{ font-family: var(--font-body); font-weight:700; font-size:21px; color: var(--ink-2); }
+.madMere{ display:flex; align-items:center; gap:6px; font-size:17px; font-weight:800; margin-top:4px; }
+.madMere svg{ width:20px; height:20px; }
+.madTilbage{ margin-bottom:18px; justify-content:flex-start; }
+.madTilbage svg, .madMereKnap svg{ width:26px; height:26px; flex:none; }
+.madMereKnap{ margin-bottom:12px; }
+.madRække{ align-items:flex-start; }
+.dagsrække .madDag{ min-width:92px; }
+.madRetTekst{ flex:1; min-width:0; font-size:21px; font-weight:700; overflow-wrap:anywhere; }
+.dagsrække.nu .madRetTekst{ color: var(--nu-fg); }
+
 /* ---- Træning-fane ---- */
 .ovelsesliste{ list-style:none; margin:12px 0 0; padding:0; display:grid; gap:6px; }
 .ovelsesliste li{ display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--streg); }
