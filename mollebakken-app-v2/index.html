@@ -803,6 +803,15 @@
   .trFelt{ display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
   .trFelt input{ min-height:46px; }
   .sidehovedKnap[hidden]{ display:none; }
+  .trKatTitel{ font-size:18px; margin:18px 0 8px; }
+  .trMaerke{ display:inline-block; margin-left:8px; padding:1px 8px; border-radius:999px; background:var(--guld); color:var(--mørk); font-size:11px; font-weight:700; vertical-align:middle; }
+  .trHjaelp{ font-size:13px; color:var(--tekst-svag); line-height:1.4; margin-top:4px; }
+  .trHjaelpAdvarsel{ background:#fff7e0; border:1px solid var(--guld); border-radius:8px; padding:8px 10px; color:var(--mørk); margin:0 0 12px; font-size:14px; }
+  .trSlot{ margin-bottom:16px; }
+  .trSlotTitel{ font-weight:600; margin-bottom:6px; }
+  .trForhaandsvisning{ width:100%; aspect-ratio:4 / 3; max-height:260px; border-radius:10px; overflow:hidden; background:#e8eeeb; display:flex; align-items:center; justify-content:center; }
+  .trForhaandsvisning img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .trIngenBillede{ color:var(--tekst-svag); font-size:14px; }
   .trPrik{ display:inline-block; width:14px; height:14px; border-radius:50%; vertical-align:middle; margin-right:8px; }
 </style>
 </head>
@@ -1273,7 +1282,7 @@
         <h2 class="sidehovedTitel">Træning</h2>
         <p class="sidehovedSub">Lav træningsprogrammer til beboerne</p>
       </div>
-      <button type="button" class="sidehovedKnap" id="trNytKnap" onclick="trNytProgram()" hidden><span data-ikon="plus"></span>Nyt program</button>
+      <button type="button" class="sidehovedKnap" id="trNytKnap" onclick="trNyHovedHandling()" hidden><span data-ikon="plus"></span><span id="trNytTekst">Nyt program</span></button>
     </header>
     <div id="trIndhold"><div class="loading">Henter …</div></div>
   </div>
@@ -2911,13 +2920,13 @@ function triggerBilledeUpload(dag){
 
 const AKTIVITET_SENTINEL = 'Ingen fælles aktivitet';
 
-function komprimerBillede(fil){
+function komprimerBillede(fil, maxBreddeValg){
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        const maxBredde = 1000;
+        const maxBredde = maxBreddeValg || 1000;
         const skala = Math.min(1, maxBredde / img.width);
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * skala);
@@ -4276,11 +4285,14 @@ const TR_TOKEN_NOEGLE = 'tr_personale_token';
 const TR_DAGE_KORT = { Mandag:'Man', Tirsdag:'Tir', Onsdag:'Ons', Torsdag:'Tor', Fredag:'Fre', Lørdag:'Lør', Søndag:'Søn' };
 
 let trToken = null;
-let trOvelser = [];
+let trOvelser = [];        // aktive øvelser (til programbyggeren)
+let trAlleOvelser = [];    // alle øvelser inkl. skjulte (til Øvelser-visningen)
+let trOvelseKladde = null; // øvelse under oprettelse/redigering
+let trOvelseGemmer = false;
 let trProgrammer = [];
 let trStatus = [];
 let trKladde = null;       // program under redigering
-let trMode = 'programmer'; // programmer | log | beboere | editor
+let trMode = 'programmer'; // programmer | ovelser | log | beboere | editor | ovelseForm
 let trFilterBeboer = '';   // beboer-id eller '' = alle
 let trPoll = null;
 let trFejlTekst = '';
@@ -4326,7 +4338,8 @@ function trBeboerNavn(id){
 }
 
 function trOvelseById(id){
-  return trOvelser.find(o => o.id === id) || null;
+  // Også skjulte øvelser, så et program der allerede bruger en skjult øvelse stadig kan vises
+  return trAlleOvelser.find(o => o.id === id) || null;
 }
 
 async function trKald(navn, args){
@@ -4363,7 +4376,7 @@ async function trHentAlt(){
   const rod = document.getElementById('trIndhold');
   if(rod && !rod.firstChild) rod.appendChild(trEl('div', 'loading', 'Henter …'));
   const svar = await Promise.all([
-    trKald('personale_hent_ovelser'),
+    trKald('personale_hent_ovelser', { p_inkl_skjulte: true }),
     trKald('personale_hent_programmer'),
     trKald('personale_beboer_status')
   ]);
@@ -4372,7 +4385,8 @@ async function trHentAlt(){
   if(fejl){ trFejlTekst = fejl.fejl; }
   else {
     trFejlTekst = '';
-    trOvelser = svar[0].data || [];
+    trAlleOvelser = svar[0].data || [];
+    trOvelser = trAlleOvelser.filter(o => o.aktiv !== false);
     trProgrammer = svar[1].data || [];
     trStatus = svar[2].data || [];
   }
@@ -4412,7 +4426,8 @@ function trTegn(){
   const rod = document.getElementById('trIndhold');
   if(!rod) return;
   rod.textContent = '';
-  document.getElementById('trNytKnap').hidden = !(trToken && trMode !== 'editor');
+  document.getElementById('trNytKnap').hidden = !(trToken && trMode !== 'editor' && trMode !== 'ovelseForm');
+  document.getElementById('trNytTekst').textContent = trMode === 'ovelser' ? 'Ny øvelse' : 'Nyt program';
 
   if(!trToken){
     const kort = trEl('div', 'kort');
@@ -4449,11 +4464,11 @@ function trTegn(){
   top.appendChild(navnRække);
   rod.appendChild(top);
 
-  if(trMode !== 'editor'){
+  if(trMode !== 'editor' && trMode !== 'ovelseForm'){
     const vælger = document.createElement('select');
     vælger.className = 'modeVælger';
     vælger.setAttribute('aria-label', 'Visning');
-    [['programmer', 'Programmer'], ['log', 'Seneste træninger'], ['beboere', 'Koder og enheder']].forEach(function(p){
+    [['programmer', 'Programmer'], ['ovelser', 'Øvelser'], ['log', 'Seneste træninger'], ['beboere', 'Koder og enheder']].forEach(function(p){
       const o = document.createElement('option');
       o.value = p[0];
       o.textContent = p[1];
@@ -4467,6 +4482,8 @@ function trTegn(){
   if(trFejlTekst) rod.appendChild(trEl('div', 'trFejl', trFejlTekst));
 
   if(trMode === 'editor') trTegnEditor(rod);
+  else if(trMode === 'ovelseForm') trTegnOvelseForm(rod);
+  else if(trMode === 'ovelser') trTegnOvelser(rod);
   else if(trMode === 'log') trTegnLog(rod);
   else if(trMode === 'beboere') trTegnBeboere(rod);
   else trTegnProgrammer(rod);
@@ -4592,7 +4609,7 @@ function trBillede(ov){
   const boks = trEl('div', 'trBillede');
   if(ov && ov.billede_sti){
     const img = document.createElement('img');
-    img.src = '../' + ov.billede_sti;
+    img.src = ovelseBilledeUrl(ov.billede_sti);
     img.alt = '';
     img.loading = 'lazy';
     boks.appendChild(img);
@@ -4825,6 +4842,398 @@ async function trGem(){
   trMode = 'programmer';
   trFejlTekst = '';
   trHentAlt();
+}
+
+// ---------- Øvelser: opret, ret, skjul ----------
+// Billeder uploades via edge-funktionen `ovelse-billede` (signeret upload-URL,
+// kræver personale-token) til bucket'en `ovelse-billeder`. I databasen gemmes den
+// fulde offentlige URL. Gamle øvelser har en relativ sti i repoet (beboer-v2/ovelser/…).
+
+const TR_KATEGORIER = [
+  ['maskine', 'Maskine'], ['styrke', 'Styrke'], ['straek', 'Stræk'],
+  ['led', 'Led'], ['balance', 'Balance'], ['cardio', 'Cardio']
+];
+const TR_BILLEDE_MAKS_BREDDE = 1200;
+const TR_BILLEDE_MAKS_BYTES = 5 * 1024 * 1024;
+const TR_BUCKET = 'ovelse-billeder';
+
+// Fuld URL (uploadet billede) bruges direkte; relativ sti (repoet) får ../ foran.
+function ovelseBilledeUrl(sti){
+  if(!sti) return null;
+  return /^https?:\/\//i.test(sti) ? sti : '../' + sti;
+}
+
+// Filnavnet i bucket'en ud fra en URL — kun hvis den peger på vores bucket.
+function trBucketFilnavn(url){
+  if(typeof url !== 'string' || url.indexOf('/' + TR_BUCKET + '/') < 0) return null;
+  return url.split('/').pop();
+}
+
+function trNyHovedHandling(){
+  if(trMode === 'ovelser') trNyOvelse(); else trNytProgram();
+}
+
+function trTegnOvelser(rod){
+  const aktive = trAlleOvelser.filter(o => o.aktiv !== false);
+  const skjulte = trAlleOvelser.filter(o => o.aktiv === false);
+
+  const intro = trEl('div', 'kort');
+  intro.appendChild(trEl('p', 'trMeta',
+    'Her er alle øvelser. Tryk "Ny øvelse" for at lave en ny, fx en maskine med billede. ' +
+    'Du kan rette de øvelser, I selv har lavet, og skjule dem, I ikke bruger. ' +
+    'Skjulte øvelser forsvinder fra biblioteket, men bliver i de programmer, der allerede bruger dem.'));
+  rod.appendChild(intro);
+
+  TR_KATEGORIER.forEach(function(p){
+    const liste = aktive.filter(o => o.kategori === p[0]);
+    if(liste.length === 0) return;
+    const sek = trEl('section');
+    sek.appendChild(trEl('h3', 'trKatTitel', p[1] + ' (' + liste.length + ')'));
+    liste.forEach(function(o){ sek.appendChild(trOvelseRaekke(o)); });
+    rod.appendChild(sek);
+  });
+
+  if(skjulte.length > 0){
+    const sek = trEl('section');
+    sek.appendChild(trEl('h3', 'trKatTitel', 'Skjulte øvelser (' + skjulte.length + ')'));
+    skjulte.forEach(function(o){ sek.appendChild(trOvelseRaekke(o)); });
+    rod.appendChild(sek);
+  }
+}
+
+function trOvelseRaekke(o){
+  const række = trEl('div', 'trOvelse');
+  række.appendChild(trBillede(o));
+  const tekst = trEl('div', 'trTekst');
+  const navn = trEl('div', 'trProgramNavn', o.navn);
+  if(o.oprettet_af_personale) navn.appendChild(trEl('span', 'trMaerke', 'Egen'));
+  tekst.appendChild(navn);
+  if(o.beskrivelse) tekst.appendChild(trEl('div', 'trBeskr', o.beskrivelse));
+  const knapper = trEl('div', 'trKnapRække');
+  if(o.aktiv !== false){
+    if(o.oprettet_af_personale) knapper.appendChild(trKnap('Ret', 'knapGuld', function(){ trRetOvelse(o); }));
+    knapper.appendChild(trKnap('Skjul', 'sekundaer', function(){ trSkjulOvelse(o, false); }));
+  } else {
+    knapper.appendChild(trKnap('Vis igen', 'knapGuld', function(){ trSkjulOvelse(o, true); }));
+  }
+  tekst.appendChild(knapper);
+  række.appendChild(tekst);
+  return række;
+}
+
+async function trSkjulOvelse(o, aktiv){
+  const res = await trKald('personale_skjul_ovelse', { p_ovelse_id: o.id, p_aktiv: aktiv });
+  if(res.fejl){ visToast(res.fejl); return; }
+  if(aktiv){
+    visToast(o.navn + ' vises igen');
+  } else {
+    const n = res.data && res.data.programmer ? res.data.programmer : 0;
+    visToast(n > 0 ? 'Skjult. Bruges stadig i ' + n + (n === 1 ? ' program' : ' programmer') : 'Skjult');
+  }
+  trHentAlt();
+}
+
+// ---- Formular ----
+
+function trTomtSlot(url){
+  return { original: url || null, blob: null, preview: null, fjernet: false };
+}
+
+function trNyOvelse(){
+  trOvelseKladde = { id: null, navn: '', beskrivelse: '', kategori: 'maskine', billeder: [trTomtSlot(null), trTomtSlot(null)] };
+  trMode = 'ovelseForm';
+  trFejlTekst = '';
+  trTegn();
+  window.scrollTo(0, 0);
+}
+
+function trRetOvelse(o){
+  trOvelseKladde = {
+    id: o.id, navn: o.navn, beskrivelse: o.beskrivelse || '', kategori: o.kategori,
+    billeder: [trTomtSlot(o.billede_sti), trTomtSlot(o.billede2_sti)]
+  };
+  trMode = 'ovelseForm';
+  trFejlTekst = '';
+  trTegn();
+  window.scrollTo(0, 0);
+}
+
+function trRydForhaandsvisninger(){
+  if(!trOvelseKladde) return;
+  trOvelseKladde.billeder.forEach(function(s){
+    if(s.preview){ try { URL.revokeObjectURL(s.preview); } catch(e){ /* ignorer */ } s.preview = null; }
+  });
+}
+
+function trAnnullerOvelse(){
+  trRydForhaandsvisninger();
+  trOvelseKladde = null;
+  trOvelseGemmer = false;
+  trMode = 'ovelser';
+  trFejlTekst = '';
+  trTegn();
+}
+
+// Det billede der vises nu i en plads: nyt valgt > eksisterende (hvis ikke fjernet)
+function trSlotVisning(slot){
+  if(slot.preview) return slot.preview;
+  if(slot.fjernet) return null;
+  return ovelseBilledeUrl(slot.original);
+}
+
+function trTegnOvelseForm(rod){
+  const k = trOvelseKladde;
+
+  const kort = trEl('div', 'kort');
+  kort.appendChild(trEl('h3', null, k.id ? 'Ret øvelse' : 'Ny øvelse'));
+
+  const nRække = trEl('div', 'formRække');
+  const nLabel = trEl('label', null, 'Navn');
+  nLabel.setAttribute('for', 'trOvNavn');
+  const nInput = document.createElement('input');
+  nInput.type = 'text';
+  nInput.id = 'trOvNavn';
+  nInput.maxLength = 60;
+  nInput.placeholder = 'Fx Brystpres';
+  nInput.autocomplete = 'off';
+  nInput.value = k.navn;
+  nInput.addEventListener('input', function(){ k.navn = nInput.value; });
+  nRække.appendChild(nLabel);
+  nRække.appendChild(nInput);
+  kort.appendChild(nRække);
+
+  const bRække = trEl('div', 'formRække');
+  const bLabel = trEl('label', null, 'Kort beskrivelse');
+  bLabel.setAttribute('for', 'trOvBeskr');
+  const bInput = document.createElement('textarea');
+  bInput.id = 'trOvBeskr';
+  bInput.maxLength = 300;
+  bInput.rows = 3;
+  bInput.value = k.beskrivelse;
+  const taeller = trEl('div', 'trMeta');
+  const opdaterTaeller = function(){ taeller.textContent = bInput.value.length + ' / 300 tegn'; };
+  bInput.addEventListener('input', function(){ k.beskrivelse = bInput.value; opdaterTaeller(); });
+  opdaterTaeller();
+  bRække.appendChild(bLabel);
+  bRække.appendChild(bInput);
+  bRække.appendChild(taeller);
+  bRække.appendChild(trEl('div', 'trHjaelp', 'Skriv kort og enkelt, fx: Skub håndtagene frem. Før dem langsomt tilbage.'));
+  kort.appendChild(bRække);
+
+  const kRække = trEl('div', 'formRække');
+  const kLabel = trEl('label', null, 'Kategori');
+  kLabel.setAttribute('for', 'trOvKat');
+  const kSel = document.createElement('select');
+  kSel.id = 'trOvKat';
+  TR_KATEGORIER.forEach(function(p){
+    const o = document.createElement('option');
+    o.value = p[0];
+    o.textContent = p[1];
+    if(p[0] === k.kategori) o.selected = true;
+    kSel.appendChild(o);
+  });
+  kSel.addEventListener('change', function(){ k.kategori = kSel.value; });
+  kRække.appendChild(kLabel);
+  kRække.appendChild(kSel);
+  kort.appendChild(kRække);
+  rod.appendChild(kort);
+
+  const billedKort = trEl('div', 'kort');
+  billedKort.appendChild(trEl('h3', null, 'Billeder'));
+  billedKort.appendChild(trEl('div', 'trHjaelp trHjaelpAdvarsel',
+    'Tag kun billeder af maskiner og redskaber. Aldrig af beboere eller personale.'));
+  billedKort.appendChild(trBilledeSlot(0, 'Billede 1: startposition'));
+  billedKort.appendChild(trBilledeSlot(1, 'Billede 2: slutposition (valgfrit)'));
+  rod.appendChild(billedKort);
+
+  if(trFejlTekst) rod.appendChild(trEl('div', 'trFejl', trFejlTekst));
+
+  const knapper = trEl('div', 'trKnapRække');
+  const gem = trKnap(trOvelseGemmer ? 'Gemmer …' : 'Gem øvelse', 'knapGuld', trGemOvelse);
+  gem.disabled = trOvelseGemmer;
+  knapper.appendChild(gem);
+  const annuller = trKnap('Annullér', 'sekundaer', trAnnullerOvelse);
+  annuller.disabled = trOvelseGemmer;
+  knapper.appendChild(annuller);
+  rod.appendChild(knapper);
+}
+
+// Én billedplads: forhåndsvisning + "Tag billede" (kamera), "Vælg fra galleri" og "Fjern".
+function trBilledeSlot(index, titel){
+  const k = trOvelseKladde;
+  const slot = k.billeder[index];
+
+  const boks = trEl('div', 'trSlot');
+  boks.appendChild(trEl('div', 'trSlotTitel', titel));
+
+  const visning = trEl('div', 'trForhaandsvisning');
+  const tegnVisning = function(){
+    visning.textContent = '';
+    const url = trSlotVisning(slot);
+    if(url){
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Forhåndsvisning';
+      visning.appendChild(img);
+    } else {
+      visning.appendChild(trEl('span', 'trIngenBillede', 'Intet billede'));
+    }
+    fjern.hidden = !url;
+  };
+
+  const lavInput = function(medKamera){
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/*';
+    if(medKamera) inp.setAttribute('capture', 'environment');
+    inp.hidden = true;
+    inp.addEventListener('change', async function(){
+      const fil = inp.files && inp.files[0];
+      inp.value = '';
+      if(!fil) return;
+      try {
+        const blob = await komprimerBillede(fil, TR_BILLEDE_MAKS_BREDDE);
+        if(blob.size > TR_BILLEDE_MAKS_BYTES){
+          visToast('Billedet er for stort. Prøv igen.');
+          return;
+        }
+        if(slot.preview){ try { URL.revokeObjectURL(slot.preview); } catch(e){ /* ignorer */ } }
+        slot.blob = blob;
+        slot.preview = URL.createObjectURL(blob);
+        slot.fjernet = false;
+        tegnVisning();
+      } catch(e){
+        console.error(e);
+        visToast('Billedet kunne ikke bruges. Prøv et andet.');
+      }
+    });
+    return inp;
+  };
+  const kameraInput = lavInput(true);
+  const galleriInput = lavInput(false);
+
+  const knapper = trEl('div', 'trKnapRække');
+  knapper.appendChild(trKnap('Tag billede', 'knapGuld', function(){ kameraInput.click(); }));
+  knapper.appendChild(trKnap('Vælg fra galleri', 'sekundaer', function(){ galleriInput.click(); }));
+  const fjern = trKnap('Fjern', 'sekundaer', function(){
+    if(slot.preview){ try { URL.revokeObjectURL(slot.preview); } catch(e){ /* ignorer */ } }
+    slot.blob = null;
+    slot.preview = null;
+    slot.fjernet = true;
+    tegnVisning();
+  });
+  knapper.appendChild(fjern);
+
+  boks.appendChild(visning);
+  boks.appendChild(knapper);
+  boks.appendChild(kameraInput);
+  boks.appendChild(galleriInput);
+  tegnVisning();
+  return boks;
+}
+
+async function trUploadBillede(blob){
+  const start = await sb.functions.invoke('ovelse-billede', {
+    body: { action: 'upload', token: trToken, type: 'image/jpeg' }
+  });
+  if(start.error){
+    const status = start.error.context && start.error.context.status;
+    if(status === 401){
+      trGemToken(null);
+      throw new Error('Du er logget ud. Log ind igen med personalekoden.');
+    }
+    throw new Error('Kunne ikke starte upload af billedet.');
+  }
+  const d = start.data;
+  if(!d || !d.token || !d.sti || !d.url) throw new Error('Kunne ikke starte upload af billedet.');
+  const op = await sb.storage.from(TR_BUCKET).uploadToSignedUrl(d.sti, d.token, blob, { contentType: 'image/jpeg' });
+  if(op.error) throw new Error('Billedet kunne ikke uploades.');
+  return { sti: d.sti, url: d.url };
+}
+
+// Best effort: fjerner en uploadet fil, som ingen øvelse bruger. Fejl er ikke kritiske
+// (den natlige oprydning, hvis den er slået til, tager resten).
+async function trSletBillede(filnavn){
+  if(!filnavn || !trToken) return;
+  try {
+    await sb.functions.invoke('ovelse-billede', { body: { action: 'slet', token: trToken, sti: filnavn } });
+  } catch(e){ console.error('Kunne ikke slette billede:', e); }
+}
+
+async function trGemOvelse(){
+  const k = trOvelseKladde;
+  if(!k || trOvelseGemmer) return;
+
+  const navn = k.navn.trim();
+  const harBillede = k.billeder.map(function(s){ return !!trSlotVisning(s); });
+  let fejl = '';
+  if(!navn) fejl = 'Giv øvelsen et navn.';
+  else if(k.beskrivelse.length > 300) fejl = 'Beskrivelsen er for lang.';
+  else if(!harBillede[0] && harBillede[1]) fejl = 'Tilføj billede 1 før billede 2.';
+  if(fejl){ trFejlTekst = fejl; trTegn(); return; }
+
+  trOvelseGemmer = true;
+  trFejlTekst = '';
+  trTegn();
+
+  const nyeFiler = [];   // filnavne uploadet i dette forsøg (fjernes igen, hvis det fejler)
+  try {
+    // 1) Upload nye billeder, og find den URL hver plads skal have
+    const urls = [];
+    for(let i = 0; i < 2; i++){
+      const slot = k.billeder[i];
+      if(slot.blob){
+        const r = await trUploadBillede(slot.blob);
+        nyeFiler.push(r.sti);
+        urls.push(r.url);
+      } else if(slot.fjernet){
+        urls.push(null);
+      } else {
+        urls.push(slot.original || null);
+      }
+    }
+    // Er billede 1 fjernet, men billede 2 findes, rykkes billede 2 op
+    if(!urls[0] && urls[1]){ urls[0] = urls[1]; urls[1] = null; }
+
+    // 2) Gem i databasen
+    const args = {
+      p_navn: navn, p_beskrivelse: k.beskrivelse.trim(), p_kategori: k.kategori,
+      p_billede_sti: urls[0], p_billede2_sti: urls[1]
+    };
+    let res;
+    if(k.id){
+      args.p_ovelse_id = k.id;
+      res = await trKald('personale_ret_ovelse', args);
+    } else {
+      res = await trKald('personale_opret_ovelse', args);
+    }
+    if(res.fejl){
+      for(let i = 0; i < nyeFiler.length; i++) await trSletBillede(nyeFiler[i]);
+      trOvelseGemmer = false;
+      if(trToken){ trFejlTekst = res.fejl; trTegn(); }
+      return;
+    }
+
+    // 3) Ryd op: gamle uploadede billeder, der ikke længere bruges
+    for(let i = 0; i < 2; i++){
+      const gammel = k.billeder[i].original;
+      if(gammel && urls.indexOf(gammel) < 0) await trSletBillede(trBucketFilnavn(gammel));
+    }
+
+    visToast(k.id ? 'Øvelsen er rettet' : 'Øvelsen er gemt og kan bruges i programmer');
+    trRydForhaandsvisninger();
+    trOvelseKladde = null;
+    trOvelseGemmer = false;
+    trMode = 'ovelser';
+    trFejlTekst = '';
+    trHentAlt();
+  } catch(e){
+    console.error(e);
+    for(let i = 0; i < nyeFiler.length; i++) await trSletBillede(nyeFiler[i]);
+    trOvelseGemmer = false;
+    trFejlTekst = (e && e.message) ? e.message : 'Noget gik galt. Prøv igen.';
+    trTegn();
+  }
 }
 
 // ---------- Seneste træninger ----------
