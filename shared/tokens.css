@@ -30,7 +30,6 @@
   --lars:    #dc2626;
   --niels:   #ea580c;
   --leyla:   #16a34a;
-  --manfred: #0891b2;
 
   --tekst-skala: 1;  /* sættes evt. lavere pr. element af JS, se tilpasTekstTilHøjde() */
 
@@ -99,7 +98,6 @@
 .beboer-tag.lars{    background:var(--lars); }
 .beboer-tag.niels{   background:var(--niels); }
 .beboer-tag.leyla{   background:var(--leyla); }
-.beboer-tag.manfred{ background:var(--manfred); }
 
 /* ---------- Listepunkt ----------
    Basis-rækken i enhver liste (Dagsplan, Afkrydsning, Overlap ...).

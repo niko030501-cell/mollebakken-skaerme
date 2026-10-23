@@ -116,7 +116,6 @@
     }
 
     #ugeplanerContainer{ grid-template-columns: repeat(6, 1fr); }
-    #beskederContainer{ grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
     #afkrydsningContainer{ grid-template-columns: repeat(6, 1fr); }
     #overlapFarveContainer{ grid-template-columns: repeat(6, 1fr); }
 
@@ -204,24 +203,6 @@
       border-radius: 0 3px 3px 0;
     }
 
-    /* ---- Personalbjælke ---- */
-
-    .personaleBjælke{
-      width: 100%;
-      background: var(--brand);
-      color: white;
-      border-radius: 6px;
-      padding: 12px 20px;
-      text-align: center;
-    }
-
-    .personaleBjælke .eyebrow{ color: var(--guld); margin-bottom: 3px; }
-
-    #personaleBjælkeTekst{
-      font-size: 16px;
-      font-weight: 700;
-    }
-
     /* ---- Vedhæftet fil (knap under en besked) ----
        Til fjernbetjening (ikke touch): et rigtigt <button>, som kan få fokus
        med piletaster og åbnes med OK/Enter. Hvilende = rolig lys knap med
@@ -280,8 +261,6 @@
       outline-offset: 2px;
     }
 
-    #personaleFilKnap{ margin-top: 8px; }
-
     #filFejlBoks{
       position: fixed;
       left: 50%;
@@ -301,30 +280,6 @@
     #filFejlBoks[hidden]{ display: none; }
 
     /* ---- Overskrifter ---- */
-
-    .forklaring{
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 24px;
-      font-size: 13px;
-      color: var(--tekst-2);
-      margin: 8px 0 4px 0;
-    }
-
-    .forklaringPunkt{ display: flex; align-items: center; gap: 6px; }
-
-    .forklaringSwatch{ width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
-
-    .swatchAkut{ background: var(--kritisk); }
-
-    .swatchOpmaerksom{
-      background: rgba(216, 155, 43, .12);
-      border-left: 3px solid var(--guld);
-      border-radius: 0 3px 3px 0;
-    }
-
-    .swatchInfo{ background: transparent; border: 1px solid var(--streg); }
 
     /* ---- Overlap: toprække med døgnvagt ---- */
 
@@ -365,6 +320,155 @@
     .tjeklisteGrid{ columns: 2; column-gap: 40px; }
     .tjeklisteGrid .listepunkt{ break-inside: avoid; }
 
+    /* ---- Beskeder: én række pr. beboer + HUSET-bjælke ----
+       Layoutet er tegnet til 1280×720 og skaleres til skærmen med --s (1 "designpixel").
+       Browsere uden min() beholder 1px (ingen skalering, men stadig brugbart). */
+
+    #beskeder{ --s: 1px; }
+    @supports (width: min(1px, 2px)){
+      #beskeder{ --s: min(calc(100vw / 1280), calc(100vh / 720)); }
+    }
+
+    #beskeder.side{
+      padding: calc(var(--s) * 12) calc(var(--s) * 20) calc(var(--s) * 14);
+      gap: calc(var(--s) * 10);
+    }
+
+    .bRækker{
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--s) * 8);
+    }
+
+    .bRække{
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      gap: calc(var(--s) * 18);
+      background: #fff;
+      border-radius: calc(var(--s) * 12);
+      padding: calc(var(--s) * 6) calc(var(--s) * 16);
+    }
+
+    .bNavn{
+      flex: 0 0 calc(var(--s) * 200);
+      display: flex;
+      align-items: center;
+      gap: calc(var(--s) * 12);
+      font-size: calc(var(--s) * 24);
+      font-weight: 800;
+      color: #1A1A1A;
+    }
+
+    .bCirkel{
+      flex: 0 0 auto;
+      width: calc(var(--s) * 46);
+      height: calc(var(--s) * 46);
+      border-radius: 50%;
+      background: var(--tom);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--s) * 24);
+      font-weight: 800;
+    }
+
+    .bChips{
+      flex: 1;
+      min-width: 0;
+      align-self: stretch;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: center;
+      gap: calc(var(--s) * 8);
+      overflow: hidden;
+    }
+
+    .bChip{
+      display: inline-flex;
+      align-items: center;
+      gap: calc(var(--s) * 8);
+      max-width: 100%;
+      padding: calc(var(--s) * 6) calc(var(--s) * 12);
+      border-radius: calc(var(--s) * 10);
+      background: var(--papir);
+      color: #1A1A1A;
+      font-size: calc(var(--s) * 20);
+      font-weight: 700;
+      line-height: 1.15;
+    }
+    .bChip.vigtig{ background: #C2410C; color: #fff; }
+    .bChip.mere{ background: #1A1A1A; color: #fff; }
+
+    .bIkon{ display: inline-flex; flex: 0 0 auto; }
+    .bIkon svg{ width: calc(var(--s) * 22); height: calc(var(--s) * 22); }
+    .bTekst{ min-width: 0; overflow-wrap: anywhere; }
+
+    .bTid, .bNy{
+      flex: 0 0 auto;
+      font-size: calc(var(--s) * 13);
+      font-weight: 800;
+      letter-spacing: .04em;
+      padding: calc(var(--s) * 3) calc(var(--s) * 7);
+      border-radius: calc(var(--s) * 6);
+      white-space: nowrap;
+    }
+    .bTid{ background: #1A1A1A; color: #fff; }
+    .bNy{ background: #FACC15; color: #1A1A1A; }
+
+    .bChip .filKnap, .bHusetPunkt .filKnap{
+      flex: 0 0 auto;
+      font-size: calc(var(--s) * 16);
+      padding: calc(var(--s) * 3) calc(var(--s) * 7);
+    }
+    .filKnap.kompakt .filNavn{ display: none; }
+
+    .bHuset{
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: calc(var(--s) * 18);
+      background: #1A1A1A;
+      color: #fff;
+      border-radius: calc(var(--s) * 12);
+      padding: calc(var(--s) * 10) calc(var(--s) * 16);
+    }
+    .bHusetMaerke{
+      flex: 0 0 calc(var(--s) * 200);
+      font-size: calc(var(--s) * 24);
+      font-weight: 800;
+      letter-spacing: .2em;
+    }
+    .bHusetListe{
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: center;
+      gap: calc(var(--s) * 6) calc(var(--s) * 24);
+      max-height: calc(var(--s) * 84);
+      overflow: hidden;
+    }
+    .bHusetPunkt{
+      display: inline-flex;
+      align-items: center;
+      gap: calc(var(--s) * 8);
+      font-size: calc(var(--s) * 20);
+      font-weight: 700;
+      line-height: 1.15;
+      max-width: 100%;
+    }
+    .bHusetPunkt.mere{ color: #FACC15; }
+    .bVigtigt{ color: #FB923C; font-weight: 800; }
+    .bHuset .bTid{ background: #fff; color: #1A1A1A; }
+    .bHusetTom{ color: #A3A3A3; font-size: calc(var(--s) * 20); font-weight: 500; }
+
+    #beskederContainer{ flex: 1; min-height: 0; display: flex; flex-direction: column; gap: calc(var(--s) * 10); }
+
     /* ---- Loading ---- */
 
     .loading{
@@ -389,6 +493,7 @@
 <!-- Supabase JS client (v2 UMD) -->
 <script src="supabase-js.min.js"></script>
 <script src="../shared/icons.js"></script>
+<script src="../shared/ikoner.js"></script>
 
 <header id="topbjælke">
   <!-- Afkrydsning og Overlap midlertidigt skjult — funktionen bruges ikke
@@ -420,17 +525,7 @@
 <!-- ==================== BESKEDER ==================== -->
 
 <div id="beskeder" class="side active">
-  <div id="personaleBjælke" class="personaleBjælke" style="display:none;">
-    <div class="eyebrow">Personale</div>
-    <div id="personaleBjælkeTekst"></div>
-    <button type="button" id="personaleFilKnap" class="filKnap" hidden></button>
-  </div>
-  <div class="forklaring">
-    <span class="forklaringPunkt"><span class="forklaringSwatch swatchAkut"></span>Akut / vigtigt</span>
-    <span class="forklaringPunkt"><span class="forklaringSwatch swatchOpmaerksom"></span>Vær opmærksom</span>
-    <span class="forklaringPunkt"><span class="forklaringSwatch swatchInfo"></span>Information</span>
-  </div>
-  <div id="beskederContainer" class="beboerKolonner">
+  <div id="beskederContainer">
     <div class="loading">Henter beskeder...</div>
   </div>
 </div>
@@ -517,8 +612,6 @@ if(!sb) visSupabaseFejl();
 // ---- Tilstand ----
 
 let aktuelSide = 'beskeder';
-let personaleBeskeder = [];
-let personaleIndex = 0;
 let sidsteUgeplanData = null;
 
 const knapIdPerSide = {
@@ -551,7 +644,7 @@ function visSide(side){
   // de skal bare måles igen nu de reelt er synlige (display:none giver 0 i
   // højde, så målingen dur ikke før nu). Afkrydsning/Overlap måler sig selv
   // i bunden af deres respektive vis-funktion, kaldt herunder.
-  if(side === 'beskeder') tilpasAlleKolonner('beskederContainer');
+  if(side === 'beskeder') tilpasBeskedRækker();
   if(side === 'ugeplaner') tilpasAlleKolonner('ugeplanerContainer');
   if(side === 'pmoede'){
     pmoedeSideIndex = 0;
@@ -645,16 +738,59 @@ function tilpasAlleKolonner(containerId){
 
 // ---- BESKEDER ----
 
+// ---- BESKEDER ----
+// Én række pr. beboer med beskederne som chips (ikon efter kategori + titel + tid-mærke),
+// og en mørk HUSET-bjælke nederst. Udløbne beskeder (fjernes_efter passeret, lokal tid) vises ikke.
+// Opdateres hvert 60. sekund (se setInterval nederst) — ingen realtime-abonnement.
+
+const BESKED_DAGE_KORT = ['SØN', 'MAN', 'TIR', 'ONS', 'TOR', 'FRE', 'LØR'];
+const BESKED_FALLBACK_BEBOERE = ['Louie', 'Kenneth', 'Lars', 'Niels', 'Leyla'];
+let beboereTavle = [];   // [{ navn, farve }]
+
+// Kategori-ikoner: tre genbruges fra shared/ikoner.js, resten (Tabler, outline) ligger her
+const BESKED_IKONER_FÆLLES = { mad: 'mad', aktivitet: 'aktivitet', rutine: 'ur' };
+const BESKED_IKONER_LOKALE = {
+  sundhed: [["path",{"d":"M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"}]],
+  besoeg:  [["path",{"d":"M14 12v.01"}],["path",{"d":"M3 21h18"}],["path",{"d":"M6 21v-16a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v16"}]],
+  fest:    [["path",{"d":"M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z"}],["path",{"d":"M12 8l0 13"}],["path",{"d":"M19 12v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-7"}],["path",{"d":"M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5"}]],
+  koersel: [["path",{"d":"M5 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"}],["path",{"d":"M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"}],["path",{"d":"M5 17h-2v-6l2 -5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5"}]],
+  info:    [["path",{"d":"M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"}],["path",{"d":"M12 9h.01"}],["path",{"d":"M11 12h1v4h1"}]]
+};
+
+function beskedKategoriIkon(kategori){
+  if(BESKED_IKONER_FÆLLES[kategori]) return moelleIkon(BESKED_IKONER_FÆLLES[kategori], { stoerrelse: 22 });
+  const dele = BESKED_IKONER_LOKALE[kategori] || BESKED_IKONER_LOKALE.info;
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.9');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  dele.forEach(function(del){
+    const el = document.createElementNS(NS, del[0]);
+    Object.keys(del[1]).forEach(function(a){ el.setAttribute(a, del[1][a]); });
+    svg.appendChild(el);
+  });
+  return svg;
+}
+
 async function hentBeskeder(){
   if(!sb) return;
-  const { data, error } = await sb
-    .from('beskeder')
-    .select('*')
-    .eq('aktiv', true)
-    .order('created_at', { ascending: true });
+  const [svar, beboerSvar] = await Promise.all([
+    sb.from('beskeder').select('*').eq('aktiv', true).order('created_at', { ascending: false }),
+    sb.from('beboere').select('navn,farve,sortering').order('sortering')
+  ]);
 
-  if(error){ console.error('Fejl beskeder:', error); return; }
-  visBeskeder(data || []);
+  if(svar.error){ console.error('Fejl beskeder:', svar.error); return; }
+  if(!beboerSvar.error && beboerSvar.data && beboerSvar.data.length > 0){
+    beboereTavle = beboerSvar.data;
+  } else if(beboereTavle.length === 0){
+    beboereTavle = BESKED_FALLBACK_BEBOERE.map(function(n){ return { navn: n, farve: null }; });
+  }
+  visBeskeder(svar.data || []);
 }
 
 // ---- Vedhæftede filer (knap under en besked) ----
@@ -779,24 +915,114 @@ document.addEventListener('focusin', function(e){
   if(e.target.classList && e.target.classList.contains('filKnap')) forlængFilPause();
 });
 
-function visPersonaleBjælke(){
-  const b = personaleBeskeder[personaleIndex];
-  document.getElementById('personaleBjælkeTekst').textContent = b.tekst;
-  const knap = document.getElementById('personaleFilKnap');
-  if(b.filNavn){
-    udfyldFilKnap(knap, b.id, b.filNavn);
-    knap.hidden = false;
-  } else {
-    knap.hidden = true;
+// Tid-mærke: "TIR 13:00", "ONS", "I DAG 09:30". Tomt for fast info (ingen dato).
+function beskedTidMaerke(r){
+  if(!r.hvornaar_dato) return '';
+  const d = r.hvornaar_dato.split('-').map(Number);
+  const dato = new Date(d[0], d[1] - 1, d[2]);
+  const dagTekst = r.hvornaar_dato === datoISO(new Date()) ? 'I DAG' : BESKED_DAGE_KORT[dato.getDay()];
+  return dagTekst + (r.hvornaar_tid ? ' ' + r.hvornaar_tid.slice(0, 5) : '');
+}
+
+// En række fra databasen -> det der skal vises (eller null hvis den er udløbet). Browserens lokale tid.
+function beskedTilVisning(r, nu){
+  if(r.fjernes_efter && new Date(r.fjernes_efter) <= nu) return null;
+  const beboere = (r.beboere && r.beboere.length > 0) ? r.beboere : [r.beboer === 'Personale' ? 'Huset' : r.beboer];
+  return {
+    id: r.id,
+    beboere: beboere,
+    titel: r.titel || r.besked,
+    kategori: r.kategori || 'info',
+    vigtig: !!r.vigtig || r.prioritet === 'Rød',
+    tid: beskedTidMaerke(r),
+    ny: (nu.getTime() - new Date(r.created_at).getTime()) < 48 * 3600 * 1000,
+    oprettet: new Date(r.created_at).getTime(),
+    fil: r.fil_sti ? (r.fil_navn || 'Vedhæftet fil') : null
+  };
+}
+
+function sorterBeskeder(liste){
+  return liste.slice().sort(function(a, b){ return ((b.vigtig ? 1 : 0) - (a.vigtig ? 1 : 0)) || (b.oprettet - a.oprettet); });
+}
+
+function lavEl(tag, klasse, tekst){
+  const e = document.createElement(tag);
+  if(klasse) e.className = klasse;
+  if(tekst != null) e.textContent = tekst;
+  return e;
+}
+
+function lavBeskedFilKnap(v){
+  const knap = lavFilKnap(v.id, v.fil);
+  knap.classList.add('kompakt');
+  return knap;
+}
+
+function lavBeskedChip(v){
+  const chip = lavEl('span', 'bChip' + (v.vigtig ? ' vigtig' : ''));
+  const ikon = lavEl('span', 'bIkon');
+  ikon.appendChild(beskedKategoriIkon(v.kategori));
+  chip.appendChild(ikon);
+  chip.appendChild(lavEl('span', 'bTekst', v.titel));
+  if(v.tid) chip.appendChild(lavEl('span', 'bTid', v.tid));
+  if(v.ny) chip.appendChild(lavEl('span', 'bNy', 'NY'));
+  if(v.fil) chip.appendChild(lavBeskedFilKnap(v));
+  return chip;
+}
+
+function lavHusetPunkt(v){
+  const punkt = lavEl('span', 'bHusetPunkt');
+  if(v.vigtig) punkt.appendChild(lavEl('span', 'bVigtigt', 'Vigtigt:'));
+  punkt.appendChild(lavEl('span', 'bTekst', v.titel));
+  if(v.tid) punkt.appendChild(lavEl('span', 'bTid', v.tid));
+  if(v.ny) punkt.appendChild(lavEl('span', 'bNy', 'NY'));
+  if(v.fil) punkt.appendChild(lavBeskedFilKnap(v));
+  return punkt;
+}
+
+// Passer chipsene ikke i rækken, skjules de sidste og "+ X mere" vises i stedet for at teksten bliver lille.
+function tilpasChips(rod, elementKlasse, mereKlasse){
+  Array.prototype.forEach.call(rod.querySelectorAll('.mere'), function(e){ e.remove(); });
+  const alle = Array.prototype.slice.call(rod.querySelectorAll(elementKlasse));
+  alle.forEach(function(e){ e.style.display = ''; });
+  if(rod.clientHeight === 0) return;   // siden er ikke synlig — måles igen når den vises
+  function passer(){ return rod.scrollHeight <= rod.clientHeight + 1; }
+  if(passer()) return;
+
+  const mere = lavEl('span', mereKlasse + ' mere');
+  rod.appendChild(mere);
+  let skjult = 0;
+  for(let i = alle.length - 1; i >= 0; i--){
+    alle[i].style.display = 'none';
+    skjult++;
+    mere.textContent = '+ ' + skjult + ' mere';
+    if(passer()) break;
   }
 }
 
+function tilpasBeskedRækker(){
+  Array.prototype.forEach.call(document.querySelectorAll('#beskederContainer .bChips'), function(rod){
+    tilpasChips(rod, '.bChip', 'bChip');
+  });
+  const huset = document.querySelector('#beskederContainer .bHusetListe');
+  if(huset) tilpasChips(huset, '.bHusetPunkt', 'bHusetPunkt');
+}
+
 function visBeskeder(data){
+  const nu = new Date();
+  const alle = data.map(function(r){ return beskedTilVisning(r, nu); }).filter(function(v){ return v; });
+  const huset = sorterBeskeder(alle.filter(function(v){ return v.beboere.indexOf('Huset') !== -1; }));
+  const rækker = beboereTavle.map(function(b){
+    return {
+      navn: b.navn,
+      farve: b.farve,
+      beskeder: sorterBeskeder(alle.filter(function(v){ return v.beboere.indexOf(b.navn) !== -1; }))
+    };
+  });
+
   // Er intet ændret (typisk hvert 60. sek.), rører vi slet ikke ved siden —
   // så fokus på en filknap nulstilles aldrig af den almindelige opdatering.
-  const signatur = datoISO(new Date()) + '|' + JSON.stringify(data.map(r => [
-    r.id, r.beboer, r.prioritet, r.besked, r.dato, r.afsender, r.fil_sti, r.fil_navn
-  ]));
+  const signatur = JSON.stringify([rækker, huset]);
   if(signatur === sidsteBeskedSignatur) return;
   sidsteBeskedSignatur = signatur;
 
@@ -804,88 +1030,40 @@ function visBeskeder(data){
   const fokuseret = document.activeElement;
   const fokusId = (fokuseret && fokuseret.classList && fokuseret.classList.contains('filKnap'))
     ? fokuseret.dataset.beskedId : null;
-  const foregåendePersonaleId = personaleBeskeder.length > 0 && personaleBeskeder[personaleIndex]
-    ? personaleBeskeder[personaleIndex].id : null;
 
   const container = document.getElementById('beskederContainer');
-  container.innerHTML = '';
-  personaleBeskeder = [];
+  container.textContent = '';
 
-  const grupper = {};
-
-  data.forEach(r => {
-    if(r.beboer === 'Personale'){
-      personaleBeskeder.push({ id: r.id, tekst: r.besked, filNavn: r.fil_sti ? (r.fil_navn || 'Vedhæftet fil') : null });
-      return;
-    }
-    if(!grupper[r.beboer]) grupper[r.beboer] = [];
-    grupper[r.beboer].push(r);
+  const rækkerEl = lavEl('div', 'bRækker');
+  rækker.forEach(function(r){
+    const række = lavEl('div', 'bRække');
+    const navn = lavEl('div', 'bNavn');
+    const cirkel = lavEl('span', 'bCirkel', r.navn.charAt(0).toUpperCase());
+    if(r.farve) cirkel.style.background = r.farve;
+    navn.appendChild(cirkel);
+    navn.appendChild(lavEl('span', null, r.navn));
+    række.appendChild(navn);
+    const chips = lavEl('div', 'bChips');
+    r.beskeder.forEach(function(v){ chips.appendChild(lavBeskedChip(v)); });
+    række.appendChild(chips);
+    rækkerEl.appendChild(række);
   });
+  container.appendChild(rækkerEl);
 
-  for(const beboer in grupper){
-    grupper[beboer].sort((a,b) => prioritetRang(a.prioritet) - prioritetRang(b.prioritet));
-  }
+  const bjælke = lavEl('div', 'bHuset');
+  bjælke.appendChild(lavEl('div', 'bHusetMaerke', 'HUSET'));
+  const liste = lavEl('div', 'bHusetListe');
+  if(huset.length === 0) liste.appendChild(lavEl('span', 'bHusetTom', 'Ingen beskeder til huset'));
+  huset.forEach(function(v){ liste.appendChild(lavHusetPunkt(v)); });
+  bjælke.appendChild(liste);
+  container.appendChild(bjælke);
 
-  for(const beboer in grupper){
-    const items = grupper[beboer];
-
-    const kolonne = document.createElement('div');
-    kolonne.className = 'beboerKolonne';
-
-    let liHtml = items.map(item => {
-      let ekstraKlasse = '';
-      if(item.prioritet === 'Rød') ekstraKlasse = 'akut';
-      else if(item.prioritet === 'Gul') ekstraKlasse = 'opmærksom';
-
-      const flag = ekstraKlasse === 'akut' ? '<span class="punkt-flag">Akut</span>' : '';
-
-      const label = datoLabel(item.dato);
-      const afsender = item.afsender
-        ? '<span class="afsender"> &middot; ' + escapeHtml(item.afsender) + '</span>'
-        : '';
-
-      return '<li class="listepunkt' + (ekstraKlasse ? ' ' + ekstraKlasse : '') + (item.fil_sti ? ' harFil' : '') + '">' +
-        '<span class="klokkeslæt">' + escapeHtml(label) + '</span>' +
-        '<span class="tekst">' + escapeHtml(item.besked) + afsender + '</span>' +
-        flag +
-        '</li>';
-    }).join('');
-
-    kolonne.innerHTML =
-      '<span class="beboer-tag ' + beboer.toLowerCase() + '">' + beboer.toUpperCase() + '</span>' +
-      '<ul>' + liHtml + '</ul>';
-
-    // Filknapperne sættes på med DOM-metoder (li'erne står i samme rækkefølge som items).
-    const lier = kolonne.querySelectorAll('li');
-    items.forEach((item, i) => {
-      if(!item.fil_sti) return;
-      const række = document.createElement('div');
-      række.className = 'filRække';
-      række.appendChild(lavFilKnap(item.id, item.fil_navn || 'Vedhæftet fil'));
-      lier[i].appendChild(række);
-    });
-
-    container.appendChild(kolonne);
-  }
-
-  const bjælke = document.getElementById('personaleBjælke');
-  if(personaleBeskeder.length > 0){
-    bjælke.style.display = 'block';
-    // Bliv på den besked bjælken viste, hvis den stadig findes
-    let nytIndex = personaleBeskeder.findIndex(b => b.id === foregåendePersonaleId);
-    personaleIndex = nytIndex >= 0 ? nytIndex : 0;
-    visPersonaleBjælke();
-  } else {
-    bjælke.style.display = 'none';
-    document.getElementById('personaleFilKnap').hidden = true;
-  }
+  tilpasBeskedRækker();
 
   if(fokusId){
-    const gen = synligeFilKnapper().find(k => k.dataset.beskedId === fokusId);
+    const gen = synligeFilKnapper().find(function(k){ return k.dataset.beskedId === fokusId; });
     if(gen) gen.focus({ preventScroll: true });
   }
-
-  tilpasAlleKolonner('beskederContainer');
 }
 
 // ---- UGEPLANER / DAGSPLAN ----
@@ -1127,7 +1305,7 @@ async function hentOverlap(){
     journalPerNøgle[r.beboer + '|' + r.tidspunkt] = r.skrevet;
   });
 
-  const BEBOERE = ['Louie','Kenneth','Lars','Niels','Leyla','Manfred'];
+  const BEBOERE = ['Louie','Kenneth','Lars','Niels','Leyla'];
   const beboere = BEBOERE.map(beboer => ({
     beboer,
     farver: ['rød','gul','grøn'].filter(f => farverPerBeboer[beboer] && farverPerBeboer[beboer][f]),
@@ -1477,16 +1655,6 @@ function opdaterUr(){
   document.getElementById('ur').textContent = timer + ':' + min;
 }
 
-// ---- PERSONALE-BJÆLKE ROTATION ----
-
-function rotérPersonaleBjælke(){
-  if(personaleBeskeder.length < 2) return;
-  // Står fokus på bjælkens filknap, skifter beskeden ikke under fingrene på brugeren.
-  if(document.activeElement === document.getElementById('personaleFilKnap')) return;
-  personaleIndex = (personaleIndex + 1) % personaleBeskeder.length;
-  visPersonaleBjælke();
-}
-
 // ---- INITIALISER ----
 
 visSide('beskeder');
@@ -1503,17 +1671,23 @@ hentSkaermIndstillinger();
 // Genmål den aktive fane én gang når webfonten er helt indlæst.
 document.fonts.ready.then(function(){
   if(document.getElementById(aktuelSide).classList.contains('active')){
-    if(aktuelSide === 'beskeder') tilpasAlleKolonner('beskederContainer');
+    if(aktuelSide === 'beskeder') tilpasBeskedRækker();
     if(aktuelSide === 'ugeplaner') tilpasAlleKolonner('ugeplanerContainer');
     if(aktuelSide === 'afkrydsning') tilpasAlleKolonner('afkrydsningContainer');
     if(aktuelSide === 'overlap') tilpasAlleKolonner('overlapFarveContainer');
   }
 });
 
+// Skærmen/zoom kan skifte efter start — genmål så chips altid passer i rækkerne
+let resizeTimer = null;
+window.addEventListener('resize', function(){
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function(){ if(aktuelSide === 'beskeder') tilpasBeskedRækker(); }, 200);
+});
+
 setInterval(tjekRotation, 1000);
 setInterval(tjekPmoedeSideSkift, 1000);
 setInterval(opdaterUr, 1000);
-setInterval(rotérPersonaleBjælke, 10000);
 setInterval(opdaterAfkrydsningOverskrift, 60000);
 
 setInterval(() => {
@@ -1531,13 +1705,6 @@ setInterval(tegnUgeplaner, 60000);
 // ikke kaste yderligere exceptions her.
 
 if(sb){
-
-  sb
-    .channel('beskeder-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'beskeder' }, () => {
-      hentBeskeder();
-    })
-    .subscribe();
 
   sb
     .channel('afkrydsning-changes')
