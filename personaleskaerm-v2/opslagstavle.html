@@ -208,7 +208,11 @@
     display:flex; align-items:center; justify-content:center;
   }
   #natListe{ min-height:0; display:flex; flex-direction:column; gap:calc(18 * var(--u)); }
-  #natListe.flere .natPerson .foto{ height:calc(190 * var(--u)); }
+  .natPerson .tekster{ flex-shrink:0; min-width:0; }
+  /* Flere nattevagte: billede ved siden af navn og tid, så alle kan ses. */
+  #natListe.flere .natPerson{ flex-direction:row; align-items:center; gap:calc(16 * var(--u)); }
+  #natListe.flere .natPerson .foto{ width:calc(130 * var(--u)); height:calc(130 * var(--u)); min-height:0; flex-shrink:0; }
+  #natListe.flere .natPerson .navn{ font-size:calc(38 * var(--u)); }
   .natPerson .foto img{ width:100%; height:100%; object-fit:cover; display:block; }
   .natPerson .navn{ font-size:calc(42 * var(--u)); font-weight:800; line-height:1.05; }
   .natPerson .vagt{ font-size:calc(28 * var(--u)); font-weight:500; color:#C9D2E4; }
@@ -262,13 +266,13 @@
   </div>
 
   <div class="kol" id="midt">
-    <div id="kommer" hidden>
-      <div class="titel haand" id="kommerTitel">Kommer</div>
-      <div id="kommerListe"></div>
-    </div>
     <div id="nat" hidden>
       <div class="hoved"><span id="natIkon"></span><span class="haand">I nat</span></div>
       <div id="natListe"></div>
+    </div>
+    <div id="kommer" hidden>
+      <div class="titel haand" id="kommerTitel">Kommer</div>
+      <div id="kommerListe"></div>
     </div>
     <div id="også" hidden>
       <div class="titel haand">Også her i dag</div>
@@ -730,8 +734,10 @@ function tegnNat(nattevagt){
     const foto = el('div', 'foto');
     sætPortræt(foto, p.navn, p.billede);
     person.appendChild(foto);
-    person.appendChild(el('div', 'navn', fornavn(p.navn)));
-    person.appendChild(el('div', 'vagt', hhmm(p.start) + '–' + hhmm(p.slut)));
+    const tekster = el('div', 'tekster');
+    tekster.appendChild(el('div', 'navn', fornavn(p.navn)));
+    tekster.appendChild(el('div', 'vagt', hhmm(p.start) + '–' + hhmm(p.slut)));
+    person.appendChild(tekster);
     liste.appendChild(person);
   });
 }
@@ -778,14 +784,12 @@ async function hentPersonale(){
     // personale på gulvet vises; I nat-kortet viser aftenens nattevagt.
     gulv = énPrPerson(alle.filter(p => erGulv(p) && p.dag === iMorgenISO)).filter(vistFor(iMorgenISO));
     funktioner = [];
-    nat = alle.filter(p => erNat(p) && p.dag === iDagISO).filter(vistFor(iDagISO));
   } else {
     // Resten af døgnet (00:00–19:30): kun dem der er på arbejde lige nu.
     // Folk dukker op når deres vagt starter og forsvinder når den slutter.
     const påArbejde = alle.filter(p => new Date(p.start) <= nu && nu < new Date(p.slut)).filter(vistFor(iDagISO));
     const gulvNu = påArbejde.filter(p => erGulv(p) || erVikar(p));
     funktioner = påArbejde.filter(p => !erGulv(p) && !erNat(p) && !erVikar(p));
-    nat = påArbejde.filter(erNat);
 
     // Mødedag: mens vikarerne er på arbejde, er "På arbejde nu" kun dem.
     // Fast personale hvis vagt fortsætter efter vikarerne går hjem står på
@@ -803,6 +807,18 @@ async function hentPersonale(){
     } else {
       gulv = gulvNu;
     }
+  }
+
+  // "I nat" står hele døgnet og skifter ikke kl. 19:30: det er den nats
+  // nattevagter (også før de er mødt), altså de tidligste vagter der ikke er
+  // slut endnu. Efter midnat er det stadig de samme, indtil de er gået hjem;
+  // først derefter vises næste nats hold.
+  const natIkkeSlut = alle.filter(p => erNat(p) && new Date(p.slut) > nu);
+  if(natIkkeSlut.length > 0){
+    const natDag = natIkkeSlut.map(p => p.dag).sort()[0];
+    nat = alle.filter(p => erNat(p) && p.dag === natDag).filter(vistFor(natDag));
+  } else {
+    nat = [];
   }
 
   if(beboerskaermAktiv.niveau1){
