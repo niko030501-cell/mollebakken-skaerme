@@ -112,6 +112,28 @@
     z-index:2;
   }
 
+  /* Døgnvagt: tape i stedet for nål, seng-mærke på billedet. */
+  .tape{
+    position:absolute; top:calc(-16 * var(--u)); left:calc(-34 * var(--u));
+    transform:rotate(-8deg);
+    padding:calc(4 * var(--u)) calc(30 * var(--u)) calc(6 * var(--u));
+    background:rgba(246, 227, 154, .88);
+    box-shadow:0 calc(2 * var(--u)) calc(5 * var(--u)) rgba(60,40,10,.25);
+    font-size:calc(38 * var(--u)); line-height:1.1; color:var(--tekst);
+    z-index:3;
+  }
+  .sengMærke{
+    position:absolute; top:calc(28 * var(--u)); right:calc(28 * var(--u));
+    width:calc(72 * var(--u)); height:calc(72 * var(--u)); border-radius:50%;
+    background:var(--nat);
+    box-shadow:0 calc(3 * var(--u)) calc(8 * var(--u)) rgba(20,25,40,.45);
+    display:flex; align-items:center; justify-content:center;
+    z-index:2;
+  }
+  .sengMærke svg{ width:calc(42 * var(--u)); height:calc(42 * var(--u)); display:block; }
+  .polaroid .hertilLille{ font-size:calc(24 * var(--u)); font-weight:600; color:var(--tekst-2); line-height:1.1; }
+  #gulv.tæt .polaroid .hertilLille{ font-size:calc(20 * var(--u)); }
+
   #gulv{ flex:1; min-height:0; display:grid; gap:calc(34 * var(--u)) calc(40 * var(--u)); padding-top:calc(14 * var(--u)); }
   #gulv .polaroid .navn{ font-size:calc(54 * var(--u)); }
   #gulv.tæt{ gap:calc(30 * var(--u)) calc(28 * var(--u)); }
@@ -390,6 +412,7 @@ function svgIkon(indhold, farve){
 }
 
 const IKON = {
+  seng: ['M3 6v13', 'M3 15h18v4', 'M21 19v-6a3 3 0 0 0-3-3h-7v5', 'M7.5 11.2a1.7 1.7 0 1 0 0.01 0'],
   måne: ['M20 14.5A8.5 8.5 0 1 1 9.5 4a6.7 6.7 0 0 0 10.5 10.5z'],
   sol: ['M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', 'M12 2v2.5', 'M12 19.5V22', 'M2 12h2.5', 'M19.5 12H22', 'M4.9 4.9l1.8 1.8', 'M17.3 17.3l1.8 1.8', 'M4.9 19.1l1.8-1.8', 'M17.3 6.7l1.8-1.8'],
   sky: ['M7 18a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 9a4.5 4.5 0 0 1 .5 9H7z'],
@@ -604,21 +627,50 @@ function tegnGulv(personer, visImorgen){
     : 'repeat(4, 1fr)';
   container.style.gridTemplateRows = 'repeat(' + rækker + ', minmax(0, 1fr))';
 
-  personer.forEach(function(p, i){
-    const kort = el('div', 'polaroid');
+  // Døgnvagter (visningsrolle "Døgnvagt", rå Workfeed-rolle "Rådighedsvagt")
+  // står altid først; ellers uændret rækkefølge.
+  const sorteret = personer.filter(p => p.rolle === 'Døgnvagt')
+    .concat(personer.filter(p => p.rolle !== 'Døgnvagt'));
+
+  sorteret.forEach(function(p, i){
+    const erDøgn = p.rolle === 'Døgnvagt';
+    const kort = el('div', 'polaroid' + (erDøgn ? ' døgn' : ''));
     kort.style.transform = 'rotate(' + DREJNING[i % DREJNING.length] + 'deg)';
 
-    const nål = el('div', 'nål');
-    nål.style.background = NÅL_FARVER[i % NÅL_FARVER.length];
-    kort.appendChild(nål);
+    if(erDøgn){
+      // Malertape i stedet for nålen.
+      kort.appendChild(el('div', 'tape haand', 'Døgnvagt'));
+    } else {
+      const nål = el('div', 'nål');
+      nål.style.background = NÅL_FARVER[i % NÅL_FARVER.length];
+      kort.appendChild(nål);
+    }
 
     const foto = el('div', 'foto');
     sætPortræt(foto, p.navn, p.billede);
     kort.appendChild(foto);
 
+    if(erDøgn){
+      const seng = el('div', 'sengMærke');
+      seng.appendChild(svgIkon(IKON.seng, '#FFFDF8'));
+      kort.appendChild(seng);
+    }
+
     kort.appendChild(el('div', 'navn', fornavn(p.navn)));
 
-    kort.appendChild(el('div', 'hertil haand', 'her til ' + slutDagTekst(p.slut) + 'kl. ' + hhmm(p.slut)));
+    if(erDøgn){
+      // En døgnvagt der startede før i dag og nu er efter kl. 6 er ved at
+      // slutte: natten er forbi.
+      const nuTid = new Date();
+      const dagensStart = new Date(nuTid); dagensStart.setHours(0, 0, 0, 0);
+      const natenForbi = new Date(p.start) < dagensStart && nuTid.getHours() >= 6;
+      const sovTekst = visImorgen ? 'sover her i morgen nat'
+        : (natenForbi ? 'sov her i nat' : 'sover her i nat');
+      kort.appendChild(el('div', 'hertil haand', sovTekst));
+      kort.appendChild(el('div', 'hertilLille', 'til ' + slutDagTekst(p.slut) + 'kl. ' + hhmm(p.slut)));
+    } else {
+      kort.appendChild(el('div', 'hertil haand', 'her til ' + slutDagTekst(p.slut) + 'kl. ' + hhmm(p.slut)));
+    }
 
     container.appendChild(kort);
   });
