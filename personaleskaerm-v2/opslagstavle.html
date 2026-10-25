@@ -138,7 +138,7 @@
     transform:rotate(-0.6deg);
   }
   #også .titel{ font-size:calc(40 * var(--u)); color:var(--tekst-2); line-height:1; margin-bottom:calc(12 * var(--u)); }
-  #opdelRække{ display:flex; flex-wrap:wrap; gap:calc(14 * var(--u)) calc(34 * var(--u)); }
+  #opdelRække{ display:flex; flex-direction:column; gap:calc(14 * var(--u)); }
   .funk{ display:flex; align-items:center; gap:calc(14 * var(--u)); }
   .funk .lille{
     width:calc(64 * var(--u)); height:calc(64 * var(--u)); border-radius:50%; background:#c9bca5; overflow:hidden;
@@ -147,7 +147,10 @@
   .funk .lille img{ width:100%; height:100%; object-fit:cover; display:block; }
   .funk .lille .initialer{ font-size:calc(26 * var(--u)); }
   .funk .navn{ font-size:calc(30 * var(--u)); font-weight:700; line-height:1.1; }
-  .funk .rolle{ font-size:calc(22 * var(--u)); color:var(--tekst-2); font-weight:500; }
+  .funk .rolle{ font-family:'Caveat', cursive; font-weight:700; font-size:calc(32 * var(--u)); line-height:1; color:var(--tekst-2); }
+  #også .funk .lille{ width:calc(72 * var(--u)); height:calc(72 * var(--u)); }
+  #også .funk .navn{ font-size:calc(34 * var(--u)); font-weight:800; }
+  #midt{ overflow:hidden; }
 
   /* ---- Kommer kl. X (mødedage) ---- */
 
@@ -175,14 +178,15 @@
   #nat .hoved{ display:flex; align-items:center; gap:calc(12 * var(--u)); }
   #nat .hoved svg{ width:calc(46 * var(--u)); height:calc(46 * var(--u)); flex-shrink:0; }
   #nat .hoved .haand{ font-size:calc(60 * var(--u)); line-height:1; }
-  .natPerson{ display:flex; flex-direction:column; gap:calc(10 * var(--u)); }
+  .natPerson{ display:flex; flex-direction:column; gap:calc(10 * var(--u)); min-height:0; flex-shrink:1; }
+  .natPerson .navn, .natPerson .vagt{ flex-shrink:0; }
   .natPerson .foto{
-    width:100%; aspect-ratio:1 / 1; max-height:calc(250 * var(--u));
+    width:100%; height:calc(250 * var(--u)); min-height:calc(90 * var(--u)); flex-shrink:1;
     background:#3a4a68; overflow:hidden;
     display:flex; align-items:center; justify-content:center;
   }
-  #natListe{ display:flex; flex-direction:column; gap:calc(18 * var(--u)); }
-  #natListe.flere .natPerson .foto{ aspect-ratio:4 / 3; }
+  #natListe{ min-height:0; display:flex; flex-direction:column; gap:calc(18 * var(--u)); }
+  #natListe.flere .natPerson .foto{ height:calc(190 * var(--u)); }
   .natPerson .foto img{ width:100%; height:100%; object-fit:cover; display:block; }
   .natPerson .navn{ font-size:calc(42 * var(--u)); font-weight:800; line-height:1.05; }
   .natPerson .vagt{ font-size:calc(28 * var(--u)); font-weight:500; color:#C9D2E4; }
@@ -233,10 +237,6 @@
   <div class="kol" id="venstre">
     <div class="sektionsTitel haand" id="gulvTitel">På arbejde nu</div>
     <div id="gulv"></div>
-    <div id="også" hidden>
-      <div class="titel haand">Også her i dag</div>
-      <div id="opdelRække"></div>
-    </div>
   </div>
 
   <div class="kol" id="midt">
@@ -247,6 +247,10 @@
     <div id="nat" hidden>
       <div class="hoved"><span id="natIkon"></span><span class="haand">I nat</span></div>
       <div id="natListe"></div>
+    </div>
+    <div id="også" hidden>
+      <div class="titel haand">Også her i dag</div>
+      <div id="opdelRække"></div>
     </div>
   </div>
 
@@ -565,6 +569,19 @@ function sætPortræt(boks, navn, url){
 const NÅL_FARVER = ['#c8453b', '#2f7d8f', '#d89b2b', '#5b8a3c', '#7a4fa0', '#d9703a'];
 const DREJNING = [-1.6, 1.2, -0.8, 1.9, -1.2, 0.9, -1.9, 1.5];
 
+// "" når vagten slutter i dag, "i morgen " dagen efter, ellers ugedagen
+// ("tirsdag "), så "her til kl. 09:15" aldrig læses som i dag.
+function slutDagTekst(slut){
+  const nu = new Date();
+  const idag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());
+  const s = new Date(slut);
+  const slutDag = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+  const diff = Math.round((slutDag - idag) / 86400000);
+  if(diff <= 0) return '';
+  if(diff === 1) return 'i morgen ';
+  return UGEDAGE[s.getDay()].toLowerCase() + ' ';
+}
+
 function tegnGulv(personer, visImorgen){
   const container = document.getElementById('gulv');
   tomme(container);
@@ -601,7 +618,7 @@ function tegnGulv(personer, visImorgen){
 
     kort.appendChild(el('div', 'navn', fornavn(p.navn)));
 
-    kort.appendChild(el('div', 'hertil haand', 'her til kl. ' + hhmm(p.slut)));
+    kort.appendChild(el('div', 'hertil haand', 'her til ' + slutDagTekst(p.slut) + 'kl. ' + hhmm(p.slut)));
 
     container.appendChild(kort);
   });
