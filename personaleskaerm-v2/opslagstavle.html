@@ -172,6 +172,7 @@
   .funk .rolle{ font-family:'Caveat', cursive; font-weight:700; font-size:calc(32 * var(--u)); line-height:1; color:var(--tekst-2); }
   #også .funk .lille{ width:calc(72 * var(--u)); height:calc(72 * var(--u)); }
   #også .funk .navn{ font-size:calc(34 * var(--u)); font-weight:800; }
+  .funk .kommerKl{ font-size:calc(28 * var(--u)); color:var(--tekst); font-weight:500; }
   #midt{ overflow:hidden; }
 
   /* ---- Kommer kl. X (mødedage) ---- */
@@ -275,7 +276,7 @@
       <div id="kommerListe"></div>
     </div>
     <div id="også" hidden>
-      <div class="titel haand">Også her i dag</div>
+      <div class="titel haand" id="alsoTitel">Også her i dag</div>
       <div id="opdelRække"></div>
     </div>
   </div>
@@ -598,14 +599,14 @@ const DREJNING = [-1.6, 1.2, -0.8, 1.9, -1.2, 0.9, -1.9, 1.5];
 
 // "" når vagten slutter i dag, "i morgen " dagen efter, ellers ugedagen
 // ("tirsdag "), så "her til kl. 09:15" aldrig læses som i dag.
-function slutDagTekst(slut){
+function slutDagTekst(slut, visImorgen){
   const nu = new Date();
-  const idag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());
+  const idag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate() + (visImorgen ? 1 : 0));
   const s = new Date(slut);
   const slutDag = new Date(s.getFullYear(), s.getMonth(), s.getDate());
   const diff = Math.round((slutDag - idag) / 86400000);
   if(diff <= 0) return '';
-  if(diff === 1) return 'i morgen ';
+  if(diff === 1 && !visImorgen) return 'i morgen ';
   return UGEDAGE[s.getDay()].toLowerCase() + ' ';
 }
 
@@ -671,9 +672,9 @@ function tegnGulv(personer, visImorgen){
       const sovTekst = visImorgen ? 'sover her i morgen nat'
         : (natenForbi ? 'sov her i nat' : 'sover her i nat');
       kort.appendChild(el('div', 'hertil haand', sovTekst));
-      kort.appendChild(el('div', 'hertilLille', 'til ' + slutDagTekst(p.slut) + 'kl. ' + hhmm(p.slut)));
+      kort.appendChild(el('div', 'hertilLille', 'til ' + slutDagTekst(p.slut, visImorgen) + 'kl. ' + hhmm(p.slut)));
     } else {
-      kort.appendChild(el('div', 'hertil haand', 'her til ' + slutDagTekst(p.slut) + 'kl. ' + hhmm(p.slut)));
+      kort.appendChild(el('div', 'hertil haand', 'her til ' + slutDagTekst(p.slut, visImorgen) + 'kl. ' + hhmm(p.slut)));
     }
 
     container.appendChild(kort);
@@ -694,7 +695,7 @@ function tilpasNavne(container){
   });
 }
 
-function tegnFunktioner(personer){
+function tegnFunktioner(personer, visImorgen){
   const boks = document.getElementById('også');
   const række = document.getElementById('opdelRække');
   tomme(række);
@@ -703,6 +704,7 @@ function tegnFunktioner(personer){
     return;
   }
   boks.hidden = false;
+  document.getElementById('alsoTitel').textContent = visImorgen ? 'Også her i morgen' : 'Også her i dag';
   personer.forEach(function(p){
     const funk = el('div', 'funk');
     const lille = el('div', 'lille');
@@ -711,6 +713,7 @@ function tegnFunktioner(personer){
     const tekster = el('div');
     tekster.appendChild(el('div', 'navn', fornavn(p.navn)));
     tekster.appendChild(el('div', 'rolle', p.rolle));
+    if(visImorgen) tekster.appendChild(el('div', 'rolle kommerKl', 'kommer kl. ' + hhmm(p.start)));
     funk.appendChild(tekster);
     række.appendChild(funk);
   });
@@ -783,7 +786,8 @@ async function hentPersonale(){
     // 19:30–00:00: de der er på arbejde nu forsvinder. Kun morgendagens
     // personale på gulvet vises; I nat-kortet viser aftenens nattevagt.
     gulv = énPrPerson(alle.filter(p => erGulv(p) && p.dag === iMorgenISO)).filter(vistFor(iMorgenISO));
-    funktioner = [];
+    // Andre funktioner (leder, køkken, pedel osv.) der starter i morgen.
+    funktioner = énPrPerson(alle.filter(p => !erGulv(p) && !erNat(p) && !erVikar(p) && p.dag === iMorgenISO)).filter(vistFor(iMorgenISO));
   } else {
     // Resten af døgnet (00:00–19:30): kun dem der er på arbejde lige nu.
     // Folk dukker op når deres vagt starter og forsvinder når den slutter.
@@ -829,7 +833,7 @@ async function hentPersonale(){
     document.getElementById('gulvTitel').hidden = true;
     document.getElementById('gulv').hidden = true;
   }
-  tegnFunktioner(funktioner);
+  tegnFunktioner(funktioner, forbered);
   tegnKommer(kommer, kommerKl);
   tegnNat(nat);
 }
