@@ -441,6 +441,15 @@ async function hentBeboerskaermIndstillinger(){
   if(!data) return;
 
   data.forEach(r => { beboerskaermAktiv[r.noegle] = r.aktiv; });
+
+  // Skift til det nye design (opslagstavle.html): rækken 'opslagstavle' med
+  // aktiv = true, eller ?design=ny. ?design=gammel holder fast i dette design.
+  const designParam = new URLSearchParams(window.location.search).get('design');
+  if(designParam === 'ny' || (designParam !== 'gammel' && beboerskaermAktiv.opslagstavle === true)){
+    window.location.replace('opslagstavle.html' + window.location.search);
+    return;
+  }
+
   anvendBeboerskaermIndstillinger();
 }
 

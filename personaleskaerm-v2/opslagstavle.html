@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>Opslagstavlen</title>
+
+<script src="../shared/auto-reload.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  /* Alle mål er i "u" = 1/1920 af skærmbredden, så tavlen fylder tv'et
+     uanset dets CSS-bredde. Skrevet som calc(54 * var(--u)) og udvidet til calc() nedenfor. */
+  :root{
+    color-scheme: light;
+    --u: calc(100vw / 1920);
+    --bg: #E9DAC3;
+    --tekst: #2B241D;
+    --tekst-2: #5A5148;
+    --seddel: #FFFDF8;
+    --gul: #F6E39A;
+    --nat: #22304A;
+  }
+
+  *{ box-sizing:border-box; }
+
+  [hidden]{ display:none !important; }
+
+  html, body{ margin:0; padding:0; }
+
+  body{
+    font-family:'Archivo', sans-serif;
+    background:var(--bg);
+    color:var(--tekst);
+    width:100vw;
+    height:calc(1080 * var(--u));
+    max-height:100vh;
+    overflow:hidden;
+    padding:calc(30 * var(--u)) calc(40 * var(--u)) calc(40 * var(--u));
+    display:flex;
+    flex-direction:column;
+    gap:calc(20 * var(--u));
+  }
+
+  .haand{ font-family:'Caveat', cursive; font-weight:700; }
+
+  /* ---- Toplinje ---- */
+
+  #top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-shrink:0;
+    height:calc(130 * var(--u));
+  }
+  #hej{ font-size:calc(92 * var(--u)); line-height:1; color:var(--tekst); }
+
+  #tid{
+    background:var(--seddel);
+    padding:calc(12 * var(--u)) calc(28 * var(--u)) calc(14 * var(--u));
+    transform:rotate(1.2deg);
+    box-shadow:0 calc(4 * var(--u)) calc(14 * var(--u)) rgba(60,40,10,.22);
+    text-align:right;
+  }
+  #ur{ font-size:calc(64 * var(--u)); font-weight:800; line-height:1.05; }
+  #datoVejr{
+    display:flex; align-items:center; justify-content:flex-end; gap:calc(10 * var(--u));
+    font-size:calc(24 * var(--u)); font-weight:600; color:var(--tekst-2);
+  }
+  #vejrIkon svg{ width:calc(34 * var(--u)); height:calc(34 * var(--u)); display:block; }
+
+  /* ---- Kolonner ---- */
+
+  #kolonner{
+    flex:1;
+    min-height:0;
+    display:grid;
+    grid-template-columns:calc(1040 * var(--u)) calc(370 * var(--u)) calc(350 * var(--u));
+    gap:calc(40 * var(--u));
+  }
+  .kol{ min-height:0; display:flex; flex-direction:column; gap:calc(22 * var(--u)); }
+
+  .sektionsTitel{ font-size:calc(46 * var(--u)); line-height:1; color:var(--tekst-2); flex-shrink:0; }
+
+  /* ---- Polaroids ---- */
+
+  .polaroid{
+    position:relative;
+    background:var(--seddel);
+    padding:calc(16 * var(--u)) calc(16 * var(--u)) calc(14 * var(--u));
+    box-shadow:0 calc(6 * var(--u)) calc(18 * var(--u)) rgba(60,40,10,.25);
+    display:flex; flex-direction:column; gap:calc(8 * var(--u));
+    min-height:0; min-width:0;
+  }
+  .polaroid .foto{
+    flex:1; min-height:0;
+    background:#d9cdb8;
+    overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .polaroid .foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .initialer{ font-size:calc(90 * var(--u)); font-weight:800; color:#fff; }
+  .polaroid .navn{ font-size:calc(54 * var(--u)); font-weight:800; line-height:1.05; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .polaroid .hertil{ font-size:calc(40 * var(--u)); line-height:1; color:var(--tekst-2); }
+  .nål{
+    position:absolute; top:calc(-12 * var(--u)); left:50%;
+    width:calc(26 * var(--u)); height:calc(26 * var(--u)); margin-left:calc(-13 * var(--u)); border-radius:50%;
+    box-shadow:0 calc(3 * var(--u)) calc(5 * var(--u)) rgba(0,0,0,.35), inset calc(-3 * var(--u)) calc(-3 * var(--u)) calc(4 * var(--u)) rgba(0,0,0,.18);
+    z-index:2;
+  }
+
+  #gulv{ flex:1; min-height:0; display:grid; gap:calc(34 * var(--u)) calc(40 * var(--u)); padding-top:calc(14 * var(--u)); }
+  #gulv .polaroid .navn{ font-size:calc(54 * var(--u)); }
+  #gulv.tæt{ gap:calc(30 * var(--u)) calc(28 * var(--u)); }
+  #gulv.tæt .polaroid .navn{ font-size:calc(44 * var(--u)); }
+  #gulv.tæt .polaroid .hertil{ font-size:calc(34 * var(--u)); }
+
+  .tom{
+    grid-column:1 / -1;
+    align-self:start;
+    background:var(--seddel);
+    padding:calc(30 * var(--u)) calc(36 * var(--u));
+    font-size:calc(40 * var(--u)); font-weight:600; color:var(--tekst-2);
+    box-shadow:0 calc(4 * var(--u)) calc(14 * var(--u)) rgba(60,40,10,.2);
+    transform:rotate(-0.8deg);
+  }
+
+  /* ---- Også her i dag ---- */
+
+  #også{
+    flex-shrink:0;
+    background:var(--seddel);
+    padding:calc(18 * var(--u)) calc(26 * var(--u)) calc(20 * var(--u));
+    box-shadow:0 calc(5 * var(--u)) calc(16 * var(--u)) rgba(60,40,10,.22);
+    transform:rotate(-0.6deg);
+  }
+  #også .titel{ font-size:calc(40 * var(--u)); color:var(--tekst-2); line-height:1; margin-bottom:calc(12 * var(--u)); }
+  #opdelRække{ display:flex; flex-wrap:wrap; gap:calc(14 * var(--u)) calc(34 * var(--u)); }
+  .funk{ display:flex; align-items:center; gap:calc(14 * var(--u)); }
+  .funk .lille{
+    width:calc(64 * var(--u)); height:calc(64 * var(--u)); border-radius:50%; background:#c9bca5; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .funk .lille img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .funk .lille .initialer{ font-size:calc(26 * var(--u)); }
+  .funk .navn{ font-size:calc(30 * var(--u)); font-weight:700; line-height:1.1; }
+  .funk .rolle{ font-size:calc(22 * var(--u)); color:var(--tekst-2); font-weight:500; }
+
+  /* ---- Kommer kl. X (mødedage) ---- */
+
+  #kommer{
+    flex-shrink:0;
+    background:var(--seddel);
+    padding:calc(16 * var(--u)) calc(22 * var(--u)) calc(18 * var(--u));
+    box-shadow:0 calc(5 * var(--u)) calc(16 * var(--u)) rgba(60,40,10,.22);
+    transform:rotate(-1.1deg);
+  }
+  #kommer .titel{ font-size:calc(52 * var(--u)); line-height:1; margin-bottom:calc(10 * var(--u)); }
+  #kommerListe{ display:flex; flex-direction:column; gap:calc(10 * var(--u)); }
+
+  /* ---- I nat ---- */
+
+  #nat{
+    background:var(--nat);
+    color:#F3EDE0;
+    padding:calc(22 * var(--u)) calc(24 * var(--u)) calc(26 * var(--u));
+    box-shadow:0 calc(6 * var(--u)) calc(18 * var(--u)) rgba(20,25,40,.4);
+    transform:rotate(1deg);
+    display:flex; flex-direction:column; gap:calc(14 * var(--u));
+    min-height:0;
+  }
+  #nat .hoved{ display:flex; align-items:center; gap:calc(12 * var(--u)); }
+  #nat .hoved svg{ width:calc(46 * var(--u)); height:calc(46 * var(--u)); flex-shrink:0; }
+  #nat .hoved .haand{ font-size:calc(60 * var(--u)); line-height:1; }
+  .natPerson{ display:flex; flex-direction:column; gap:calc(10 * var(--u)); }
+  .natPerson .foto{
+    width:100%; aspect-ratio:1 / 1; max-height:calc(250 * var(--u));
+    background:#3a4a68; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #natListe{ display:flex; flex-direction:column; gap:calc(18 * var(--u)); }
+  #natListe.flere .natPerson .foto{ aspect-ratio:4 / 3; }
+  .natPerson .foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .natPerson .navn{ font-size:calc(42 * var(--u)); font-weight:800; line-height:1.05; }
+  .natPerson .vagt{ font-size:calc(28 * var(--u)); font-weight:500; color:#C9D2E4; }
+
+  /* ---- Aktivitet ---- */
+
+  #aktivitet{ flex:1; min-height:calc(140 * var(--u)); transform:rotate(-1.3deg); }
+  #aktivitet .tidspunkt{ font-size:calc(46 * var(--u)); line-height:1; color:var(--tekst-2); }
+  #aktivitet .navn{ font-size:calc(36 * var(--u)); line-height:1.1; white-space:normal; }
+  #aktivitet .sted{ font-size:calc(22 * var(--u)); color:var(--tekst-2); font-weight:500; }
+
+  /* ---- Mad ---- */
+
+  #mad{
+    flex-shrink:0;
+    background:var(--gul);
+    padding:calc(18 * var(--u)) calc(22 * var(--u)) calc(18 * var(--u));
+    box-shadow:0 calc(6 * var(--u)) calc(18 * var(--u)) rgba(60,40,10,.25);
+    transform:rotate(0.9deg);
+  }
+  #mad .titel{ font-size:calc(52 * var(--u)); line-height:1; }
+  #madRet{ font-size:calc(36 * var(--u)); font-weight:800; line-height:1.1; margin:calc(6 * var(--u)) 0 calc(12 * var(--u)); overflow-wrap:anywhere; }
+  #madUge{ border-top:calc(2 * var(--u)) solid rgba(43,36,29,.25); padding-top:calc(8 * var(--u)); display:flex; flex-direction:column; gap:calc(2 * var(--u)); }
+  .ugeRække{ display:flex; gap:calc(8 * var(--u)); font-size:calc(20 * var(--u)); line-height:1.2; padding:calc(2 * var(--u)) calc(6 * var(--u)); border-radius:calc(6 * var(--u)); }
+  .ugeRække .dag{ font-weight:700; flex-shrink:0; width:calc(84 * var(--u)); }
+  .ugeRække .ret{ font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ugeRække.idag{ background:rgba(43,36,29,.14); font-weight:800; }
+  .ugeRække.idag .ret{ font-weight:800; }
+</style>
+</head>
+<body>
+
+<script>
+  const SUPABASE_URL = 'https://lumxvqhlmokspqnazhso.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1bXh2cWhsbW9rc3BxbmF6aHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzc3NTMsImV4cCI6MjA5OTYxMzc1M30.WvVrbqZWaY1V-6sC4XwoYDOciBULeCxcnxvB7TlAMno';
+</script>
+<script src="supabase-js.min.js"></script>
+
+<div id="top">
+  <div id="hej" class="haand">Hej! I dag er vi her</div>
+  <div id="tid">
+    <div id="ur">--:--</div>
+    <div id="datoVejr"><span id="dato"></span><span id="vejrIkon"></span><span id="vejrTekst"></span></div>
+  </div>
+</div>
+
+<div id="kolonner">
+  <div class="kol" id="venstre">
+    <div class="sektionsTitel haand" id="gulvTitel">På arbejde nu</div>
+    <div id="gulv"></div>
+    <div id="også" hidden>
+      <div class="titel haand">Også her i dag</div>
+      <div id="opdelRække"></div>
+    </div>
+  </div>
+
+  <div class="kol" id="midt">
+    <div id="kommer" hidden>
+      <div class="titel haand" id="kommerTitel">Kommer</div>
+      <div id="kommerListe"></div>
+    </div>
+    <div id="nat" hidden>
+      <div class="hoved"><span id="natIkon"></span><span class="haand">I nat</span></div>
+      <div id="natListe"></div>
+    </div>
+  </div>
+
+  <div class="kol" id="højre">
+    <div class="polaroid" id="aktivitet" hidden>
+      <div class="nål" style="background:#2f7d8f"></div>
+      <div class="foto" id="aktivitetFoto"></div>
+      <div class="tidspunkt haand" id="aktivitetTid"></div>
+      <div class="navn" id="aktivitetNavn"></div>
+      <div class="sted" id="aktivitetSted"></div>
+    </div>
+    <div id="mad" hidden>
+      <div class="titel haand">Mad i dag</div>
+      <div id="madRet">–</div>
+      <div id="madUge"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ==================================================================
+// OPSLAGSTAVLEN — nyt design til beboerskærmen. Det gamle design ligger
+// uændret i index.html. Samme datakilder og samme regler for hvem der
+// vises som dér (se flettVagter), kun præsentationen er ny.
+// ==================================================================
+
+let sb = null;
+try {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) {
+  console.error('Kunne ikke oprette Supabase-klient:', e);
+}
+
+// Al tekst fra data sættes med textContent, så den aldrig tolkes som HTML.
+function el(tag, klasse, tekst){
+  const e = document.createElement(tag);
+  if(klasse) e.className = klasse;
+  if(tekst != null) e.textContent = tekst;
+  return e;
+}
+
+function tomme(node){
+  while(node.firstChild) node.removeChild(node.firstChild);
+}
+
+const UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+const MÅNEDER = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
+const DAGE_KORT = ['søn','man','tirs','ons','tors','fre','lør'];
+
+// ==================================================================
+// SKIFT GAMMEL/NY — se også koden i index.html. Parameteren ?design=ny
+// eller ?design=gammel vinder; ellers afgør rækken 'opslagstavle' i
+// skaerm_indstillinger (aktiv = nyt design). Kan indstillingen ikke
+// læses, bliver siden hvor den er.
+// ==================================================================
+
+const DESIGN_PARAM = new URLSearchParams(window.location.search).get('design');
+
+let beboerskaermAktiv = {
+  niveau1: true, niveau2: true, niveau3: true,
+  aftensmad: true, aktivitet: true, madplan: true, vejr: true
+};
+
+async function hentIndstillinger(){
+  if(!sb) return;
+  const { data, error } = await sb
+    .from('skaerm_indstillinger')
+    .select('noegle, aktiv')
+    .eq('skaerm', 'beboerskaerm');
+  if(error){ console.error('Fejl skaerm_indstillinger:', error); return; }
+  if(!data) return;
+
+  let nytValgt = false;
+  data.forEach(r => {
+    if(r.noegle === 'opslagstavle'){ nytValgt = r.aktiv === true; return; }
+    beboerskaermAktiv[r.noegle] = r.aktiv;
+  });
+
+  if(DESIGN_PARAM === 'gammel' || (DESIGN_PARAM !== 'ny' && !nytValgt)){
+    window.location.replace('index.html' + window.location.search);
+    return;
+  }
+  anvendIndstillinger();
+}
+
+function anvendIndstillinger(){
+  hentAlt();
+}
+
+// ==================================================================
+// TID OG DATO
+// ==================================================================
+
+function datoISO(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function hhmm(iso){
+  const d = new Date(iso);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+// Kl. 19:30–00:00 forbereder skærmen morgendagen. Kun personalet følger
+// dette skift; mad og aktivitet skifter først ved midnat.
+function erForberedelse(nu){
+  return nu.getHours() > 19 || (nu.getHours() === 19 && nu.getMinutes() >= 30);
+}
+
+function opdaterUr(){
+  const nu = new Date();
+  document.getElementById('ur').textContent =
+    String(nu.getHours()).padStart(2,'0') + ':' + String(nu.getMinutes()).padStart(2,'0');
+  document.getElementById('dato').textContent =
+    UGEDAGE[nu.getDay()].toLowerCase() + ' ' + nu.getDate() + '. ' + MÅNEDER[nu.getMonth()];
+}
+
+// ==================================================================
+// IKONER (enkle SVG-streger, faste tekster — ingen data i strengene)
+// ==================================================================
+
+function svgIkon(indhold, farve){
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = document.createElementNS(ns, 'svg');
+  s.setAttribute('viewBox', '0 0 24 24');
+  s.setAttribute('fill', 'none');
+  s.setAttribute('stroke', farve);
+  s.setAttribute('stroke-width', '1.7');
+  s.setAttribute('stroke-linecap', 'round');
+  s.setAttribute('stroke-linejoin', 'round');
+  indhold.forEach(function(d){
+    const p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', d);
+    s.appendChild(p);
+  });
+  return s;
+}
+
+const IKON = {
+  måne: ['M20 14.5A8.5 8.5 0 1 1 9.5 4a6.7 6.7 0 0 0 10.5 10.5z'],
+  sol: ['M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', 'M12 2v2.5', 'M12 19.5V22', 'M2 12h2.5', 'M19.5 12H22', 'M4.9 4.9l1.8 1.8', 'M17.3 17.3l1.8 1.8', 'M4.9 19.1l1.8-1.8', 'M17.3 6.7l1.8-1.8'],
+  sky: ['M7 18a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 9a4.5 4.5 0 0 1 .5 9H7z'],
+  regn: ['M7 14a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 5a4.5 4.5 0 0 1 .5 9H7z', 'M8 17l-1 3', 'M12 17l-1 3', 'M16 17l-1 3'],
+  sne: ['M12 3v18', 'M4.2 7.5l15.6 9', 'M4.2 16.5l15.6-9'],
+  tåge: ['M4 9h16', 'M3 13h18', 'M6 17h12'],
+  torden: ['M7 14a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 5a4.5 4.5 0 0 1 .5 9H7z', 'M12 13l-2.5 4.5H13L11 22']
+};
+
+function vejrIkonFraKode(kode){
+  if(kode === 0 || kode === 1) return 'sol';
+  if(kode === 2 || kode === 3) return 'sky';
+  if(kode === 45 || kode === 48) return 'tåge';
+  if((kode >= 71 && kode <= 77) || kode === 85 || kode === 86) return 'sne';
+  if(kode >= 95) return 'torden';
+  return 'regn';
+}
+
+const VEJR_TEKST = {
+  sol: 'Klart', sky: 'Skyet', tåge: 'Tåge', sne: 'Sne', torden: 'Tordenvejr', regn: 'Regn'
+};
+
+async function hentVejr(){
+  const boks = document.getElementById('datoVejr');
+  if(!beboerskaermAktiv.vejr){
+    document.getElementById('vejrIkon').style.display = 'none';
+    document.getElementById('vejrTekst').style.display = 'none';
+    return;
+  }
+  document.getElementById('vejrIkon').style.display = '';
+  document.getElementById('vejrTekst').style.display = '';
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.28&longitude=10.46&current=temperature_2m,weather_code&timezone=Europe/Copenhagen&forecast_days=1');
+    const data = await res.json();
+    const temp = Math.round(data.current.temperature_2m);
+    const ikon = vejrIkonFraKode(data.current.weather_code);
+    const ikonBoks = document.getElementById('vejrIkon');
+    tomme(ikonBoks);
+    ikonBoks.appendChild(svgIkon(IKON[ikon], '#5A5148'));
+    document.getElementById('vejrTekst').textContent = temp + '° · ' + VEJR_TEKST[ikon];
+  } catch(e){
+    console.error('Fejl vejr:', e);
+  }
+}
+
+// ==================================================================
+// VAGTER — samme regler som index.html (hentPersonale/flettVagter).
+// ==================================================================
+
+function visningsRolle(raaRolle, tag){
+  if(tag === 'Admin') return 'Kontor';
+  const tabel = {
+    'Daglig leder': 'Leder',
+    'Køkkenpersonale': 'Køkken',
+    'Pedel': 'Pedel',
+    'Vågen nattevagt': 'Nattevagt',
+    'Socialfaglig medarbejder': 'Medarbejder',
+    'SSA': 'Medicinvagt',
+    'Rådighedsvagt': 'Døgnvagt'
+  };
+  return tabel[raaRolle] || raaRolle;
+}
+
+// Samler de rå rækker til ÉN vagt pr. person og rolle (Workfeeds midnats-
+// split flettes sammen) og giver hver vagt sin visningsrolle. Hvem der vises
+// hvornår afgøres i hentPersonale().
+function flettVagter(rækker){
+  const erNatvagt = r => {
+    const s = new Date(r.start);
+    const e = new Date(r.slut);
+    return s.getHours() >= 20 && e.getDate() !== s.getDate();
+  };
+
+  const rå = new Map();
+  rækker.forEach(r => {
+    const nøgle = r.navn + '|' + r.rolle;
+    if(!rå.has(nøgle)) rå.set(nøgle, []);
+    rå.get(nøgle).push(r);
+  });
+
+  const vagter = [];
+  rå.forEach(liste => {
+    liste.sort((a, b) => new Date(a.start) - new Date(b.start));
+    const flettet = [];
+    liste.forEach(r => {
+      const sidste = flettet[flettet.length - 1];
+      if(sidste && Math.abs(new Date(r.start) - new Date(sidste.slut)) <= 60000){
+        if(new Date(r.slut) > new Date(sidste.slut)) sidste.slut = r.slut;
+        if(r.tag === 'Admin' || (!sidste.tag && r.tag)) sidste.tag = r.tag;
+      } else {
+        flettet.push({ ...r });
+      }
+    });
+    flettet.forEach(v => {
+      let rolle = visningsRolle(v.rolle, v.tag);
+      if(rolle === 'Medarbejder' && erNatvagt(v)) rolle = 'Nattevagt';
+      vagter.push({ ...v, rolle });
+    });
+  });
+  return vagter;
+}
+
+// En person kan have flere vagter i hentningen; kun den tidligste pr.
+// person og rolle vises som forhåndsvisning.
+function énPrPerson(vagter){
+  const set = new Map();
+  vagter.slice().sort((a, b) => new Date(a.start) - new Date(b.start)).forEach(v => {
+    const nøgle = v.navn + '|' + v.rolle;
+    if(!set.has(nøgle)) set.set(nøgle, v);
+  });
+  return Array.from(set.values());
+}
+
+async function hentSkjulninger(){
+  try {
+    const { data, error } = await sb.from('skjult_personale')
+      .select('navn,dag,udloeber').gt('udloeber', new Date().toISOString());
+    if(error){ console.error('Fejl skjult_personale (viser alle):', error); return []; }
+    return data || [];
+  } catch (e) {
+    console.error('Fejl skjult_personale (viser alle):', e);
+    return [];
+  }
+}
+
+function skStartAfDag(iso){
+  const d = iso.split('-');
+  return new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]));
+}
+
+// Samme regel som i index.html og mollebakken-app-v2.
+function findSkjulning(skjulninger, navn, visteDagISO, nu){
+  const visteStart = skStartAfDag(visteDagISO);
+  const dagenFør = new Date(visteStart);
+  dagenFør.setDate(dagenFør.getDate() - 1);
+  const dagenFørISO = datoISO(dagenFør);
+  return skjulninger.find(s => {
+    if(s.navn !== navn) return false;
+    if(new Date(s.udloeber) <= nu) return false;
+    if(s.dag === visteDagISO) return true;
+    return s.dag === dagenFørISO && nu >= visteStart;
+  }) || null;
+}
+
+function renspNavn(navn){
+  return (navn || '').replace(/^(?:(?:Pedel|Vikar|Nat)[:\s]+)+/i, '').trim();
+}
+
+function fornavn(navn){
+  const renset = renspNavn(navn);
+  return renset.split(' ')[0] || renset;
+}
+
+function initialer(navn){
+  const dele = renspNavn(navn).split(/\s+/).filter(Boolean);
+  if(dele.length === 0) return '';
+  if(dele.length === 1) return dele[0].charAt(0).toUpperCase();
+  return (dele[0].charAt(0) + dele[dele.length - 1].charAt(0)).toUpperCase();
+}
+
+// Fylder en boks med billedet, eller personens initialer hvis der intet er
+// (eller billedet ikke kan hentes).
+function sætPortræt(boks, navn, url){
+  tomme(boks);
+  const fallback = function(){
+    tomme(boks);
+    boks.appendChild(el('span', 'initialer', initialer(navn)));
+  };
+  if(!url){ fallback(); return; }
+  const img = document.createElement('img');
+  img.alt = '';
+  img.onerror = fallback;
+  img.src = url;
+  boks.appendChild(img);
+}
+
+const NÅL_FARVER = ['#c8453b', '#2f7d8f', '#d89b2b', '#5b8a3c', '#7a4fa0', '#d9703a'];
+const DREJNING = [-1.6, 1.2, -0.8, 1.9, -1.2, 0.9, -1.9, 1.5];
+
+function tegnGulv(personer, visImorgen){
+  const container = document.getElementById('gulv');
+  tomme(container);
+
+  document.getElementById('gulvTitel').textContent = visImorgen ? 'Kommer i morgen' : 'På arbejde nu';
+
+  if(personer.length === 0){
+    container.style.gridTemplateColumns = '1fr';
+    container.appendChild(el('div', 'tom', visImorgen ? 'Ingen dagvagt i morgen' : 'Ingen på arbejde lige nu'));
+    return;
+  }
+
+  // Op til 3 pr. række i fast bredde (ca. 320 px); flere end 6 går til
+  // 4 smallere kolonner. Rækkerne deler højden, så få personer = høje billeder.
+  const kolonner = personer.length > 6 ? 4 : 3;
+  const rækker = Math.ceil(personer.length / kolonner);
+  container.className = personer.length > 6 ? 'tæt' : '';
+  container.style.gridTemplateColumns = kolonner === 3
+    ? 'repeat(3, calc(320 * var(--u)))'
+    : 'repeat(4, 1fr)';
+  container.style.gridTemplateRows = 'repeat(' + rækker + ', minmax(0, 1fr))';
+
+  personer.forEach(function(p, i){
+    const kort = el('div', 'polaroid');
+    kort.style.transform = 'rotate(' + DREJNING[i % DREJNING.length] + 'deg)';
+
+    const nål = el('div', 'nål');
+    nål.style.background = NÅL_FARVER[i % NÅL_FARVER.length];
+    kort.appendChild(nål);
+
+    const foto = el('div', 'foto');
+    sætPortræt(foto, p.navn, p.billede);
+    kort.appendChild(foto);
+
+    kort.appendChild(el('div', 'navn', fornavn(p.navn)));
+
+    kort.appendChild(el('div', 'hertil haand', 'her til kl. ' + hhmm(p.slut)));
+
+    container.appendChild(kort);
+  });
+
+  tilpasNavne(container);
+}
+
+// Lange fornavne (fx Christoffer) krymper til de passer på polaroiden.
+function tilpasNavne(container){
+  container.querySelectorAll('.navn').forEach(function(n){
+    n.style.fontSize = '';
+    let størrelse = parseFloat(getComputedStyle(n).fontSize);
+    while(n.scrollWidth > n.clientWidth && størrelse > 20){
+      størrelse -= 2;
+      n.style.fontSize = størrelse + 'px';
+    }
+  });
+}
+
+function tegnFunktioner(personer){
+  const boks = document.getElementById('også');
+  const række = document.getElementById('opdelRække');
+  tomme(række);
+  if(personer.length === 0 || !beboerskaermAktiv.niveau2){
+    boks.hidden = true;
+    return;
+  }
+  boks.hidden = false;
+  personer.forEach(function(p){
+    const funk = el('div', 'funk');
+    const lille = el('div', 'lille');
+    sætPortræt(lille, p.navn, p.billede);
+    funk.appendChild(lille);
+    const tekster = el('div');
+    tekster.appendChild(el('div', 'navn', fornavn(p.navn)));
+    tekster.appendChild(el('div', 'rolle', p.rolle));
+    funk.appendChild(tekster);
+    række.appendChild(funk);
+  });
+}
+
+function tegnNat(nattevagt){
+  const boks = document.getElementById('nat');
+  const liste = document.getElementById('natListe');
+  tomme(liste);
+  if(nattevagt.length === 0 || !beboerskaermAktiv.niveau3){
+    boks.hidden = true;
+    return;
+  }
+  boks.hidden = false;
+  const ikon = document.getElementById('natIkon');
+  if(!ikon.firstChild) ikon.appendChild(svgIkon(IKON.måne, '#F3EDE0'));
+
+  liste.className = nattevagt.length > 1 ? 'flere' : '';
+  nattevagt.forEach(function(p){
+    const person = el('div', 'natPerson');
+    const foto = el('div', 'foto');
+    sætPortræt(foto, p.navn, p.billede);
+    person.appendChild(foto);
+    person.appendChild(el('div', 'navn', fornavn(p.navn)));
+    person.appendChild(el('div', 'vagt', hhmm(p.start) + '–' + hhmm(p.slut)));
+    liste.appendChild(person);
+  });
+}
+
+function nyDag(nu, plus){
+  const d = new Date(nu);
+  d.setDate(d.getDate() + plus);
+  return d;
+}
+
+async function hentPersonale(){
+  if(!sb) return;
+
+  const nu = new Date();
+  const forbered = erForberedelse(nu);
+  const iDagISO = datoISO(nu);
+  const iMorgenISO = datoISO(nyDag(nu, 1));
+
+  document.getElementById('hej').textContent = forbered ? 'Hej! I morgen er vi her' : 'Hej! I dag er vi her';
+
+  // En vagt har samme dag som da den startede, også efter midnat, så
+  // gårsdagens nat- og døgnvagter hentes med.
+  const dage = [datoISO(nyDag(nu, -1)), iDagISO, iMorgenISO];
+  const [vagterRes, skjulninger] = await Promise.all([
+    sb.from('personaleskaerm_vagter').select('*').in('dag', dage).order('start'),
+    hentSkjulninger()
+  ]);
+  const { data, error } = vagterRes;
+  if(error){ console.error('Fejl personale:', error); return; }
+
+  const alle = flettVagter(data || []);
+  const erGulv = p => p.rolle === 'Medarbejder' || p.rolle === 'Døgnvagt';
+  const erNat = p => p.rolle === 'Nattevagt';
+  const vistFor = (dagISO) => (p => !findSkjulning(skjulninger, p.navn, dagISO, nu));
+
+  // Vikar-tagget bruges kun på møde-/kursusdage. Vikarer er altid på gulvet.
+  const erVikar = p => p.tag === 'Vikar' && !erNat(p);
+
+  let gulv, funktioner, nat;
+  let kommer = [];
+  let kommerKl = null;
+  if(forbered){
+    // 19:30–00:00: de der er på arbejde nu forsvinder. Kun morgendagens
+    // personale på gulvet vises; I nat-kortet viser aftenens nattevagt.
+    gulv = énPrPerson(alle.filter(p => erGulv(p) && p.dag === iMorgenISO)).filter(vistFor(iMorgenISO));
+    funktioner = [];
+    nat = alle.filter(p => erNat(p) && p.dag === iDagISO).filter(vistFor(iDagISO));
+  } else {
+    // Resten af døgnet (00:00–19:30): kun dem der er på arbejde lige nu.
+    // Folk dukker op når deres vagt starter og forsvinder når den slutter.
+    const påArbejde = alle.filter(p => new Date(p.start) <= nu && nu < new Date(p.slut)).filter(vistFor(iDagISO));
+    const gulvNu = påArbejde.filter(p => erGulv(p) || erVikar(p));
+    funktioner = påArbejde.filter(p => !erGulv(p) && !erNat(p) && !erVikar(p));
+    nat = påArbejde.filter(erNat);
+
+    // Mødedag: mens vikarerne er på arbejde, er "På arbejde nu" kun dem.
+    // Fast personale hvis vagt fortsætter efter vikarerne går hjem står på
+    // "Kommer kl. X" (X = seneste vikar-sluttid i dag); de der slutter
+    // samtidig med eller før vikarerne vises slet ikke. Når vikarerne er
+    // gået, gælder de normale regler igen.
+    const vikarerNu = gulvNu.filter(erVikar);
+    if(vikarerNu.length > 0){
+      const sluttid = Math.max.apply(null,
+        alle.filter(p => erVikar(p) && p.dag === iDagISO).map(p => new Date(p.slut).getTime()));
+      gulv = vikarerNu;
+      kommer = alle.filter(p => erGulv(p) && !erVikar(p) &&
+        new Date(p.start).getTime() < sluttid && new Date(p.slut).getTime() > sluttid).filter(vistFor(iDagISO));
+      kommerKl = hhmm(new Date(sluttid));
+    } else {
+      gulv = gulvNu;
+    }
+  }
+
+  if(beboerskaermAktiv.niveau1){
+    document.getElementById('gulvTitel').hidden = false;
+    document.getElementById('gulv').hidden = false;
+    tegnGulv(gulv, forbered);
+  } else {
+    document.getElementById('gulvTitel').hidden = true;
+    document.getElementById('gulv').hidden = true;
+  }
+  tegnFunktioner(funktioner);
+  tegnKommer(kommer, kommerKl);
+  tegnNat(nat);
+}
+
+// "Kommer kl. X": kun på mødedage, ellers skjult.
+function tegnKommer(personer, kl){
+  const boks = document.getElementById('kommer');
+  const liste = document.getElementById('kommerListe');
+  tomme(liste);
+  if(personer.length === 0 || !kl){
+    boks.hidden = true;
+    return;
+  }
+  boks.hidden = false;
+  document.getElementById('kommerTitel').textContent = 'Kommer kl. ' + kl;
+  personer.forEach(function(p){
+    const funk = el('div', 'funk');
+    const lille = el('div', 'lille');
+    sætPortræt(lille, p.navn, p.billede);
+    funk.appendChild(lille);
+    funk.appendChild(el('div', 'navn', fornavn(p.navn)));
+    liste.appendChild(funk);
+  });
+}
+
+// ==================================================================
+// MAD OG AKTIVITET — skifter ved midnat (dagens dato), ikke 19:30.
+// ==================================================================
+
+// Mandag i den uge dagens dato ligger i. Skærmen viser dagens ret og
+// aktivitet, så ugen må ikke skifte før selve dagen (appen planlægger
+// næste uge fra søndag kl. 20, men det gælder ikke her).
+function effektivMandag(){
+  const mandag = new Date();
+  const dag = mandag.getDay();
+  mandag.setDate(mandag.getDate() + (dag === 0 ? -6 : 1 - dag));
+  mandag.setHours(0,0,0,0);
+  return mandag;
+}
+
+async function hentMadplan(){
+  if(!sb) return;
+  const boks = document.getElementById('mad');
+  if(!beboerskaermAktiv.madplan && !beboerskaermAktiv.aftensmad){
+    boks.hidden = true;
+    return;
+  }
+
+  const dagensDag = UGEDAGE[new Date().getDay()];
+  const ugeStart = datoISO(effektivMandag());
+
+  const { data, error } = await sb.from('madplan').select('*').eq('uge_start', ugeStart);
+  if(error){ console.error('Fejl madplan:', error); return; }
+
+  const perDag = {};
+  (data || []).forEach(r => { perDag[r.dag] = r.ret; });
+
+  boks.hidden = false;
+  document.getElementById('madRet').textContent = perDag[dagensDag] || 'Ikke angivet';
+
+  const uge = document.getElementById('madUge');
+  tomme(uge);
+  uge.hidden = !beboerskaermAktiv.madplan;
+  ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'].forEach(function(dag){
+    const række = el('div', 'ugeRække' + (dag === dagensDag ? ' idag' : ''));
+    række.appendChild(el('span', 'dag', dag));
+    række.appendChild(el('span', 'ret', perDag[dag] || '–'));
+    uge.appendChild(række);
+  });
+}
+
+let aktivitetBilledeInterval = null;
+let aktivitetDiasNøgle = null;
+const AKTIVITET_INGEN = 'Ingen fælles aktivitet';
+
+async function hentAktivitet(){
+  if(!sb) return;
+  const kort = document.getElementById('aktivitet');
+  if(!beboerskaermAktiv.aktivitet){
+    kort.hidden = true;
+    return;
+  }
+
+  const dagensDag = UGEDAGE[new Date().getDay()];
+  const ugeStart = datoISO(effektivMandag());
+
+  const { data, error } = await sb.from('aktiviteter').select('*').eq('uge_start', ugeStart).eq('dag', dagensDag);
+  if(error){ console.error('Fejl aktivitet:', error); return; }
+
+  const række = data && data.length > 0 ? data[0] : null;
+  const valgt = række ? række.aktivitet : null;
+  const aktivitet = valgt || AKTIVITET_INGEN;
+
+  kort.hidden = false;
+  document.getElementById('aktivitetNavn').textContent = aktivitet;
+  document.getElementById('aktivitetTid').textContent = række && række.tid ? 'kl. ' + række.tid : '';
+  document.getElementById('aktivitetSted').textContent = række && række.sted ? række.sted : '';
+
+  const { data: billeder, error: billedeFejl } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet);
+  if(billedeFejl){ console.error('Fejl aktivitet_billeder:', billedeFejl); return; }
+
+  const boks = document.getElementById('aktivitetFoto');
+
+  if(!billeder || billeder.length === 0){
+    if(aktivitetBilledeInterval){ clearInterval(aktivitetBilledeInterval); aktivitetBilledeInterval = null; }
+    aktivitetDiasNøgle = null;
+    tomme(boks);
+    return;
+  }
+
+  const urls = billeder
+    .map(b => sb.storage.from('aktivitet-billeder').getPublicUrl(b.storage_path).data.publicUrl)
+    .sort();
+
+  // Uændret aktivitet og billeder: lad diasshowet køre videre.
+  const nøgle = aktivitet + '|' + urls.join(',');
+  if(nøgle === aktivitetDiasNøgle) return;
+  aktivitetDiasNøgle = nøgle;
+
+  if(aktivitetBilledeInterval){
+    clearInterval(aktivitetBilledeInterval);
+    aktivitetBilledeInterval = null;
+  }
+
+  const billede = document.createElement('img');
+  billede.alt = '';
+  billede.src = urls[0];
+  tomme(boks);
+  boks.appendChild(billede);
+
+  if(urls.length > 1){
+    let index = 0;
+    aktivitetBilledeInterval = setInterval(function(){
+      index = (index + 1) % urls.length;
+      billede.src = urls[index];
+    }, 10000);
+  }
+}
+
+// ==================================================================
+// INITIALISER
+// ==================================================================
+
+function hentAlt(){
+  hentPersonale();
+  hentMadplan();
+  hentAktivitet();
+}
+
+opdaterUr();
+hentIndstillinger();
+hentAlt();
+hentVejr();
+
+setInterval(opdaterUr, 1000);
+setInterval(hentIndstillinger, 60000);
+setInterval(hentAlt, 60000);
+setInterval(hentVejr, 1800000);
+
+</script>
+
+</body>
+</html>
