@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../shared/tokens.css">
   <link rel="stylesheet" href="dagens-besked.css">
   <link rel="stylesheet" href="la2-fane.css">
+  <link rel="stylesheet" href="dagsplan-b.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -115,7 +116,6 @@
       min-height: 0;
     }
 
-    #ugeplanerContainer{ grid-template-columns: repeat(6, 1fr); }
     #afkrydsningContainer{ grid-template-columns: repeat(6, 1fr); }
     #overlapFarveContainer{ grid-template-columns: repeat(6, 1fr); }
 
@@ -168,14 +168,6 @@
     .pmoedeTom{
       font-size: 18px;
       color: var(--tom);
-    }
-
-    /* Note-tegn til højre på et dagsplan-punkt der har en instruktion i appen */
-    .listepunkt .instruktionMaerke{
-      width: calc(16px * var(--tekst-skala, 1));
-      height: calc(16px * var(--tekst-skala, 1));
-      color: var(--guld-moerk);
-      align-self: center;
     }
 
     .listepunkt.nu .afsender,
@@ -655,7 +647,7 @@ function visSide(side){
   // højde, så målingen dur ikke før nu). Afkrydsning/Overlap måler sig selv
   // i bunden af deres respektive vis-funktion, kaldt herunder.
   if(side === 'beskeder') tilpasBeskedRækker();
-  if(side === 'ugeplaner') tilpasAlleKolonner('ugeplanerContainer');
+  if(side === 'ugeplaner') window.DagsplanB.tilpas(document.getElementById('ugeplanerContainer'));
   if(side === 'pmoede'){
     pmoedeSideIndex = 0;
     pmoedeSideStart = Date.now();
@@ -696,16 +688,6 @@ function prioritetRang(p){
   if(p === 'Gul') return 1;
   if(p === 'Grøn') return 2;
   return 3;
-}
-
-function tidTilMinutter(tid){
-  if(!tid) return null;
-  const m = tid.toString().trim().match(/^(\d{1,2})[:.](\d{2})/);
-  if(!m) return null;
-  const t = parseInt(m[1],10);
-  const min = parseInt(m[2],10);
-  if(isNaN(t) || isNaN(min)) return null;
-  return t * 60 + min;
 }
 
 function escapeHtml(str){
@@ -1183,26 +1165,21 @@ function visBeskeder(data){
 
 async function hentUgeplaner(){
   if(!sb) return;
-  const { data, error } = await sb
-    .from('ugeplaner')
-    .select('*');
+  const [svar, beboerSvar] = await Promise.all([
+    sb.from('ugeplaner').select('*'),
+    sb.from('beboere').select('navn,farve,sortering').order('sortering')
+  ]);
 
-  if(error){ console.error('Fejl ugeplaner:', error); return; }
-  sidsteUgeplanData = data || [];
+  if(svar.error){ console.error('Fejl ugeplaner:', svar.error); return; }
+  if(!beboerSvar.error && beboerSvar.data && beboerSvar.data.length > 0) beboereTavle = beboerSvar.data;
+  sidsteUgeplanData = svar.data || [];
   tegnUgeplaner();
 }
-
-// Lille note-tegn: punktet har en instruktion i appen (selve teksten vises ikke på tavlen)
-const INSTRUKTION_MAERKE = '<svg class="moelle-ikon instruktionMaerke" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Se instruktion i appen">' +
-  '<path d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-11a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1m3 0v18"></path>' +
-  '<path d="M13 8l2 0"></path><path d="M13 12l2 0"></path></svg>';
 
 function tegnUgeplaner(){
   if(!sidsteUgeplanData) return;
 
-  const container = document.getElementById('ugeplanerContainer');
-  container.innerHTML = '';
-
+  // Browserens lokale tid. Efter kl. 20 vises i morgens plan, hvor alt er kommende.
   let nu = new Date();
   let visesForMorgendagen = false;
 
@@ -1212,71 +1189,13 @@ function tegnUgeplaner(){
   }
 
   const dagensDag = UGEDAGE[nu.getDay()];
-  const nuMinutter = nu.getHours() * 60 + nu.getMinutes();
+  const nuMinutter = visesForMorgendagen ? -1 : nu.getHours() * 60 + nu.getMinutes();
 
   document.getElementById('dagOverskrift').innerHTML = visesForMorgendagen
     ? 'Dagsplan &bull; ' + dagensDag + ' <span style="color:var(--tom);font-weight:400;text-transform:none">(i morgen)</span>'
     : 'Dagsplan &bull; ' + dagensDag;
 
-  const grupper = {};
-  sidsteUgeplanData.forEach(r => {
-    if(r.ugedag !== dagensDag) return;
-    const nøgle = r.beboer;
-    if(!grupper[nøgle]) grupper[nøgle] = { beboer: r.beboer, aktiviteter: [] };
-    grupper[nøgle].aktiviteter.push({ tid: r.tid, aktivitet: r.aktivitet, harInstruktion: !!r.instruktion });
-  });
-
-  for(const nøgle in grupper){
-    const gruppe = grupper[nøgle];
-
-    const aMedMin = gruppe.aktiviteter.map(item => ({
-      ...item,
-      minutter: tidTilMinutter(item.tid)
-    }));
-
-    aMedMin.sort((a,b) => {
-      if(a.minutter === null) return 1;
-      if(b.minutter === null) return -1;
-      return a.minutter - b.minutter;
-    });
-
-    let nuIndeks = -1;
-    if(!visesForMorgendagen){
-      aMedMin.forEach((item, i) => {
-        if(item.minutter !== null && item.minutter <= nuMinutter) nuIndeks = i;
-      });
-    }
-
-    const kolonne = document.createElement('div');
-    kolonne.className = 'beboerKolonne';
-
-    let liHtml = aMedMin.map((item, i) => {
-      let klasse = 'listepunkt';
-      let flag = '';
-
-      if(i === nuIndeks){
-        klasse += ' nu';
-        flag = '<span class="punkt-flag">Nu</span>';
-      } else if(i < nuIndeks){
-        klasse += ' overstået';
-      }
-
-      return '<li class="' + klasse + '">' +
-        '<span class="klokkeslæt">' + escapeHtml(item.tid) + '</span>' +
-        '<span class="tekst">' + escapeHtml(item.aktivitet) + '</span>' +
-        flag +
-        (item.harInstruktion ? INSTRUKTION_MAERKE : '') +
-        '</li>';
-    }).join('');
-
-    kolonne.innerHTML =
-      '<span class="beboer-tag ' + gruppe.beboer.toLowerCase() + '">' + gruppe.beboer.toUpperCase() + '</span>' +
-      '<ul>' + liHtml + '</ul>';
-
-    container.appendChild(kolonne);
-  }
-
-  tilpasAlleKolonner('ugeplanerContainer');
+  window.DagsplanB.tegn(document.getElementById('ugeplanerContainer'), sidsteUgeplanData, beboereTavle, dagensDag, nuMinutter);
 }
 
 // ---- AFKRYDSNINGSSKEMA ----
@@ -1785,7 +1704,7 @@ hentSkaermIndstillinger();
 document.fonts.ready.then(function(){
   if(document.getElementById(aktuelSide).classList.contains('active')){
     if(aktuelSide === 'beskeder') tilpasBeskedRækker();
-    if(aktuelSide === 'ugeplaner') tilpasAlleKolonner('ugeplanerContainer');
+    if(aktuelSide === 'ugeplaner') window.DagsplanB.tilpas(document.getElementById('ugeplanerContainer'));
     if(aktuelSide === 'afkrydsning') tilpasAlleKolonner('afkrydsningContainer');
     if(aktuelSide === 'overlap') tilpasAlleKolonner('overlapFarveContainer');
   }
@@ -1795,7 +1714,7 @@ document.fonts.ready.then(function(){
 let resizeTimer = null;
 window.addEventListener('resize', function(){
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(function(){ if(aktuelSide === 'beskeder') tilpasBeskedRækker(); }, 200);
+  resizeTimer = setTimeout(function(){ if(aktuelSide === 'beskeder') tilpasBeskedRækker(); if(aktuelSide === 'ugeplaner') window.DagsplanB.tilpas(document.getElementById('ugeplanerContainer')); }, 200);
 });
 
 setInterval(tjekRotation, 1000);
@@ -1848,6 +1767,7 @@ if(sb){
 
 <!-- Dagens besked kl. 09:02 (liste + effekt) — selvstændige filer, rører ikke scriptet ovenfor -->
 <script src="la2-fane.js"></script>
+<script src="dagsplan-b.js"></script>
 <script src="dagens-besked.js"></script>
 <script src="dagens-besked-effekt.js"></script>
 

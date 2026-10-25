@@ -1,0 +1,119 @@
+/* Dagsplan, design B: kolonner med NU-kort. Tokens er scopet til #ugeplaner
+   (fra godkendt mockup); resten genbruger Archivo fra siden. */
+
+#ugeplaner{
+  --dp-bg:        #F4F2EE;
+  --dp-flade:     #FFFFFF;
+  --dp-tekst:     #16181D;
+  --dp-tekst-2:   #4A4842;
+  --dp-faerdig:   #6B6862;
+  --dp-nu-bg:     #16181D;
+  --dp-nu-maerke: #B8341C;
+  --dp-nu-tid:    #D4D1CA;
+  --dp-spor:      #3A3C42;
+  --dp-fri-kant:  #CFCAC0;
+  --dp-skel:      #ECE8E0;
+  background: var(--dp-bg);
+  color: var(--dp-tekst);
+  color-scheme: light;
+}
+
+#ugeplanerContainer{
+  display: grid;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+}
+
+.dpB-kol{
+  background: var(--dp-flade);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+
+.dpB-hoved{ display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+
+.dpB-skilt{
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #fff;
+  background: var(--dp-faerdig);
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+
+.dpB-tilbage{ font-size: 20px; font-weight: 600; color: var(--dp-tekst-2); }
+
+.dpB-faerdige{ display: flex; flex-direction: column; gap: 6px; }
+.dpB-faerdig{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: calc(19px * var(--dp-skala, 1));
+  line-height: 1.2;
+  color: var(--dp-faerdig);
+}
+.dpB-faerdig span{ min-width: 0; overflow-wrap: anywhere; }
+.dpB-flueben{ width: 18px; height: 18px; flex-shrink: 0; }
+
+.dpB-nu{
+  background: var(--dp-nu-bg);
+  color: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dpB-nu-top{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dpB-nu-maerke{
+  background: var(--dp-nu-maerke);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+.dpB-nu-tid{ font-size: 20px; font-weight: 600; color: var(--dp-nu-tid); }
+.dpB-nu-titel{ font-size: calc(34px * var(--dp-skala, 1)); font-weight: 800; line-height: 1.1; overflow-wrap: anywhere; }
+.dpB-spor{ height: 8px; background: var(--dp-spor); border-radius: 4px; overflow: hidden; }
+.dpB-fyld{ height: 100%; background: #fff; border-radius: 4px; }
+
+.dpB-fri{
+  border: 3px dashed var(--dp-fri-kant);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dpB-fri-titel{ font-size: calc(28px * var(--dp-skala, 1)); font-weight: 800; color: var(--dp-tekst); }
+.dpB-fri-naeste{ font-size: 20px; font-weight: 600; color: var(--dp-tekst-2); overflow-wrap: anywhere; }
+
+.dpB-liste{ list-style: none; margin: 0; padding: 0; min-height: 0; }
+.dpB-punkt{
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: calc(10px * var(--dp-skala, 1)) 0;
+  border-bottom: 1px solid var(--dp-skel);
+}
+.dpB-punkt:last-child{ border-bottom: none; }
+.dpB-tid{ font-size: calc(22px * var(--dp-skala, 1)); font-weight: 800; flex-shrink: 0; }
+.dpB-tekst{ font-size: calc(25px * var(--dp-skala, 1)); font-weight: 600; line-height: 1.2; min-width: 0; overflow-wrap: anywhere; }
+
+.dpB-tidligere{ font-size: 17px; font-weight: 600; color: var(--dp-faerdig); }
