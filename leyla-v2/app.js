@@ -489,22 +489,16 @@ function tegnFuld(tal){
 }
 
 // ---------- Personalet sætter selv 2-4 billeder op mod hinanden ----------
-// Knappen "Sæt valg op" er til personalet: den åbnes ved at holde den nede et øjeblik, så Leyla ikke
-// kommer til det ved et uheld. Personalet trykker på 2-4 billeder og trykker "Vis til Leyla".
+// Knappen "Sæt valg op" er til personalet. Personalet trykker på 2-4 billeder og trykker "Vis til Leyla".
 // Valget vises derefter i fuld skærm (se nedenfor). Svaret noteres bagefter i admin.
-
-var vaelgHold = null;
 
 function lavValgKnap(){
   var k = lav('button', 'staffValg', 'Sæt valg op');
   k.type = 'button';
-  k.setAttribute('aria-label', 'Sæt valg op (hold nede)');
-  k.addEventListener('pointerdown', function(){
-    vaelgHold = setTimeout(function(){ vaelgHold = null; aabnVaelger(); }, 900);
-  });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(ev){
-    k.addEventListener(ev, function(){ if(vaelgHold){ clearTimeout(vaelgHold); vaelgHold = null; } });
-  });
+  k.setAttribute('aria-label', 'Sæt valg op');
+  // Et almindeligt tryk. (Et langt tryk blev afbrudt af iOS, så det virkede ikke på iPad.)
+  // Vælgeren er harmløs: den kan lukkes igen med Annuller.
+  k.addEventListener('click', aabnVaelger);
   return k;
 }
 
@@ -590,7 +584,27 @@ function aabnVaelger(){
 // dæmpes, og ordet siges. Fremhævningen bliver stående, til personalet lukker valget i admin.
 
 var valgSidsteStart = null;
-var holdTimer = null;
+function bekraeftLuk(){
+  if(document.getElementById('valgbekraeft')) return;
+  var lag = lav('div', 'valgBekraeft'); lag.id = 'valgbekraeft';
+  var boks = lav('div', 'valgBekraeftBoks');
+  boks.appendChild(lav('div', 'valgBekraeftTekst', 'Luk valget?'));
+  boks.appendChild(lav('div', 'valgBekraeftSub', 'Til personalet. Der gemmes ingen note. Brug helst admin.'));
+  var rk = lav('div', 'valgBekraeftKnapper');
+  var nej = lav('button', 'vaelgKnap', 'Behold valget'); nej.type = 'button';
+  var ja = lav('button', 'vaelgKnap primaer', 'Luk valget'); ja.type = 'button';
+  nej.addEventListener('click', function(){ lag.remove(); });
+  ja.addEventListener('click', async function(){
+    ja.disabled = true;
+    var res = await rpc('beboer_pik_valg_luk', { p_token: S.token });
+    if(res.fejl){ ja.disabled = false; boks.querySelector('.valgBekraeftSub').textContent = 'Ingen forbindelse. Prøv igen.'; return; }
+    S.aktiv = null; lag.remove(); lukValgSkaerm();
+  });
+  rk.appendChild(nej); rk.appendChild(ja);
+  boks.appendChild(rk);
+  lag.appendChild(boks);
+  document.getElementById('valgfuld').appendChild(lag);
+}
 
 async function hentAktivt(){
   if(!S.token || document.hidden) return;
@@ -641,19 +655,12 @@ function tegnValg(){
   });
   el.appendChild(raekke);
 
-  // Nødudgang til personalet: hold nede i et øjeblik. Beboeren kan ikke ramme den ved et uheld.
-  var luk = lav('button', 'valgLuk', 'Luk valget (hold nede)');
+  // Udgang til personalet: tryk på "Luk valget" og bekræft. Det kræver to bevidste tryk, så det ikke
+  // sker ved et uheld. (Svaret noteres helst i admin; dette lukker uden at gemme en note.)
+  var luk = lav('button', 'valgLuk', 'Luk valget');
   luk.type = 'button';
-  luk.setAttribute('aria-label', 'Luk valget (hold nede)');   // til personalet
-  luk.addEventListener('pointerdown', function(){
-    holdTimer = setTimeout(async function(){
-      await rpc('beboer_pik_valg_luk', { p_token: S.token });
-      S.aktiv = null; lukValgSkaerm();
-    }, 1500);
-  });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(ev){
-    luk.addEventListener(ev, function(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; } });
-  });
+  luk.setAttribute('aria-label', 'Luk valget (personale)');
+  luk.addEventListener('click', function(e){ e.stopPropagation(); bekraeftLuk(); });
   el.appendChild(luk);
   rod.appendChild(el);
   opdaterFremhaevning();

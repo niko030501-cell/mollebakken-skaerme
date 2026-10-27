@@ -216,3 +216,11 @@ img{ -webkit-user-drag:none; }
 .vaelgKnap{ min-height:52px; padding:0 22px; border-radius:14px; font-size:18px; font-weight:700; background:var(--kort); border:2px solid var(--streg); }
 .vaelgKnap.primaer{ background:var(--tekst); color:#fff; border-color:var(--tekst); }
 .vaelgKnap:disabled{ opacity:.4; }
+
+/* Bekræftelse før personalet lukker et valg */
+.valgBekraeft{ position:absolute; inset:0; background:rgba(46,58,55,.55); display:flex; align-items:center; justify-content:center; z-index:2; }
+.valgBekraeftBoks{ background:var(--kort); border-radius:var(--radius); padding:28px; width:min(460px, 90%); text-align:center; }
+.valgBekraeftTekst{ font-size:28px; font-weight:700; margin-bottom:6px; }
+.valgBekraeftSub{ font-size:16px; color:var(--tekst-svag); margin-bottom:20px; }
+.valgBekraeftKnapper{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.staffValg, .valgLuk{ touch-action:manipulation; }
