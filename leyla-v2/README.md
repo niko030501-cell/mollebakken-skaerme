@@ -12,7 +12,7 @@ Det her er en kort vejledning til personalet. Der er to dele:
 Det gøres kun én gang. Bagefter skal Leyla ikke logge ind.
 
 1. Åbn **Safari** på iPad'en og gå til adressen på Leylas app (samme adresse som Møllebakken-appen, men med `/leyla-v2/` til sidst).
-2. Log ind med **Leylas navn og hendes firecifrede kode** (samme kode som i træningsappen). Koden sættes under Træning → Beboere.
+2. Log ind med **Leylas navn og hendes firecifrede kode** (samme login som i beboerappen). Koden sættes under Beboerapp → Beboere.
 3. Tryk på **Del**-knappen (firkant med pil op) og vælg **Føj til hjemmeskærm**. Giv den navnet "Min dag".
 4. Åbn appen fra hjemmeskærmen. Den fylder hele skærmen.
 5. Hold iPad'en på **langs** (landskab). Tryk på **Skærmlås → slå retningslås fra**, hvis skærmen ikke vil dreje.
@@ -33,7 +33,7 @@ Hvis personalet skal lukke et valg direkte på iPad'en: **hold fingeren på det 
 
 ## Del 2: Sådan bruges admin
 
-Åbn Møllebakken-appen og tryk på **Piktogrammer**. Første gang skal du skrive personalekoden (den samme som under Træning). Knappen **Se som Leyla** viser hendes forside.
+Åbn Møllebakken-appen og tryk på **Piktogrammer**. Første gang skal du skrive personalekoden (den samme som under Beboerapp). Knappen **Se som Leyla** viser hendes forside.
 
 ### Fanen Billeder
 

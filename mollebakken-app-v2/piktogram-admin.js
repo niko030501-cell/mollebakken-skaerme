@@ -5,7 +5,7 @@
 // Fanerne I dag, Valg og Noter kommer i næste dele.
 //
 // Al adgang går gennem personale_pik_*-funktionerne (shared/piktogram-admin-schema.sql)
-// og bruger samme personale-login som Træning (token gemt i trToken).
+// og bruger samme personale-login som Beboerapp (token gemt i trToken).
 // Alt tekst sættes med textContent / DOM-metoder (ingen HTML-strenge med brugerinput).
 //
 // Alt er pr. beboer: skift PK_BEBOER_ID/PK_BEBOER_NAVN, hvis siden senere flyttes under Beboer.
@@ -230,7 +230,7 @@ function pkTegn(){
   if(!trToken){
     const kort = pkEl('div', 'kort');
     kort.appendChild(pkEl('h3', null, 'Personalekode'));
-    kort.appendChild(pkEl('p', null, 'Skriv koden for at styre billederne. Det er den samme kode som under Træning.'));
+    kort.appendChild(pkEl('p', null, 'Skriv koden for at styre billederne. Det er den samme kode som under Beboerapp.'));
     const r = pkEl('div', 'pkEkstra');
     const input = document.createElement('input');
     input.type = 'password'; input.id = 'pkKode'; input.autocomplete = 'off';

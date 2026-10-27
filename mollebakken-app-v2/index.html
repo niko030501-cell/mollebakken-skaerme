@@ -1602,8 +1602,8 @@
   <div id="traening" class="side">
     <header class="sidehoved">
       <div>
-        <h2 class="sidehovedTitel">Træning</h2>
-        <p class="sidehovedSub">Lav træningsprogrammer til beboerne</p>
+        <h2 class="sidehovedTitel">Beboerapp</h2>
+        <p class="sidehovedSub">Træningsprogrammer, koder og log til beboernes egen app</p>
       </div>
       <button type="button" class="sidehovedKnap" id="trNytKnap" onclick="trNyHovedHandling()" hidden><span data-ikon="plus"></span><span id="trNytTekst">Nyt program</span></button>
     </header>
@@ -1801,7 +1801,7 @@ const sideTitler = {
   rengoring: 'Rengøring',
   paragraf104: '§104',
   personalemoede: 'Personalemøde',
-  traening: 'Træning',
+  traening: 'Beboerapp',
   skaerm: 'Beboerskærm',
   piktogram: 'Piktogrammer',
   admin: 'Admin'
@@ -1825,7 +1825,7 @@ const NAV_PUNKTER = [
   { id: 'la2',            side: 'la2',            ikon: 'la2',        titel: 'LA2-planer',      fane: 'la2' },
   { id: 'paragraf104',    side: 'paragraf104',    ikon: 'p104',       titel: '§104',            fane: 'paragraf104' },
   { id: 'personalemoede', side: 'personalemoede', ikon: 'pmoede',     titel: 'Personalemøde',   fane: 'personalemoede' },
-  { id: 'traening',       side: 'traening',       ikon: 'aktivitet',  titel: 'Træning',         fane: 'traening' },
+  { id: 'traening',       side: 'traening',       ikon: 'aktivitet',  titel: 'Beboerapp',       fane: 'traening' },
   { id: 'skaerm',         side: 'skaerm',         ikon: 'skaerm',     titel: 'Beboerskærm',     fane: 'skaerm' },
   { id: 'piktogram',      side: 'piktogram',      ikon: 'farver',     titel: 'Piktogrammer',    fane: 'piktogram' }
 ];
@@ -6901,7 +6901,7 @@ function trTegnBeboere(rod){
   });
 
   const bund = trEl('div', 'trKnapRække');
-  bund.appendChild(trKnap('Lås Træning på denne enhed', 'sekundaer', trLogud));
+  bund.appendChild(trKnap('Lås Beboerapp på denne enhed', 'sekundaer', trLogud));
   rod.appendChild(bund);
 }
 
