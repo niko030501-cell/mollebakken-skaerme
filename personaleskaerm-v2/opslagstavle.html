@@ -7,6 +7,7 @@
 <title>Opslagstavlen</title>
 
 <script src="../shared/auto-reload.js"></script>
+<script src="../shared/supabase-cache.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
@@ -305,6 +306,12 @@
 // vises som dér (se flettVagter), kun præsentationen er ny.
 // ==================================================================
 
+// Hvor længe et svar fra Supabase genbruges, før der hentes igen. Skærmen
+// gentegner stadig hvert minut (fra cachen), så tidsskift sker til tiden.
+// Se ../shared/supabase-cache.js for hvorfor.
+const DATA_CACHE_MS = 5 * 60 * 1000;   // vagter, madplan, aktiviteter, billeder
+const SKJUL_CACHE_MS = 2 * 60 * 1000;  // "skjul fra skærmen" skal slå hurtigere igennem
+
 let sb = null;
 try {
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -364,7 +371,14 @@ async function hentIndstillinger(){
   anvendIndstillinger();
 }
 
+// Gentegn kun når indstillingerne faktisk har ændret sig. Før kaldte denne
+// hentAlt() hvert minut OVENI setInterval(hentAlt) — så alt blev hentet
+// to gange i minuttet.
+let sidsteIndstillinger = null;
 function anvendIndstillinger(){
+  const nye = JSON.stringify(beboerskaermAktiv);
+  if(nye === sidsteIndstillinger) return;
+  sidsteIndstillinger = nye;
   hentAlt();
 }
 
@@ -533,8 +547,10 @@ function énPrPerson(vagter){
 
 async function hentSkjulninger(){
   try {
-    const { data, error } = await sb.from('skjult_personale')
-      .select('navn,dag,udloeber').gt('udloeber', new Date().toISOString());
+    // Udløbne skjulninger frasorteres alligevel i findSkjulning(), så et
+    // par minutter gammelt svar er fint.
+    const { data, error } = await cachetHent('skjult_personale', SKJUL_CACHE_MS, () =>
+      sb.from('skjult_personale').select('navn,dag,udloeber').gt('udloeber', new Date().toISOString()));
     if(error){ console.error('Fejl skjult_personale (viser alle):', error); return []; }
     return data || [];
   } catch (e) {
@@ -765,7 +781,8 @@ async function hentPersonale(){
   // gårsdagens nat- og døgnvagter hentes med.
   const dage = [datoISO(nyDag(nu, -1)), iDagISO, iMorgenISO];
   const [vagterRes, skjulninger] = await Promise.all([
-    sb.from('personaleskaerm_vagter').select('*').in('dag', dage).order('start'),
+    cachetHent('vagter|' + dage.join(','), DATA_CACHE_MS, () =>
+      sb.from('personaleskaerm_vagter').select('*').in('dag', dage).order('start')),
     hentSkjulninger()
   ]);
   const { data, error } = vagterRes;
@@ -885,7 +902,8 @@ async function hentMadplan(){
   const dagensDag = UGEDAGE[new Date().getDay()];
   const ugeStart = datoISO(effektivMandag());
 
-  const { data, error } = await sb.from('madplan').select('*').eq('uge_start', ugeStart);
+  const { data, error } = await cachetHent('madplan|' + ugeStart, DATA_CACHE_MS, () =>
+    sb.from('madplan').select('*').eq('uge_start', ugeStart));
   if(error){ console.error('Fejl madplan:', error); return; }
 
   const perDag = {};
@@ -920,7 +938,8 @@ async function hentAktivitet(){
   const dagensDag = UGEDAGE[new Date().getDay()];
   const ugeStart = datoISO(effektivMandag());
 
-  const { data, error } = await sb.from('aktiviteter').select('*').eq('uge_start', ugeStart).eq('dag', dagensDag);
+  const { data, error } = await cachetHent('aktiviteter|' + ugeStart + '|' + dagensDag, DATA_CACHE_MS, () =>
+    sb.from('aktiviteter').select('*').eq('uge_start', ugeStart).eq('dag', dagensDag));
   if(error){ console.error('Fejl aktivitet:', error); return; }
 
   const række = data && data.length > 0 ? data[0] : null;
@@ -932,7 +951,8 @@ async function hentAktivitet(){
   document.getElementById('aktivitetTid').textContent = række && række.tid ? 'kl. ' + række.tid : '';
   document.getElementById('aktivitetSted').textContent = række && række.sted ? række.sted : '';
 
-  const { data: billeder, error: billedeFejl } = await sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet);
+  const { data: billeder, error: billedeFejl } = await cachetHent('aktivitet_billeder|' + aktivitet, DATA_CACHE_MS, () =>
+    sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet));
   if(billedeFejl){ console.error('Fejl aktivitet_billeder:', billedeFejl); return; }
 
   const boks = document.getElementById('aktivitetFoto');
@@ -989,7 +1009,7 @@ hentAlt();
 hentVejr();
 
 setInterval(opdaterUr, 1000);
-setInterval(hentIndstillinger, 60000);
+setInterval(hentIndstillinger, 2 * 60000);
 setInterval(hentAlt, 60000);
 setInterval(hentVejr, 1800000);
 

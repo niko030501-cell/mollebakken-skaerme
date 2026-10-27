@@ -7,6 +7,7 @@
   <title>Personaletavle</title>
 
   <script src="../shared/auto-reload.js"></script>
+  <script src="../shared/supabase-cache.js"></script>
   <link rel="stylesheet" href="../shared/tokens.css">
   <link rel="stylesheet" href="dagens-besked.css">
   <link rel="stylesheet" href="la2-fane.css">
@@ -595,6 +596,17 @@
 // placeholders). Uret og fane-rotationen skal virke uanset — dette er en
 // uovervåget skærm — så en fejl her må ALDRIG stoppe resten af scriptet.
 
+// Hvor længe et svar fra Supabase genbruges, før der hentes igen. Tavlen
+// gentegner stadig hvert minut (fra cachen). Se ../shared/supabase-cache.js.
+const BESKED_CACHE_MS = 2 * 60 * 1000;    // nye beskeder skal frem hurtigt
+const DATA_CACHE_MS   = 5 * 60 * 1000;    // ugeplaner, p-møde, skærmindstillinger
+const BEBOER_CACHE_MS = 30 * 60 * 1000;   // beboerlisten ændres sjældent
+
+function hentBeboereCachet(){
+  return cachetHent('beboere', BEBOER_CACHE_MS, () =>
+    sb.from('beboere').select('navn,farve,sortering').order('sortering'));
+}
+
 let sb = null;
 
 try {
@@ -806,8 +818,9 @@ async function hentBeskeder(){
   }
   if(!sb) return;
   const [svar, beboerSvar] = await Promise.all([
-    sb.from('beskeder').select('*').eq('aktiv', true).order('created_at', { ascending: false }),
-    sb.from('beboere').select('navn,farve,sortering').order('sortering')
+    cachetHent('beskeder', BESKED_CACHE_MS, () =>
+      sb.from('beskeder').select('*').eq('aktiv', true).order('created_at', { ascending: false })),
+    hentBeboereCachet()
   ]);
 
   if(svar.error){ console.error('Fejl beskeder:', svar.error); return; }
@@ -1166,8 +1179,8 @@ function visBeskeder(data){
 async function hentUgeplaner(){
   if(!sb) return;
   const [svar, beboerSvar] = await Promise.all([
-    sb.from('ugeplaner').select('*'),
-    sb.from('beboere').select('navn,farve,sortering').order('sortering')
+    cachetHent('ugeplaner', DATA_CACHE_MS, () => sb.from('ugeplaner').select('*')),
+    hentBeboereCachet()
   ]);
 
   if(svar.error){ console.error('Fejl ugeplaner:', svar.error); return; }
@@ -1454,25 +1467,25 @@ function pmoedeDatoLabel(datoStr){
 async function hentPmoede(){
   if(!sb) return;
 
-  const { data: moeder, error } = await sb
+  const { data: moeder, error } = await cachetHent('moeder', DATA_CACHE_MS, () => sb
     .from('moeder')
     .select('*')
     .eq('status', 'afsluttet')
     .order('dato', { ascending: false })
     .order('starttid', { ascending: false })
-    .limit(1);
+    .limit(1));
 
   if(error){ console.error('Fejl pmoede (moeder):', error); return; }
   const moede = (moeder && moeder.length > 0) ? moeder[0] : null;
 
   if(!moede){ pmoedeData = null; pmoedeSider = []; return; }
 
-  const { data: highlights, error: hlFejl } = await sb
+  const { data: highlights, error: hlFejl } = await cachetHent('highlights|' + moede.id, DATA_CACHE_MS, () => sb
     .from('highlights')
     .select('*')
     .eq('moede_id', moede.id)
     .eq('vist_paa_skaerm', true)
-    .order('oprettet_at', { ascending: true });
+    .order('oprettet_at', { ascending: true }));
 
   if(hlFejl){ console.error('Fejl pmoede (highlights):', hlFejl); return; }
 
@@ -1558,12 +1571,12 @@ let normaleVisningstider = { beskeder: 30000, ugeplaner: 30000 };
 async function hentSkaermIndstillinger(){
   if(!sb) return;
 
-  const { data, error } = await sb
+  const { data, error } = await cachetHent('skaerm_indstillinger', DATA_CACHE_MS, () => sb
     .from('skaerm_indstillinger')
     .select('*')
     .eq('skaerm', 'infoskaerm')
     .eq('aktiv', true)
-    .order('raekkefoelge');
+    .order('raekkefoelge'));
 
   // Fail-safe: kan indstillingerne ikke hentes, beholdes den nuværende
   // (evt. hardkodede fallback-) liste uændret i stedet for at fejle.

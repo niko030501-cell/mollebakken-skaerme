@@ -17,7 +17,7 @@
 (function(){
   'use strict';
 
-  var POLL_MS = 60 * 1000;
+  var POLL_MS = 5 * 60 * 1000; // LA2-notifikationer haster ikke; sparer Supabase-logs
   var SIDE_MS = 10 * 1000;        // automatisk sideskift ved lange lister
   var NYT_DAGE = 7;
   var REVIDER_DAGE = 14;
