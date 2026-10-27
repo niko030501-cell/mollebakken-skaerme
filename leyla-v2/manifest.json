@@ -1,0 +1,15 @@
+{
+  "name": "Min dag",
+  "short_name": "Min dag",
+  "description": "Billeder og dagens plan",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#E9E4DB",
+  "theme_color": "#E9E4DB",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -19,6 +19,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="piktogram-admin.css">
 
 <style>
   :root{
@@ -1609,6 +1610,11 @@
     <div id="trIndhold"><div class="loading">Henter …</div></div>
   </div>
 
+  <!-- ============ PIKTOGRAMMER (admin til beboerens iPad) ============ -->
+  <div id="piktogram" class="side">
+    <div id="pkRod"><div class="loading">Henter …</div></div>
+  </div>
+
   <!-- ============ ADMIN ============ -->
   <div id="admin" class="side">
     <header class="sidehoved">
@@ -1797,6 +1803,7 @@ const sideTitler = {
   personalemoede: 'Personalemøde',
   traening: 'Træning',
   skaerm: 'Beboerskærm',
+  piktogram: 'Piktogrammer',
   admin: 'Admin'
 };
 
@@ -1819,7 +1826,8 @@ const NAV_PUNKTER = [
   { id: 'paragraf104',    side: 'paragraf104',    ikon: 'p104',       titel: '§104',            fane: 'paragraf104' },
   { id: 'personalemoede', side: 'personalemoede', ikon: 'pmoede',     titel: 'Personalemøde',   fane: 'personalemoede' },
   { id: 'traening',       side: 'traening',       ikon: 'aktivitet',  titel: 'Træning',         fane: 'traening' },
-  { id: 'skaerm',         side: 'skaerm',         ikon: 'skaerm',     titel: 'Beboerskærm',     fane: 'skaerm' }
+  { id: 'skaerm',         side: 'skaerm',         ikon: 'skaerm',     titel: 'Beboerskærm',     fane: 'skaerm' },
+  { id: 'piktogram',      side: 'piktogram',      ikon: 'farver',     titel: 'Piktogrammer',    fane: 'piktogram' }
 ];
 const NAV_MODE_VÆLGER = { opgaver: 'opgaverMode', program: 'programMode' };
 
@@ -1955,6 +1963,7 @@ function visSide(side){
   if(side === 'personalemoede') visMoedeMode();
   if(side === 'traening') trVis(); else trStop();
   if(side === 'skaerm') visSkaerm();
+  if(side === 'piktogram') pkVis();
 }
 
 function gåTilForside(){
@@ -2032,7 +2041,8 @@ const FEATURE_KORT = [
   { fane: 'paragraf104',    side: 'paragraf104' },
   { fane: 'personalemoede', side: 'personalemoede' },
   { fane: 'traening',       side: 'traening' },
-  { fane: 'skaerm',         side: 'skaerm' }
+  { fane: 'skaerm',         side: 'skaerm' },
+  { fane: 'piktogram',      side: 'piktogram' }
 ];
 
 function fsFaneTilladt(fane){
@@ -7090,5 +7100,6 @@ if('serviceWorker' in navigator){
 
 </script>
 
+<script src="piktogram-admin.js"></script>
 </body>
 </html>

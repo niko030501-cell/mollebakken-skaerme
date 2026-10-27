@@ -4,13 +4,15 @@
 // fra cache. Data (Supabase-kald) caches ALDRIG — de skal altid være friske,
 // så beskeder/dagsplaner osv. aldrig viser forældet information.
 
-const CACHE_NAVN = 'mollebakken-app-v15';
+const CACHE_NAVN = 'mollebakken-app-v16';
 const APP_SKAL = [
   './',
   './index.html',
   '../shared/ikoner.js',
   './supabase-js.min.js',
   './manifest.json',
+  './piktogram-admin.js',
+  './piktogram-admin.css',
   './icon-192.png',
   './icon-512.png',
 ];

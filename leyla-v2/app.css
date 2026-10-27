@@ -1,0 +1,183 @@
+/* Leylas visning — rolig, voksen, varm. Kun at se og trykke.
+   Farver pr. kategori kommer fra databasen og sættes som --k på hvert element. */
+
+:root{
+  --bg:#E9E4DB;          /* dæmpet varm baggrund, ikke skarp hvid */
+  --kort:#F6F2EA;
+  --streg:#D6CFC2;
+  --tekst:#2E3A37;
+  --tekst-svag:#6B756F;
+  --ja:#5E9A74;
+  --nej:#C2605A;
+  --mere:#5183B0;
+  --radius:22px;
+  color-scheme: light;
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; margin:0; }
+body{
+  font-family:'Atkinson Hyperlegible', system-ui, sans-serif;
+  background:var(--bg);
+  color:var(--tekst);
+  overflow:hidden;
+  -webkit-user-select:none; user-select:none;
+  -webkit-touch-callout:none;
+}
+button{ font-family:inherit; color:inherit; border:none; cursor:pointer; }
+img{ -webkit-user-drag:none; }
+
+#rod{ height:100%; }
+
+/* ---------- Hovedlayout ---------- */
+.hoved{
+  height:100%;
+  display:grid;
+  grid-template-columns:330px 1fr;
+  gap:16px;
+  padding:16px;
+  padding-left:max(16px, env(safe-area-inset-left));
+  padding-right:max(16px, env(safe-area-inset-right));
+  padding-bottom:max(16px, env(safe-area-inset-bottom));
+}
+.venstre{ display:flex; flex-direction:column; gap:12px; min-height:0; }
+.hoejre{ min-width:0; min-height:0; overflow-y:auto; overflow-x:hidden; padding-right:4px; }
+
+/* ---------- Nu-kort ---------- */
+.nu{
+  flex:1 1 0; min-height:0;
+  background:var(--kort); border-radius:var(--radius);
+  padding:14px; display:flex; flex-direction:column; gap:8px;
+}
+.nuTop{ display:flex; align-items:baseline; gap:10px; }
+.nuMaerke{
+  background:var(--tekst); color:#fff; font-weight:700; font-size:15px; letter-spacing:.08em;
+  padding:3px 12px; border-radius:999px;
+}
+.nuTid{ font-size:22px; font-weight:700; color:var(--tekst-svag); }
+.nuBillede{
+  flex:1 1 0; min-height:0; border-radius:18px;
+  background:color-mix(in srgb, var(--k, #bbb) 20%, #fff);
+  display:flex; align-items:center; justify-content:center; gap:8px; padding:8px;
+  overflow:hidden;
+}
+.nuBillede.tom{ background:transparent; }
+.nuBillede img{ min-width:0; min-height:0; max-width:100%; max-height:100%; object-fit:contain; border-radius:12px; flex:1 1 0; }
+.nuOrd{ font-size:30px; font-weight:700; text-align:center; line-height:1.1; min-height:1.1em; }
+
+.bagefter{
+  display:flex; align-items:center; gap:10px; min-height:56px;
+  background:var(--bg); border-radius:16px; padding:6px 10px;
+}
+.bagefter.tom{ visibility:hidden; }
+.bagefterTekst{ font-size:14px; font-weight:700; color:var(--tekst-svag); }
+.bagefterBillede{
+  width:48px; height:48px; border-radius:12px; flex:0 0 auto;
+  background:color-mix(in srgb, var(--k, #bbb) 20%, #fff);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.bagefterBillede img{ width:100%; height:100%; object-fit:contain; }
+.bagefterOrd{ font-size:18px; font-weight:700; }
+
+/* ---------- Med dig nu ---------- */
+.meddig{
+  background:var(--kort); border-radius:var(--radius);
+  padding:10px 14px; display:flex; align-items:center; gap:12px;
+}
+.meddigFoto{
+  width:56px; height:56px; border-radius:50%; flex:0 0 auto; object-fit:cover;
+  background:var(--streg); display:flex; align-items:center; justify-content:center;
+  font-size:24px; font-weight:700; color:var(--tekst-svag);
+}
+.meddigLabel{ font-size:13px; font-weight:700; color:var(--tekst-svag); }
+.meddigNavn{ font-size:22px; font-weight:700; line-height:1.1; }
+
+/* ---------- Ja / Nej / Mere ---------- */
+.svar{ display:flex; gap:10px; flex:0 0 clamp(150px, 27%, 230px); min-height:0; }
+.svarKnap{
+  flex:1 1 0; min-width:0; border-radius:var(--radius); color:#fff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  background:var(--c);
+}
+.svarKnap:active{ filter:brightness(.88); }
+.svarKnap svg, .svarKnap img{ width:56%; max-height:62%; object-fit:contain; }
+.svarKnap img{ border-radius:12px; background:#fff; padding:4px; }
+.svarKnap .ord{ font-size:15px; font-weight:700; opacity:.92; }
+.svarKnap.ja{ --c:var(--ja); }
+.svarKnap.nej{ --c:var(--nej); }
+.svarKnap.mere{ --c:var(--mere); }
+
+/* ---------- Billedgitter ---------- */
+.kat{ margin-bottom:var(--katgap, 14px); }
+.katHoved{ display:flex; align-items:center; gap:10px; height:var(--hovedh, 30px); }
+.katPrik{ width:14px; height:14px; border-radius:50%; background:var(--k); flex:0 0 auto; }
+.katNavn{ font-size:17px; font-weight:700; color:var(--tekst-svag); }
+.gitter{ display:grid; grid-template-columns:repeat(8, 1fr); gap:var(--gap, 10px); }
+.felt{
+  aspect-ratio:1; padding:0; border-radius:16px; overflow:hidden;
+  background:color-mix(in srgb, var(--k) 20%, #fff);
+  display:flex; align-items:center; justify-content:center;
+}
+.felt:active{ filter:brightness(.92); }
+.felt img{ width:100%; height:100%; object-fit:contain; padding:6%; }
+
+/* ---------- Fuld skærm ---------- */
+.fuld{
+  position:fixed; inset:0; z-index:10; background:var(--k);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3vh;
+  padding:4vh 4vw; touch-action:none;
+}
+.fuldBillede{
+  flex:1 1 0; min-height:0; width:100%; display:flex; align-items:center; justify-content:center;
+}
+.fuldBillede img{
+  max-width:100%; max-height:100%; object-fit:contain; border-radius:28px;
+  background:rgba(255,255,255,.55); padding:2vh 2vw;
+}
+.fuldOrd{ font-size:clamp(40px, 8vh, 84px); font-weight:700; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.25); }
+.fuldPrikker{ display:flex; gap:10px; min-height:14px; }
+.fuldPrik{ width:12px; height:12px; border-radius:50%; background:rgba(255,255,255,.45); }
+.fuldPrik.nu{ background:#fff; }
+
+/* ---------- Login (til personalet ved opsætning) ---------- */
+.login{ height:100%; display:flex; align-items:center; justify-content:center; padding:24px; }
+.loginKort{ background:var(--kort); border-radius:var(--radius); padding:32px; width:min(420px, 100%); }
+.loginKort h1{ margin:0 0 6px; font-size:26px; }
+.loginKort p{ margin:0 0 20px; color:var(--tekst-svag); font-size:16px; }
+.loginKort label{ display:block; font-weight:700; font-size:15px; margin:14px 0 6px; }
+.loginKort input{
+  width:100%; font:inherit; font-size:20px; padding:12px 14px;
+  border:2px solid var(--streg); border-radius:14px; background:#fff;
+}
+.loginKnap{ width:100%; margin-top:22px; padding:16px; font-size:20px; font-weight:700; border-radius:16px; background:var(--tekst); color:#fff; }
+.loginFejl{ color:var(--nej); font-weight:700; margin-top:14px; min-height:1.2em; }
+
+/* Lille diskret markering, hvis nettet er væk (viser det sidst hentede) */
+.offline{ position:fixed; top:8px; right:12px; width:10px; height:10px; border-radius:50%; background:#B7A98F; z-index:5; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+}
+
+/* ---------- Valg i fuld skærm ---------- */
+.nuBillede.valgbar{ cursor:pointer; outline:3px dashed color-mix(in srgb, var(--tekst) 35%, transparent); outline-offset:-3px; }
+.valgfuld{
+  position:fixed; inset:0; z-index:20; background:var(--bg);
+  display:flex; flex-direction:column; gap:3vh; padding:4vh 4vw;
+}
+.valgSpoergsmaal{ font-size:clamp(30px, 6vh, 60px); font-weight:700; text-align:center; }
+.valgRaekke{ flex:1 1 0; min-height:0; display:flex; gap:3vw; }
+.valgFelt{
+  flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:2vh; padding:2vh 1.5vw;
+  border-radius:28px; background:color-mix(in srgb, var(--k) 22%, #fff); border:6px solid transparent;
+}
+.valgBillede{ flex:1 1 0; min-height:0; display:flex; align-items:center; justify-content:center; }
+.valgBillede img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:20px; }
+.valgOrd{ font-size:clamp(30px, 6vh, 60px); font-weight:700; text-align:center; }
+/* Når der er trykket: det valgte fremhæves, de andre dæmpes, og det bliver stående */
+.valgfuld.harValgt .valgFelt{ opacity:.3; }
+.valgfuld.harValgt .valgFelt.valgt{ opacity:1; border-color:var(--tekst); background:color-mix(in srgb, var(--k) 40%, #fff); }
+.valgLuk{
+  position:absolute; right:12px; bottom:12px; width:56px; height:56px; border-radius:50%;
+  background:transparent; color:var(--tekst-svag); opacity:.35; font-size:22px;
+}

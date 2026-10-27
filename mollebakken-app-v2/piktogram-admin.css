@@ -1,0 +1,178 @@
+/* Piktogram-admin (side #piktogram i Møllebakken-appen). Arver farver og skrifttype fra index.html. */
+
+#piktogram .pkFaner{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px; }
+#piktogram .pkFane{
+  min-height:46px; padding:0 20px; border-radius:12px; font-size:15px; font-weight:700;
+  background:#fff; color:var(--mørk); border:1px solid #e1e7e4;
+}
+#piktogram .pkFane.aktiv{ background:var(--mørk); color:#fff; border-color:var(--mørk); }
+
+#piktogram .pkVaelger{ display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }
+#piktogram .pkVaelger button{
+  min-height:44px; padding:0 16px; border-radius:999px; font-size:14px; font-weight:700;
+  background:#fff; border:1px solid #d1d9d6; color:var(--mørk);
+}
+#piktogram .pkVaelger button.aktiv{ background:var(--mørk); color:#fff; border-color:var(--mørk); }
+
+#piktogram .pkVaerktoej{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 16px; }
+#piktogram .pkTael{ font-size:16px; font-weight:700; flex:1 1 220px; }
+#piktogram .pkTael small{ display:block; font-weight:400; color:var(--tekst-svag); font-size:13px; margin-top:2px; }
+#piktogram .pkSoeg{ flex:1 1 200px; min-width:160px; min-height:46px; }
+#piktogram .pkKnap{
+  min-height:46px; padding:0 18px; border-radius:12px; font-size:15px; font-weight:700;
+  background:#fff; color:var(--mørk); border:1px solid #d1d9d6; display:inline-flex; align-items:center; gap:8px;
+}
+#piktogram .pkKnap.primaer{ background:var(--guld); border-color:var(--guld); color:var(--mørk); }
+#piktogram .pkKnap.fare{ color:var(--rød); border-color:#e8b9b9; }
+#piktogram .pkKnap:disabled{ opacity:.45; cursor:default; }
+
+/* ---- Kategorier og billedfelter ---- */
+#piktogram .pkKat{ margin:0 0 22px; }
+#piktogram .pkKatHoved{ display:flex; align-items:center; gap:10px; margin:0 0 10px; }
+#piktogram .pkPrik{ width:16px; height:16px; border-radius:50%; flex:0 0 auto; }
+#piktogram .pkKatNavn{ font-size:18px; font-weight:800; flex:1; }
+#piktogram .pkKatNavn small{ font-weight:400; color:var(--tekst-svag); font-size:13px; margin-left:8px; }
+#piktogram .pkGitter{ display:grid; grid-template-columns:repeat(auto-fill, minmax(124px, 1fr)); gap:10px; }
+
+#piktogram .pkFelt{
+  background:#fff; border:1px solid #e1e7e4; border-radius:14px; padding:8px; display:flex; flex-direction:column; gap:6px;
+  position:relative; text-align:left; color:var(--mørk);
+}
+#piktogram .pkFelt.skjult .pkBillede, #piktogram .pkFelt.skjult .pkNavn{ opacity:.4; }
+#piktogram .pkFelt.traekkes{ outline:3px solid var(--guld); }
+#piktogram .pkBillede{
+  width:100%; aspect-ratio:1; border-radius:10px; object-fit:contain; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--k, #999) 18%, #fff); overflow:hidden;
+}
+#piktogram .pkBillede img{ width:100%; height:100%; object-fit:contain; }
+#piktogram .pkBillede.mangler{ background:#fff; border:2px dashed #d9a3a3; color:var(--rød); font-size:12px; font-weight:700; text-align:center; padding:6px; }
+#piktogram .pkNavn{ font-size:14px; font-weight:700; line-height:1.2; min-height:2.4em; overflow:hidden; }
+#piktogram .pkFeltBund{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+#piktogram .pkFeltBund span{ font-size:12px; color:var(--tekst-svag); }
+
+/* Kontakt (vises for beboeren til/fra) */
+#piktogram .pkSwitch{
+  width:52px; height:32px; border-radius:16px; background:#c9d1ce; position:relative; padding:0; flex:0 0 auto;
+}
+#piktogram .pkSwitch::after{
+  content:''; position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:#fff;
+}
+#piktogram .pkSwitch[aria-pressed="true"]{ background:var(--grøn); }
+#piktogram .pkSwitch[aria-pressed="true"]::after{ left:23px; }
+#piktogram .pkSwitch::before{ content:''; position:absolute; inset:-8px -4px; }   /* større trykflade */
+
+/* ---- Ugeplanens aktiviteter ---- */
+#piktogram .pkAkt{
+  display:flex; align-items:center; gap:14px; width:100%; min-height:72px; text-align:left;
+  background:#fff; border:1px solid #e1e7e4; border-left:6px solid var(--grøn); border-radius:12px;
+  padding:10px 14px; margin:0 0 8px; color:var(--mørk);
+}
+#piktogram .pkAkt.mangler{ border-left-color:var(--rød); background:#fdf3f3; }
+#piktogram .pkAktTekst{ flex:1; min-width:0; }
+#piktogram .pkAktNavn{ font-size:16px; font-weight:800; }
+#piktogram .pkAktMeta{ font-size:13px; color:var(--tekst-svag); }
+#piktogram .pkAktBillede{ width:52px; height:52px; border-radius:10px; overflow:hidden; flex:0 0 auto; background:#eef1ee; }
+#piktogram .pkAktBillede img{ width:100%; height:100%; object-fit:contain; }
+#piktogram .pkMaerke{ font-size:13px; font-weight:800; padding:6px 12px; border-radius:999px; flex:0 0 auto; }
+#piktogram .pkMaerke.mangler{ background:var(--rød); color:#fff; }
+#piktogram .pkMaerke.ok{ background:#e3efe8; color:var(--grøn); }
+
+#piktogram .pkInfo{ padding:14px 16px; border-radius:12px; background:#fff; border:1px solid #e1e7e4; margin:0 0 14px; }
+#piktogram .pkFejl{ color:var(--rød); font-weight:700; margin-top:10px; }
+
+/* ---- Dialoger ---- */
+.pkOverlay{
+  position:fixed; inset:0; z-index:3000; background:rgba(22,33,31,.55);
+  display:flex; align-items:center; justify-content:center; padding:16px;
+}
+.pkDialog{
+  background:#fff; border-radius:16px; width:min(560px, 100%); max-height:calc(100vh - 32px); overflow:auto; padding:20px;
+  color:var(--mørk);
+}
+.pkDialog.bred{ width:min(760px, 100%); }
+.pkDialog h3{ margin:0 0 14px; font-size:20px; }
+.pkFeltRække{ margin:0 0 14px; }
+.pkFeltRække label{ display:block; font-size:13px; font-weight:700; color:var(--tekst-svag); margin:0 0 6px; }
+.pkFeltRække input[type=text], .pkFeltRække select{ width:100%; min-height:46px; }
+.pkKnapRække{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+.pkKnapRække .hoejre{ margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
+.pkEkstra{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.pkEkstra button, .pkDialog .pkKnap{
+  min-height:46px; padding:0 16px; border-radius:12px; font-size:15px; font-weight:700;
+  background:#fff; color:var(--mørk); border:1px solid #d1d9d6;
+}
+.pkDialog .pkKnap.primaer{ background:var(--guld); border-color:var(--guld); }
+.pkDialog .pkKnap.fare{ color:var(--rød); border-color:#e8b9b9; }
+.pkDialog .pkKnap:disabled{ opacity:.45; }
+.pkStortBillede{ width:100%; max-height:240px; display:flex; justify-content:center; margin:0 0 14px; }
+.pkStortBillede img{ max-width:100%; max-height:240px; object-fit:contain; border-radius:12px; background:#eef1ee; }
+.pkFarver{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.pkFarveValg{ width:44px; height:44px; border-radius:50%; border:3px solid transparent; padding:0; }
+.pkFarveValg.valgt{ border-color:var(--mørk); }
+
+.pkTilfoejRække{
+  display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #eef1ee;
+}
+.pkTilfoejRække img, .pkTilfoejRække .pkMiniBillede{ width:56px; height:56px; border-radius:10px; object-fit:contain; background:#eef1ee; flex:0 0 auto; }
+.pkTilfoejRække input[type=text]{ flex:1; min-width:0; min-height:44px; }
+.pkTilfoejRække select{ min-height:44px; max-width:180px; }
+.pkStatus{ font-size:12px; color:var(--tekst-svag); min-width:64px; }
+
+.pkVaelgGitter{ display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:8px; margin:0 0 14px; }
+.pkVaelgFelt{ background:#fff; border:2px solid #e1e7e4; border-radius:12px; padding:6px; text-align:center; font-size:12px; font-weight:700; color:var(--mørk); }
+.pkVaelgFelt.valgt{ border-color:var(--grøn); background:#eaf3ee; }
+.pkVaelgFelt img{ width:100%; aspect-ratio:1; object-fit:contain; border-radius:8px; display:block; margin-bottom:4px; }
+
+/* "Se som Leyla" */
+.pkSe{ position:fixed; inset:0; z-index:3500; background:#16211f; display:flex; flex-direction:column; }
+.pkSeHoved{ display:flex; align-items:center; justify-content:space-between; padding:8px 14px; color:#fff; font-weight:700; }
+.pkSeHoved button{ min-height:44px; padding:0 18px; border-radius:12px; background:#fff; color:var(--mørk); font-weight:700; }
+.pkSe iframe{ flex:1; border:0; background:#E9E4DB; width:100%; }
+
+/* ---- Fanen I dag ---- */
+#piktogram .pkMedRække, .pkDialog .pkMedRække{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #eef1ee; flex-wrap:wrap; }
+.pkMedFoto{ width:56px; height:56px; border-radius:50%; object-fit:cover; flex:0 0 auto; background:#e1e7e4; }
+.pkMedFoto.tom{ display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; color:var(--tekst-svag); }
+.pkStatusMaerke{ font-size:13px; font-weight:800; padding:6px 12px; border-radius:999px; flex:0 0 auto; }
+.pkStatusMaerke.nu{ background:var(--grøn); color:#fff; }
+.pkStatusMaerke.senere{ background:#fbf0d9; color:#8a6212; }
+.pkStatusMaerke.faerdig{ background:#e9eceb; color:var(--tekst-svag); }
+.pkVagtRække{ display:flex; align-items:center; gap:12px; width:100%; min-height:72px; text-align:left; padding:8px 10px;
+  background:#fff; border:1px solid #e1e7e4; border-radius:12px; margin:0 0 8px; color:var(--mørk); }
+.pkPlanRække{ min-height:64px; }
+.pkPlanTid{ font-size:17px; font-weight:800; width:58px; flex:0 0 auto; font-variant-numeric:tabular-nums; }
+.pkPlanRække.nuRække{ border-left-color:var(--mørk); background:#f3efe4; box-shadow:0 0 0 2px var(--mørk) inset; }
+.pkNuMaerke{ background:var(--mørk); color:#fff; font-size:13px; font-weight:800; padding:6px 12px; border-radius:999px; flex:0 0 auto; letter-spacing:.06em; }
+
+/* ---- Fanen Valg og Noter ---- */
+.pkValgStribe{ display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:8px; margin:0 0 14px; min-height:40px; align-items:start; }
+#piktogram .pkMiniStribe{ display:flex; gap:8px; flex:0 0 auto; }
+#piktogram .pkMiniStribe.stor{ flex-wrap:wrap; gap:14px; margin:10px 0; }
+#piktogram .pkValgBillede{ width:150px; text-align:center; padding:8px; border:3px solid transparent; border-radius:14px; opacity:.55; }
+#piktogram .pkValgBillede img{ width:100%; aspect-ratio:1; object-fit:contain; border-radius:10px; background:#eef1ee; }
+#piktogram .pkValgBillede.valgt{ opacity:1; border-color:var(--grøn); background:#eaf3ee; }
+#piktogram .pkAktivtValg{ border:2px solid var(--guld); }
+
+/* Tre lige store svarknapper: ens i størrelse og udseende, ingen ligner en fejl */
+#piktogram .pkSvarRække{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:12px; }
+#piktogram .pkSvarKnap{
+  min-height:76px; border-radius:14px; font-size:17px; font-weight:800; padding:8px 12px;
+  background:#fff; color:var(--mørk); border:2px solid var(--mørk);
+}
+#piktogram .pkSvarKnap:active{ background:#eef1ee; }
+
+#piktogram .pkJnmRække{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+#piktogram .pkJnm{
+  background:#fff; border:2px solid #e1e7e4; border-radius:14px; padding:12px; text-align:center; color:var(--mørk);
+  border-top:8px solid var(--c);
+}
+#piktogram .pkJnm.ja{ --c:#5E9A74; }
+#piktogram .pkJnm.nej{ --c:#C2605A; }
+#piktogram .pkJnm.mere{ --c:#5183B0; }
+#piktogram .pkJnmBillede{
+  width:96px; height:96px; margin:0 auto 8px; border-radius:12px; background:#eef1ee; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--tekst-svag); padding:4px;
+}
+#piktogram .pkJnmBillede img{ width:100%; height:100%; object-fit:contain; }
+
+#piktogram .pkNote{ padding:10px 0; border-bottom:1px solid #eef1ee; font-size:15px; line-height:1.4; }
