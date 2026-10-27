@@ -264,6 +264,7 @@ function tegn(){
   // Fuld skærm ligger ovenpå og skal ikke tegnes om af en baggrundsopdatering
   var fuldEl = document.getElementById('fuld');
   var valgEl = document.getElementById('valgfuld');
+  var vaelgEl = document.getElementById('valgvaelg');
 
   rod.textContent = '';
   if(S.offline) rod.appendChild(lav('div', 'offline'));
@@ -278,9 +279,11 @@ function tegn(){
   hoved.appendChild(hoejre);
   rod.appendChild(hoved);
   tegnGitter(hoejre);
+  hoejre.appendChild(lavValgKnap());
   tilpasGitter();
   if(fuldEl) rod.appendChild(fuldEl);
   if(valgEl) rod.appendChild(valgEl);
+  if(vaelgEl) rod.appendChild(vaelgEl);
 }
 
 function billedeEl(url, alt){
@@ -483,6 +486,101 @@ function tegnFuld(tal){
   el.addEventListener('pointercancel', function(){ swipe = null; });
   rod.appendChild(el);
   if(tal) sig(p.navn);
+}
+
+// ---------- Personalet sætter selv 2-4 billeder op mod hinanden ----------
+// Knappen "Sæt valg op" er til personalet: den åbnes ved at holde den nede et øjeblik, så Leyla ikke
+// kommer til det ved et uheld. Personalet trykker på 2-4 billeder og trykker "Vis til Leyla".
+// Valget vises derefter i fuld skærm (se nedenfor). Svaret noteres bagefter i admin.
+
+var vaelgHold = null;
+
+function lavValgKnap(){
+  var k = lav('button', 'staffValg', 'Sæt valg op');
+  k.type = 'button';
+  k.setAttribute('aria-label', 'Sæt valg op (hold nede)');
+  k.addEventListener('pointerdown', function(){
+    vaelgHold = setTimeout(function(){ vaelgHold = null; aabnVaelger(); }, 900);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(ev){
+    k.addEventListener(ev, function(){ if(vaelgHold){ clearTimeout(vaelgHold); vaelgHold = null; } });
+  });
+  return k;
+}
+
+function aabnVaelger(){
+  if(document.getElementById('valgvaelg')) return;
+  var valgte = [];
+  var el = lav('div', 'valgvaelg'); el.id = 'valgvaelg';
+  var top = lav('div', 'vaelgTop');
+  top.appendChild(lav('div', 'vaelgTitel', 'Sæt to billeder op mod hinanden'));
+  top.appendChild(lav('div', 'vaelgSub', 'Tryk på 2-4 billeder. Rækkefølgen er den, de står i på skærmen.'));
+  el.appendChild(top);
+
+  var gitterBoks = lav('div', 'vaelgGitterBoks');
+  el.appendChild(gitterBoks);
+
+  var bund = lav('div', 'vaelgBund');
+  var sp = lav('input'); sp.type = 'text'; sp.value = 'Hvad vil du?'; sp.maxLength = 120;
+  sp.setAttribute('aria-label', 'Spørgsmål der siges højt');
+  var fejl = lav('div', 'vaelgFejl');
+  var annuller = lav('button', 'vaelgKnap', 'Annuller'); annuller.type = 'button';
+  var vis = lav('button', 'vaelgKnap primaer', 'Vis til ' + ((S.data && S.data.navn) || 'beboeren')); vis.type = 'button';
+  vis.disabled = true;
+  bund.appendChild(sp); bund.appendChild(fejl); bund.appendChild(annuller); bund.appendChild(vis);
+  el.appendChild(bund);
+
+  function opdater(){
+    vis.disabled = valgte.length < 2;
+    Array.prototype.forEach.call(gitterBoks.querySelectorAll('.vaelgFelt'), function(f){
+      var i = valgte.indexOf(f.dataset.id);
+      f.classList.toggle('valgt', i >= 0);
+      f.querySelector('.vaelgNr').textContent = i >= 0 ? String(i + 1) : '';
+    });
+  }
+
+  kategorier().forEach(function(kat){
+    var sek = lav('section', 'vaelgKat');
+    sek.style.setProperty('--k', kat.farve || '#999');
+    var h = lav('div', 'katHoved');
+    h.appendChild(lav('span', 'katPrik'));
+    h.appendChild(lav('span', 'katNavn', kat.navn));
+    sek.appendChild(h);
+    var g = lav('div', 'vaelgGitter');
+    kat.piktogrammer.forEach(function(p){
+      var f = lav('button', 'vaelgFelt'); f.type = 'button'; f.dataset.id = p.id;
+      f.setAttribute('aria-label', p.navn);
+      f.appendChild(billedeEl(billedeUrl(p.sti), p.navn));
+      f.appendChild(lav('span', 'vaelgNr'));
+      f.addEventListener('click', function(){
+        var i = valgte.indexOf(p.id);
+        if(i >= 0) valgte.splice(i, 1);
+        else if(valgte.length < 4) valgte.push(p.id);
+        else { fejl.textContent = 'Højst 4 billeder.'; return; }
+        fejl.textContent = '';
+        opdater();
+      });
+      g.appendChild(f);
+    });
+    sek.appendChild(g);
+    gitterBoks.appendChild(sek);
+  });
+
+  annuller.addEventListener('click', function(){ el.remove(); });
+  vis.addEventListener('click', async function(){
+    vis.disabled = true;
+    var res = await rpc('beboer_pik_valg_start', { p_token: S.token, p_piktogram_ids: valgte, p_spoergsmaal: sp.value });
+    if(res.fejl || !res.data){
+      fejl.textContent = res.fejl === 'ingen_forbindelse' ? 'Ingen forbindelse. Prøv igen.' : 'Valget kunne ikke startes.';
+      opdater();
+      return;
+    }
+    el.remove();
+    S.aktiv = res.data;
+    tegnValg();
+  });
+  rod.appendChild(el);
+  opdater();
 }
 
 // ---------- Valg i fuld skærm ----------

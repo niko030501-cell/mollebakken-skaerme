@@ -24,6 +24,7 @@ Hvis Leyla bliver logget ud (fx efter lang tid): log ind igen som i trin 2.
 
 - **Til venstre:** hvad der sker **NU** (billede og ord) og hvad der kommer **Bagefter**. Under det står, hvem der er **med hende nu**, og de tre knapper **Ja** (grøn), **Nej** (rød) og **Mere** (blå). Når hun trykker, siges ordet højt.
 - **Til højre:** alle billeder, delt i kategorier med hver sin farve. Tryk på et billede viser det i fuld skærm med ordet under, og ordet siges højt. Swipe til siden for næste billede. Tryk et vilkårligt sted for at lukke.
+- **Sæt to billeder op mod hinanden (personalet):** hold fingeren på den lille knap **Sæt valg op** nederst til højre i ca. 1 sekund. Tryk på 2-4 billeder, skriv evt. et spørgsmål, og tryk **Vis til Leyla**. Valget kommer i fuld skærm. Noter svaret bagefter i admin under Valg. Faste valg kan også startes derfra eller fra Nu-kortet.
 - **Valg:** når der er et valg i gang, vises billederne side om side i fuld skærm. Når hun trykker på ét, fremhæves det, og de andre dæmpes. Det bliver stående, til personalet lukker valget.
 - **Uden net:** appen viser det sidst hentede og henter igen, når nettet er tilbage. En lille grå prik øverst til højre betyder, at der ikke er net lige nu.
 
