@@ -5,12 +5,12 @@
 //   - skrifttypen (Google Fonts)
 // Personalets fotos ("Med dig nu") caches IKKE — de må ikke blive liggende efter dagen.
 
-const CACHE_NAVN = 'leyla-v2-1';
+const CACHE_NAVN = 'leyla-v2-2';
 const BILLEDE_CACHE = 'leyla-v2-billeder';
 const SKRIFT_CACHE = 'leyla-v2-skrift';
 const BILLEDE_STI = '/storage/v1/object/public/piktogram-billeder/';
 const APP_SKAL = ['./', './index.html', './app.css', './app.js', './manifest.json',
-                  './icon-192.png', './icon-512.png', './supabase-js.min.js'];
+                  './icon-192.png?v=2', './icon-512.png?v=2', './supabase-js.min.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAVN).then((cache) => cache.addAll(APP_SKAL)));

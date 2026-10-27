@@ -4,7 +4,7 @@
 // Undtagelse: øvelsesbilleder uploadet af personalet (bucket ovelse-billeder).
 // Filnavnene er unikke (uuid) og ændres aldrig, så de caches "cache først".
 
-const CACHE_NAVN = 'beboer-v2-3';
+const CACHE_NAVN = 'beboer-v2-4';
 const BILLEDE_CACHE = 'beboer-v2-billeder';
 const BILLEDE_STI = '/storage/v1/object/public/ovelse-billeder/';
 const APP_SKAL = [
@@ -13,8 +13,8 @@ const APP_SKAL = [
   './app.css',
   './app.js',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
+  './icon-192.png?v=2',
+  './icon-512.png?v=2',
   './supabase-js.min.js',
   '../shared/tokens.css'
 ];
