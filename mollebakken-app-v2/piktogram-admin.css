@@ -176,3 +176,5 @@
 #piktogram .pkJnmBillede img{ width:100%; height:100%; object-fit:contain; }
 
 #piktogram .pkNote{ padding:10px 0; border-bottom:1px solid #eef1ee; font-size:15px; line-height:1.4; }
+
+#piktogram .pkValgBanner{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border:2px solid var(--guld); font-weight:700; }

@@ -258,6 +258,14 @@ function pkTegn(){
   });
   rod.appendChild(faner);
 
+  // Er et valg i gang, så husk personalen på det, uanset hvilken fane der er åben
+  if(pk.valg && pk.valg.aktivt && pk.fane !== 'valg'){
+    const b = pkEl('div', 'pkInfo pkValgBanner');
+    b.appendChild(pkEl('span', null, 'Der er et valg i gang på ' + PK_BEBOER_NAVN + 's iPad: "' + pk.valg.aktivt.spoergsmaal + '"'));
+    b.appendChild(pkKnap('Gå til valget', 'primaer', () => { pk.fane = 'valg'; pkTegn(); }));
+    rod.appendChild(b);
+  }
+
   if(pk.fane === 'billeder') pkTegnBilleder(rod);
   else if(pk.fane === 'idag') pkTegnIdag(rod);
   else if(pk.fane === 'valg') pkTegnValg(rod);

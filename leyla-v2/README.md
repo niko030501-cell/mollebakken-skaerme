@@ -28,7 +28,7 @@ Hvis Leyla bliver logget ud (fx efter lang tid): log ind igen som i trin 2.
 - **Valg:** når der er et valg i gang, vises billederne side om side i fuld skærm. Når hun trykker på ét, fremhæves det, og de andre dæmpes. Det bliver stående, til personalet lukker valget.
 - **Uden net:** appen viser det sidst hentede og henter igen, når nettet er tilbage. En lille grå prik øverst til højre betyder, at der ikke er net lige nu.
 
-Hvis personalet skal lukke et valg direkte på iPad'en: **hold fingeren på det svage ✕ nederst til højre i halvanden sekund**. Det lukker valget uden at gemme en note. Brug hellere admin (se nedenfor), så svaret bliver noteret.
+Hvis personalet skal lukke et valg direkte på iPad'en: **hold fingeren på knappen "Luk valget (hold nede)" nederst til højre i halvanden sekund**. Det lukker valget uden at gemme en note. Brug hellere admin (se nedenfor), så svaret bliver noteret.
 
 ---
 

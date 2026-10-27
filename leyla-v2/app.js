@@ -642,9 +642,9 @@ function tegnValg(){
   el.appendChild(raekke);
 
   // Nødudgang til personalet: hold nede i et øjeblik. Beboeren kan ikke ramme den ved et uheld.
-  var luk = lav('button', 'valgLuk', '✕');
+  var luk = lav('button', 'valgLuk', 'Luk valget (hold nede)');
   luk.type = 'button';
-  luk.setAttribute('aria-label', 'Luk valget (hold nede)');
+  luk.setAttribute('aria-label', 'Luk valget (hold nede)');   // til personalet
   luk.addEventListener('pointerdown', function(){
     holdTimer = setTimeout(async function(){
       await rpc('beboer_pik_valg_luk', { p_token: S.token });

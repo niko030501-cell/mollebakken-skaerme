@@ -178,8 +178,9 @@ img{ -webkit-user-drag:none; }
 .valgfuld.harValgt .valgFelt{ opacity:.3; }
 .valgfuld.harValgt .valgFelt.valgt{ opacity:1; border-color:var(--tekst); background:color-mix(in srgb, var(--k) 40%, #fff); }
 .valgLuk{
-  position:absolute; right:12px; bottom:12px; width:56px; height:56px; border-radius:50%;
-  background:transparent; color:var(--tekst-svag); opacity:.35; font-size:22px;
+  position:absolute; right:16px; bottom:16px; min-height:48px; padding:0 18px; border-radius:999px;
+  background:var(--kort); color:var(--tekst-svag); border:1px solid var(--streg); opacity:.85;
+  font-size:15px; font-weight:700;
 }
 
 /* ---------- Personalets "Sæt valg op" ---------- */
