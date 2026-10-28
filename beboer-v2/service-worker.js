@@ -3,10 +3,13 @@
 // seneste dagsplan/programmer lokalt til en simpel offline-visning.
 // Undtagelse: øvelsesbilleder uploadet af personalet (bucket ovelse-billeder).
 // Filnavnene er unikke (uuid) og ændres aldrig, så de caches "cache først".
+// Kalenderbilleder (Canva) har samme filnavn, når kalenderen rettes, så de
+// hentes netværk først og caches kun som offline-fallback.
 
-const CACHE_NAVN = 'beboer-v2-4';
+const CACHE_NAVN = 'beboer-v2-5';
 const BILLEDE_CACHE = 'beboer-v2-billeder';
 const BILLEDE_STI = '/storage/v1/object/public/ovelse-billeder/';
+const KALENDER_STI = '/storage/v1/object/public/aktivitet-billeder/plakater/';
 const APP_SKAL = [
   './',
   './index.html',
@@ -49,6 +52,24 @@ self.addEventListener('fetch', (event) => {
           });
         })
       )
+    );
+    return;
+  }
+
+  // Kalenderbilleder: netværk først, cache som offline-fallback (kun CORS-svar).
+  // Nøglen er stien uden ?v=, så en rettet kalender overskriver den gamle.
+  if (url.hostname.endsWith('.supabase.co') && url.pathname.indexOf(KALENDER_STI) === 0) {
+    const noegle = new Request(url.origin + url.pathname);
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res.ok && res.type === 'cors') {
+            const kopi = res.clone();
+            caches.open(BILLEDE_CACHE).then((cache) => cache.put(noegle, kopi));
+          }
+          return res;
+        })
+        .catch(() => caches.open(BILLEDE_CACHE).then((cache) => cache.match(noegle)).then((hit) => hit || Response.error()))
     );
     return;
   }

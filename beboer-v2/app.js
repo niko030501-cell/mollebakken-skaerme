@@ -24,6 +24,7 @@ var S = {
   fane: 'hjem',
   programmer: [], dagsplan: [], vagter: [], skjulte: [], traeninger: [],
   madplan: {}, visMad: false,
+  kalendere: [], kalValg: 'denne',
   offline: false, indlaest: false, flow: null,
   fejl: '', loginBusy: false
 };
@@ -101,7 +102,8 @@ var IKONER = {
   mere: ['M5 12h.01', 'M12 12h.01', 'M19 12h.01'],
   bestik: ['M5 3v5a2 2 0 0 0 4 0V3', 'M7 10v11', 'M17 21V3c-2 1.5-3 4-3 7s1 4 3 4'],
   tilbage: ['M15 5l-7 7 7 7'],
-  frem: ['M9 5l7 7-7 7']
+  frem: ['M9 5l7 7-7 7'],
+  kalender: ['M4 6h16v14H4z', 'M4 10h16', 'M8 3v4', 'M16 3v4']
 };
 
 // ---------- Temaer ----------
@@ -298,6 +300,7 @@ async function rpc(navn, args){
 }
 
 function logUdLokalt(besked){
+  lukKalenderStor();
   S.token = null;
   S.navn = '';
   S.programmer = [];
@@ -305,6 +308,8 @@ function logUdLokalt(besked){
   S.vagter = [];
   S.traeninger = [];
   S.madplan = {};
+  S.kalendere = [];
+  S.kalValg = 'denne';
   S.visMad = false;
   S.fejl = besked || '';
   lagSkriv(NOEGLE_TOKEN, null);
@@ -372,7 +377,9 @@ async function hentAlt(){
       rpc('beboer_traeninger', { p_token: S.token }),
       Promise.all(madUgeNoegler.map(function(iso){
         return rpc('beboer_madplan', { p_token: S.token, p_uge_start: iso });
-      }))
+      })),
+      sb.from('aktivitet_kalendere').select('maaned,titel,storage_path,hentet_at')
+        .in('maaned', kalenderMaaneder(kalNu())).eq('aktiv', true)
     ]);
   } catch(e){
     S.offline = true;
@@ -413,9 +420,11 @@ async function hentAlt(){
       }
     });
     S.madplan = nyMad;
+    // Kalendere: fejler hentningen, beholdes de senest kendte.
+    if(!svar[6].error) S.kalendere = svar[6].data || [];
     lagSkriv(NOEGLE_CACHE, JSON.stringify({
       navn: S.navn, tema: S.tema, programmer: S.programmer, dagsplan: S.dagsplan, traeninger: S.traeninger,
-      madplan: S.madplan
+      madplan: S.madplan, kalendere: S.kalendere
     }));
   }
   S.indlaest = true;
@@ -453,6 +462,7 @@ function tegn(){
   }
   if(S.visMad) tegnMadUge(side);
   else if(S.fane === 'hjem') tegnHjem(side);
+  else if(S.fane === 'kalender') tegnKalender(side);
   else if(S.fane === 'traening') tegnTraening(side);
   else if(S.fane === 'statistik') tegnStatistik(side);
   else tegnMere(side);
@@ -518,7 +528,7 @@ function bundmenu(){
   var nav = lav('nav', 'bund');
   nav.setAttribute('aria-label', 'Hovedmenu');
   var inder = lav('div', 'inder');
-  [['hjem', 'Hjem'], ['traening', 'Træning'], ['statistik', 'Statistik'], ['mere', 'Mere']].forEach(function(p){
+  [['hjem', 'Hjem'], ['kalender', 'Kalender'], ['traening', 'Træning'], ['statistik', 'Statistik'], ['mere', 'Mere']].forEach(function(p){
     var k = lav('button', S.fane === p[0] ? 'aktiv' : '');
     k.type = 'button';
     if(S.fane === p[0]) k.setAttribute('aria-current', 'page');
@@ -718,6 +728,133 @@ function tegnMadUge(side){
     liste.appendChild(li);
   });
   side.appendChild(liste);
+}
+
+// ---------- Kalender ----------
+
+// Dags dato i browserens lokale tid.
+function kalNu(){
+  return new Date();
+}
+
+function maanedNoegle(aar, maaned){
+  return aar + '-' + String(maaned + 1).padStart(2, '0') + '-01';
+}
+
+// [den 1. i denne måned, den 1. i næste måned] som YYYY-MM-DD
+function kalenderMaaneder(nu){
+  var naeste = new Date(nu.getFullYear(), nu.getMonth() + 1, 1);
+  return [maanedNoegle(nu.getFullYear(), nu.getMonth()), maanedNoegle(naeste.getFullYear(), naeste.getMonth())];
+}
+
+function stortM(navn){ return navn.charAt(0).toUpperCase() + navn.slice(1); }
+
+function kalenderUrl(r){
+  return sb.storage.from('aktivitet-billeder').getPublicUrl(r.storage_path).data.publicUrl +
+    '?v=' + new Date(r.hentet_at).getTime();
+}
+
+function kalenderRaekke(noegle){
+  for(var i = 0; i < S.kalendere.length; i++){
+    if(S.kalendere[i] && S.kalendere[i].maaned === noegle) return S.kalendere[i];
+  }
+  return null;
+}
+
+function tegnKalender(side){
+  var nu = kalNu();
+  var noegler = kalenderMaaneder(nu);
+  var naesteDato = new Date(nu.getFullYear(), nu.getMonth() + 1, 1);
+  var rDenne = kalenderRaekke(noegler[0]);
+  var rNaeste = kalenderRaekke(noegler[1]);
+  var valgNaeste = !!(rNaeste && S.kalValg === 'naeste');
+  var aar = valgNaeste ? naesteDato.getFullYear() : nu.getFullYear();
+  var md = valgNaeste ? naesteDato.getMonth() : nu.getMonth();
+  var r = valgNaeste ? rNaeste : rDenne;
+
+  var hoved = lav('header', 'hoved');
+  hoved.appendChild(lav('h1', null, stortM(MAANEDER[md]) + ' ' + aar));
+  side.appendChild(hoved);
+
+  if(!S.indlaest){
+    side.appendChild(lav('p', 'tom', 'Henter …'));
+    return;
+  }
+
+  if(rNaeste){
+    var valg = lav('div', 'kalValg');
+    [['denne', nu.getMonth()], ['naeste', naesteDato.getMonth()]].forEach(function(v){
+      var aktiv = (v[0] === 'naeste') === valgNaeste;
+      var k = lav('button', 'knap ' + (aktiv ? 'accent' : 'lys'), stortM(MAANEDER[v[1]]));
+      k.type = 'button';
+      k.setAttribute('aria-pressed', aktiv ? 'true' : 'false');
+      k.addEventListener('click', function(){ S.kalValg = v[0]; tegn(); });
+      valg.appendChild(k);
+    });
+    side.appendChild(valg);
+  }
+
+  if(!r){
+    var tom = lav('div', 'kort kalTom');
+    tom.appendChild(lav('p', null, 'Kalenderen for ' + MAANEDER[md] + ' kommer snart'));
+    side.appendChild(tom);
+    return;
+  }
+
+  var url = kalenderUrl(r);
+  var titel = r.titel || ('Kalender ' + stortM(MAANEDER[md]) + ' ' + aar);
+  var knap = lav('button', 'kalBillede');
+  knap.type = 'button';
+  knap.setAttribute('aria-label', 'Se kalenderen større');
+  var img = document.createElement('img');
+  img.crossOrigin = 'anonymous';
+  img.alt = titel;
+  img.src = url;
+  knap.appendChild(img);
+  knap.addEventListener('click', function(){ aabnKalenderStor(url, titel); });
+  side.appendChild(knap);
+  side.appendChild(lav('p', 'kalHint', 'Tryk på kalenderen for at se den større'));
+}
+
+// Fuld skærm ligger uden for #rod, så den ikke forsvinder, når siden tegnes
+// om af pollingen. Billedet er dobbelt så bredt som skærmen og kan scrolles
+// i begge retninger (virker på iPhone og Android uden særlige gestus).
+function lukKalenderStor(){
+  var e = document.getElementById('kalStor');
+  if(e) e.parentNode.removeChild(e);
+  document.body.classList.remove('kalAaben');
+  document.removeEventListener('keydown', kalEscape);
+}
+function kalEscape(e){ if(e.key === 'Escape') lukKalenderStor(); }
+
+function aabnKalenderStor(url, titel){
+  lukKalenderStor();
+  var lag = lav('div', 'kalStor');
+  lag.id = 'kalStor';
+  lag.setAttribute('role', 'dialog');
+  lag.setAttribute('aria-modal', 'true');
+  lag.setAttribute('aria-label', titel);
+
+  var top = lav('div', 'kalStorTop');
+  top.appendChild(lav('span', 'kalStorTip', 'Drej telefonen for at se den større'));
+  var luk = lav('button', 'knap accent kalLuk', 'Luk');
+  luk.type = 'button';
+  luk.addEventListener('click', lukKalenderStor);
+  top.appendChild(luk);
+  lag.appendChild(top);
+
+  var rul = lav('div', 'kalStorRul');
+  var img = document.createElement('img');
+  img.crossOrigin = 'anonymous';
+  img.alt = titel;
+  img.src = url;
+  rul.appendChild(img);
+  lag.appendChild(rul);
+
+  document.body.appendChild(lag);
+  document.body.classList.add('kalAaben');
+  document.addEventListener('keydown', kalEscape);
+  luk.focus();
 }
 
 function tegnTraening(side){
@@ -1466,6 +1603,7 @@ function start(){
     S.dagsplan = cache.dagsplan || [];
     S.traeninger = cache.traeninger || [];
     S.madplan = cache.madplan || {};
+    S.kalendere = cache.kalendere || [];
   }
 
   rpc('beboer_session_tjek', { p_token: S.token }).then(function(res){
