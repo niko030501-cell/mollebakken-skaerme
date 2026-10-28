@@ -274,7 +274,7 @@ body.kalAaben{ overflow:hidden; }
   padding:8px 0; text-align:center; min-height:84px;
 }
 .ugeDag.idag{ border-color: var(--ink); }
-.ugeDag.med{ background: var(--accent); border-color: var(--ink); }
+.ugeDag.med{ background: var(--accent); border-color: var(--ink); color: var(--accent-ink); }
 .ugeDagNavn{ font-weight:800; font-size:15px; }
 .ugeDagMaerke{ font-size:28px; font-weight:800; line-height:1.5; min-height:42px; }
 
@@ -366,6 +366,116 @@ body.kalAaben{ overflow:hidden; }
 :root[data-tema="bowling"] .soejle.denne .soejleBar{ background: #D7263D; }
 :root[data-tema="bowling"] .ugeDag.med{ background: #2EC4B6; }
 :root[data-tema="bowling"] .medalje.optjent{ background: #2EC4B6; }
+
+/* ---- Gamer ---- */
+:root[data-tema="gamer"]{
+  color-scheme: dark;
+  --bg:      #0B0D17;
+  --kort:    #151A2E;
+  --ink:     #EAF0FF;
+  --ink-2:   #A3ADCC;
+  --streg:   #2A3150;
+  --accent:  #39FF88;
+  --accent-ink: #0B0D17;
+  --fare:    #FF3EA5;
+  --fare-tekst: #FF6BB8;
+  --font-display: 'Silkscreen', 'Archivo', system-ui, sans-serif;
+  --display-vaegt: 400;
+  --knap-bg: #2A3150;  --knap-fg: #EAF0FF;
+  --bund-bg: #151A2E;  --bund-fg: #EAF0FF;
+  --nu-bg:   #39FF88;  --nu-fg:   #0B0D17;
+  --ikon-bg: #151A2E;  --ikon-fg: #39FF88;
+  --stop-kant: #FF3EA5;
+}
+:root[data-tema="gamer"] body::before{
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(57, 255, 136, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 255, 136, .06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+:root[data-tema="gamer"] #rod{ position: relative; z-index: 1; }
+:root[data-tema="gamer"] .bund{ border-top: 2px solid #39FF88; }
+:root[data-tema="gamer"] .kort{ border-color: #2A3150; }
+:root[data-tema="gamer"] .soejleBar{ background: #3A4572; }
+:root[data-tema="gamer"] .soejle.denne .soejleBar{ background: #39FF88; }
+:root[data-tema="gamer"] .bjaelkeFyld{ background: #39FF88; }
+:root[data-tema="gamer"] .saetCirkel{ border-color: #39FF88; }
+:root[data-tema="gamer"] .saetCirkel.nu{ background: transparent; box-shadow: 0 0 0 4px #FF3EA5; }
+:root[data-tema="gamer"] .ugeDag.idag{ border-color: #39FF88; }
+:root[data-tema="gamer"] .medalje.optjent{ border-color: #39FF88; }
+:root[data-tema="gamer"] .flowStjerne{ color: #39FF88; }
+
+/* ---- Natur ---- */
+:root[data-tema="natur"]{
+  --bg:      #EEF3EA;
+  --kort:    #FAFCF7;
+  --ink:     #1F3326;
+  --ink-2:   #4C6152;
+  --streg:   #D3DECD;
+  --accent:  #5E9E4F;
+  --accent-ink: #10200F;
+  --fare:    #C8553D;
+  --fare-tekst: #A8412B;
+  --font-display: 'Fraunces', Georgia, serif;
+  --display-vaegt: 600;
+  --knap-bg: #1F3326;  --knap-fg: #EEF3EA;
+  --bund-bg: #1F3326;  --bund-fg: #EEF3EA;
+  --nu-bg:   #1F3326;  --nu-fg:   #EEF3EA;
+  --ikon-bg: #1F3326;  --ikon-fg: #8FCB7E;
+  --stop-kant: #1F3326;
+}
+:root[data-tema="natur"] body::before{
+  content: '';
+  position: fixed; right: -60px; bottom: 90px; z-index: 0;
+  width: min(80vw, 420px); aspect-ratio: 1;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 19C5 10 11 4 20 4c0 9-6 15-15 15zM5 19L14 10' fill='none' stroke='%235E9E4F' stroke-width='.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: .14;
+  pointer-events: none;
+}
+:root[data-tema="natur"] #rod{ position: relative; z-index: 1; }
+:root[data-tema="natur"] .bund button.aktiv{ color: #8FCB7E; }
+:root[data-tema="natur"] .soejle.denne .soejleBar{ background: #5E9E4F; }
+:root[data-tema="natur"] .bjaelkeFyld{ background: #5E9E4F; }
+:root[data-tema="natur"] .saetCirkel.nu{ box-shadow: 0 0 0 4px #5E9E4F; }
+
+/* ---- Hunde & katte ---- */
+:root[data-tema="dyr"]{
+  --bg:      #FFF4E6;
+  --kort:    #FFFFFF;
+  --ink:     #3B2A20;
+  --ink-2:   #6E5A4C;
+  --streg:   #F0DCC4;
+  --accent:  #F2A541;
+  --accent-ink: #3B2A20;
+  --fare:    #D9534F;
+  --fare-tekst: #B8403C;
+  --font-display: 'Baloo 2', 'Archivo', system-ui, sans-serif;
+  --display-vaegt: 700;
+  --knap-bg: #3B2A20;  --knap-fg: #FFF4E6;
+  --bund-bg: #3B2A20;  --bund-fg: #FFF4E6;
+  --nu-bg:   #3B2A20;  --nu-fg:   #FFF4E6;
+  --ikon-bg: #3B2A20;  --ikon-fg: #F2A541;
+  --stop-kant: #3B2A20;
+}
+:root[data-tema="dyr"] body::before{
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' fill='%23E07A8F'%3E%3Cg transform='rotate(-18 45 55)'%3E%3Cellipse cx='45' cy='66' rx='14' ry='11'/%3E%3Ccircle cx='28' cy='46' r='6'/%3E%3Ccircle cx='40' cy='34' r='6'/%3E%3Ccircle cx='53' cy='34' r='6'/%3E%3Ccircle cx='64' cy='46' r='6'/%3E%3C/g%3E%3Cg transform='rotate(20 150 150)'%3E%3Cellipse cx='150' cy='161' rx='14' ry='11'/%3E%3Ccircle cx='133' cy='141' r='6'/%3E%3Ccircle cx='145' cy='129' r='6'/%3E%3Ccircle cx='158' cy='129' r='6'/%3E%3Ccircle cx='169' cy='141' r='6'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 220px 220px repeat;
+  opacity: .11;
+  pointer-events: none;
+}
+:root[data-tema="dyr"] #rod{ position: relative; z-index: 1; }
+:root[data-tema="dyr"] .kort, :root[data-tema="dyr"] .dagsrække, :root[data-tema="dyr"] .temaKnap,
+:root[data-tema="dyr"] .kalBillede{ border-radius: 28px; }
+:root[data-tema="dyr"] .knap, :root[data-tema="dyr"] .stopKnap{ border-radius: 999px; }
+:root[data-tema="dyr"] .medalje, :root[data-tema="dyr"] .ugeDag{ border-radius: 26px; }
+:root[data-tema="dyr"] .flowBillede{ border-radius: 30px; }
+:root[data-tema="dyr"] .saetCirkel.nu{ box-shadow: 0 0 0 4px #E07A8F; }
+:root[data-tema="dyr"] .ugeDag.idag{ border-color: #E07A8F; }
+:root[data-tema="dyr"] .bund{ border-top: 3px solid #E07A8F; border-radius: 24px 24px 0 0; }
 
 /* ---- Temavælger (Mere) ---- */
 .temaTitel{ font-size:22px; margin-bottom:12px; }

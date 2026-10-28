@@ -170,6 +170,66 @@ var TEMAER = {
       m50: { navn: 'Perfect game', ikon: 'stjerne' },
       u3:  { navn: 'Strike-stime', ikon: 'flamme' }
     }
+  },
+  gamer: {
+    navn: 'Gamer', beskrivelse: 'Neon og levels',
+    farver: ['#0B0D17', '#39FF88', '#FF3EA5'], statuslinje: '#0B0D17',
+    t: {
+      dagensTraening: 'Dagens quest',
+      start: 'Start træning',
+      taeller: function(i, n){ return 'Level ' + i + ' af ' + n; },
+      saetFaerdig: 'Level klaret!',
+      pause: 'Respawn …',
+      faerdig: function(navn){ return 'GG, ' + navn + '!'; },
+      medaljer: 'Achievements',
+      uger: 'XP pr. uge'
+    },
+    medaljer: {
+      m10: { navn: 'Controller', ikon: 'controller' },
+      m25: { navn: 'Power-up', ikon: 'lyn' },
+      m50: { navn: 'Legend', ikon: 'krone' },
+      u3:  { navn: 'Streak', ikon: 'flamme' }
+    }
+  },
+  natur: {
+    navn: 'Natur', beskrivelse: 'Roligt og grønt',
+    farver: ['#EEF3EA', '#1F3326', '#5E9E4F'], statuslinje: '#1F3326',
+    t: {
+      dagensTraening: 'Dagens tur',
+      start: 'Start træning',
+      taeller: function(i, n){ return 'Trin ' + i + ' af ' + n; },
+      saetFaerdig: 'Videre!',
+      pause: 'Træk vejret',
+      faerdig: function(navn){ return 'Godt gået, ' + navn + '!'; },
+      medaljer: 'Fund',
+      uger: 'Ture pr. uge'
+    },
+    medaljer: {
+      m10: { navn: 'Blad', ikon: 'blad' },
+      m25: { navn: 'Træ', ikon: 'trae' },
+      m50: { navn: 'Bjergtop', ikon: 'bjerg' },
+      u3:  { navn: 'Solskin', ikon: 'sol' }
+    }
+  },
+  dyr: {
+    navn: 'Hunde & katte', beskrivelse: 'Poter og knurhår',
+    farver: ['#FFF4E6', '#F2A541', '#E07A8F'], statuslinje: '#3B2A20',
+    t: {
+      dagensTraening: 'Dagens gåtur',
+      start: 'Start træning',
+      taeller: function(i, n){ return 'Pote ' + i + ' af ' + n; },
+      saetFaerdig: 'Godt klaret!',
+      pause: 'Lille lur',
+      faerdig: function(navn){ return 'Pote-high-five, ' + navn + '!'; },
+      medaljer: 'Godbidder',
+      uger: 'Gåture pr. uge'
+    },
+    medaljer: {
+      m10: { navn: 'Pote', ikon: 'pote' },
+      m25: { navn: 'Knogle', ikon: 'knogle' },
+      m50: { navn: 'Guld-halsbånd', ikon: 'halsbaand' },
+      u3:  { navn: 'Garnnøgle', ikon: 'garn' }
+    }
   }
 };
 
@@ -931,7 +991,25 @@ var MEDALJE_STIER = {
   // Bowling
   kugle:   [cirkelSti(12, 12, 8), 'M9 9h.01', 'M13 8h.01', 'M12 12h.01'],
   turkey:  kegleSti(5).concat(kegleSti(12), kegleSti(19)),
-  stjerne: ['M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z']
+  stjerne: ['M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z'],
+  // Gamer
+  controller: ['M7 8h10a4 4 0 0 1 4 4v1a3 3 0 0 1-5.2 2L14.5 14h-5l-1.3 1A3 3 0 0 1 3 13v-1a4 4 0 0 1 4-4z',
+               'M8 10.5v3', 'M6.5 12h3', 'M16 11h.01', 'M18 12.5h.01'],
+  lyn:     ['M13 3L5 14h6l-1 7 8-11h-6z'],
+  krone:   ['M4 18h16', 'M4 18L3 8l5 4 4-7 4 7 5-4-1 10'],
+  // Natur
+  blad:    ['M5 19C5 10 11 4 20 4c0 9-6 15-15 15z', 'M5 19L14 10'],
+  trae:    ['M12 3l5 7h-3l4 6H6l4-6H7z', 'M12 16v5'],
+  bjerg:   ['M3 20L9 9l4 7 2.5-3.5L21 20z', 'M7.5 12l1.5 1.5 1.5-1.5'],
+  sol:     [cirkelSti(12, 12, 4), 'M12 3v2', 'M12 19v2', 'M3 12h2', 'M19 12h2', 'M5.6 5.6L7 7', 'M17 17l1.4 1.4',
+            'M5.6 18.4L7 17', 'M17 7l1.4-1.4'],
+  // Hunde & katte
+  pote:    [cirkelSti(6, 11, 1.7), cirkelSti(9.5, 6.5, 1.7), cirkelSti(14.5, 6.5, 1.7), cirkelSti(18, 11, 1.7),
+            'M12 12.5c-3 0-5.5 3-5.5 5.2 0 1.6 1.4 2.3 3 2.3 1 0 1.6-.4 2.5-.4s1.5.4 2.5.4c1.6 0 3-.7 3-2.3 0-2.2-2.5-5.2-5.5-5.2z'],
+  knogle:  [cirkelSti(6.5, 9.5, 2.3), cirkelSti(6.5, 14.5, 2.3), cirkelSti(17.5, 9.5, 2.3), cirkelSti(17.5, 14.5, 2.3),
+            'M8.5 10.8h7', 'M8.5 13.2h7'],
+  halsbaand: ['M4 8c0 6 3.5 9 8 9s8-3 8-9', 'M4 8c2 1.5 5 2.5 8 2.5S18 9.5 20 8', cirkelSti(12, 19, 2)],
+  garn:    [cirkelSti(11, 12, 7), 'M5 9c3 2 8 2 12 0', 'M4.5 13c4 2 9 2 13-1', 'M8 18c1-4 4-10 8-12', 'M17 17c2 0 3 1 4 3']
 };
 
 // "2026-10-13" -> lokal dato kl. 12 (undgår sommertids-fejl)
@@ -1130,7 +1208,7 @@ function tegnMere(side){
   var gruppe = lav('div', 'temaGruppe');
   gruppe.setAttribute('role', 'radiogroup');
   gruppe.setAttribute('aria-label', 'Tema');
-  ['standard', 'zombie', 'bowling'].forEach(function(id){
+  ['standard', 'zombie', 'bowling', 'gamer', 'natur', 'dyr'].forEach(function(id){
     var t = TEMAER[id];
     var valgt = S.tema === id;
     var kn = lav('button', 'temaKnap' + (valgt ? ' valgt' : ''));
