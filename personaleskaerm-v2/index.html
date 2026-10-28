@@ -318,6 +318,7 @@
   }
 
   #aktivitetBilledeBoks img{ width:100%; height:100%; object-fit:cover; display:block; }
+  #aktivitetBilledeBoks.plakat img{ object-fit:contain; }
 
   .ugensMadGrid{ display:grid; grid-template-columns:1fr 1fr; gap:0 20px; overflow-y:auto; }
   .ugensMadRække{ padding:6px 0; border-bottom:1px solid var(--streg-svag); font-size:14px; }
@@ -528,8 +529,10 @@ function måldato(){
   return nu;
 }
 
+// ?testdato=YYYY-MM-DD erstatter dagens dato til plakater og aktivitet (test).
 function dagensDato(){
-  return new Date();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(new URLSearchParams(location.search).get('testdato') || '');
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date();
 }
 
 function datoISO(d){
@@ -949,7 +952,7 @@ async function hentMadplan(){
 // Samme Sunday-20:00-effektiv-mandag-regel som Møllebakken-appen bruger
 // til Madplan/Aktiviteter — sikrer samme "uge" vises begge steder.
 function effektivMandag(){
-  const nu = new Date();
+  const nu = dagensDato();
   const basis = new Date(nu);
   if(nu.getDay() === 0 && nu.getHours() >= 20){
     basis.setDate(basis.getDate() + 1);
@@ -971,14 +974,81 @@ let aktivitetBilledeInterval = null;
 let aktivitetDiasNøgle = null;   // aktivitet + billed-URL'er der vises nu
 
 // Samme navn som AKTIVITET_SENTINEL i mollebakken-app-v2 — skal være ens,
-// så billederne findes under samme aktivitet_navn.
+// så billederne findes under samme aktivitet_navn. Må ikke omdøbes.
 const AKTIVITET_INGEN = 'Ingen fælles aktivitet';
+const AKTIVITET_INGEN_TEKST = 'Ingen aktivitet i dag';
+
+function stopAktivitetDias(){
+  if(aktivitetBilledeInterval){ clearInterval(aktivitetBilledeInterval); aktivitetBilledeInterval = null; }
+}
+
+function indlæsBillede(url){
+  return new Promise(function(resolve){
+    const test = new Image();
+    test.onload = function(){ resolve(true); };
+    test.onerror = function(){ resolve(false); };
+    test.src = url;
+  });
+}
+
+async function hentPlakater(datoStr){
+  const { data, error } = await cachetHent('plakater|' + datoStr, DATA_CACHE_MS, () =>
+    sb.from('aktivitet_plakater').select('*').eq('dato', datoStr).eq('aktiv', true).order('titel'));
+  if(error){ console.error('Fejl aktivitet_plakater:', error); return []; }
+  return (data || []).map(function(p){
+    return {
+      titel: p.titel,
+      url: sb.storage.from('aktivitet-billeder').getPublicUrl(p.storage_path).data.publicUrl + '?v=' + new Date(p.hentet_at).getTime()
+    };
+  });
+}
+
+// Viser dagens plakater hele (contain). Returnerer false, hvis ingen kan indlæses.
+async function visPlakater(plakater, nøgle){
+  const indlæst = await Promise.all(plakater.map(p => indlæsBillede(p.url)));
+  const ok = plakater.filter((p, i) => indlæst[i]);
+  if(ok.length === 0) return false;
+
+  aktivitetDiasNøgle = nøgle;
+  stopAktivitetDias();
+
+  const boks = document.getElementById('aktivitetBilledeBoks');
+  boks.classList.add('plakat');
+  const billede = document.createElement('img');
+  billede.id = 'aktivitetBillede';
+  boks.textContent = '';
+  boks.appendChild(billede);
+
+  function vis(i){
+    billede.src = ok[i].url;
+    billede.alt = ok[i].titel || '';
+    document.getElementById('aktivitetNavn').textContent = ok[i].titel || '';
+  }
+  vis(0);
+  if(ok.length > 1){
+    let index = 0;
+    aktivitetBilledeInterval = setInterval(function(){
+      index = (index + 1) % ok.length;
+      vis(index);
+    }, 10000);
+  }
+  return true;
+}
 
 async function hentAktivitet(){
   if(!sb) return;
   if(!beboerskaermAktiv.aktivitet) return;
 
   const dato = dagensDato();
+
+  const plakater = await hentPlakater(datoISO(dato));
+  if(plakater.length > 0){
+    const plakatNøgle = 'plakat|' + plakater.map(p => p.url).join(',');
+    if(plakatNøgle === aktivitetDiasNøgle) return;
+    if(await visPlakater(plakater, plakatNøgle)) return;
+    aktivitetDiasNøgle = null;
+  }
+
   const dagensDag = UGEDAGE[dato.getDay()];
   const ugeStart = datoISO(effektivMandag());
 
@@ -991,7 +1061,7 @@ async function hentAktivitet(){
   // og viser stemningsbillederne som diasshow — præcis som hvis den var valgt.
   const valgt = data && data.length > 0 ? data[0].aktivitet : null;
   const aktivitet = valgt || AKTIVITET_INGEN;
-  document.getElementById('aktivitetNavn').textContent = aktivitet;
+  document.getElementById('aktivitetNavn').textContent = aktivitet === AKTIVITET_INGEN ? AKTIVITET_INGEN_TEKST : aktivitet;
 
   const { data: billeder, error: billedeFejl } = await cachetHent('aktivitet_billeder|' + aktivitet, DATA_CACHE_MS, () =>
     sb.from('aktivitet_billeder').select('*').eq('aktivitet_navn', aktivitet));
@@ -999,9 +1069,10 @@ async function hentAktivitet(){
   if(billedeFejl){ console.error('Fejl aktivitet_billeder:', billedeFejl); return; }
 
   const boks = document.getElementById('aktivitetBilledeBoks');
+  boks.classList.remove('plakat');
 
   if(!billeder || billeder.length === 0){
-    if(aktivitetBilledeInterval){ clearInterval(aktivitetBilledeInterval); aktivitetBilledeInterval = null; }
+    stopAktivitetDias();
     aktivitetDiasNøgle = null;
     boks.textContent = '';
     return;
