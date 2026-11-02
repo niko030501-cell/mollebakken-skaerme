@@ -467,6 +467,59 @@
   .skRække.erSkjult .skNavn strong{ color:var(--tekst-svag); text-decoration:line-through; }
   .skTom{ font-size:13px; color:var(--tekst-svag); padding:4px 0; }
 
+  /* ---- Admin → Mødedag: fire bunker + skiftetidspunkt ---- */
+  .mdDatoRække{ display:flex; gap:8px; margin-bottom:14px; align-items:stretch; }
+  .mdDatoRække button{
+    flex:1; padding:12px; font-size:14px; font-weight:700;
+    background:var(--kort); color:var(--mørk); border:1px solid #d1d9d6; border-radius:10px;
+  }
+  .mdDatoRække button.valgt{ background:var(--mørk); color:white; border-color:var(--mørk); }
+  .mdDatoRække input{ flex:1.4; min-width:0; font-size:14px; font-weight:700; padding:10px; }
+  .mdSkifte{
+    background:var(--mørk); color:white; border-radius:14px; padding:14px 16px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .mdSkifteLabel{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.14em; opacity:.85; }
+  .mdSkifteSub{ font-size:12px; opacity:.8; margin-top:4px; line-height:1.4; }
+  .mdSkifteKl{ font-size:38px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; color:var(--guld-lys); white-space:nowrap; }
+  .mdSkifteKl.ingen{ font-size:18px; color:white; opacity:.8; }
+  .mdBesked{ background:#fff7e0; border:1px solid #f0d58a; border-radius:12px; padding:12px 14px; margin-bottom:12px; font-size:13px; line-height:1.5; }
+  .mdBesked button{ margin-top:8px; padding:10px 14px; font-size:13px; font-weight:700; background:var(--mørk); color:white; border-radius:8px; }
+  .mdHandlinger{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  .mdHandlinger button{ flex:1; min-width:150px; padding:14px; font-size:15px; font-weight:700; border-radius:10px; }
+  .mdGem{ background:var(--grøn); color:white; }
+  .mdGem:disabled{ opacity:.45; cursor:default; }
+  .mdIkke{ background:var(--kort); color:var(--rød); border:1px solid #e3b4b4 !important; }
+  .mdStatus{ font-size:12px; color:var(--tekst-svag); margin:0 0 14px; min-height:16px; }
+  .mdStatus.ugemt{ color:#92600a; font-weight:700; }
+  .mdBunkeHoved{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .mdBunkeHoved h3{ margin:0; font-size:17px; }
+  .mdAntal{ font-size:13px; font-weight:800; color:var(--tekst-svag); }
+  .mdBeskr{ font-size:12px; color:var(--tekst-svag); margin:2px 0 6px; line-height:1.4; }
+  .mdBunke.vikar{ border-left:5px solid var(--grøn) !important; }
+  .mdBunke.kun_til_moede{ border-left:5px solid #9aa7a4 !important; }
+  .mdBunke.fortsaetter{ border-left:5px solid var(--guld) !important; }
+  .mdBunke.normal{ border-left:5px solid #d1d9d6 !important; }
+  .mdPerson{ border-top:1px solid #e3e9e6; }
+  .mdRække{ display:flex; align-items:center; gap:12px; width:100%; padding:10px 0; background:none; color:var(--mørk); text-align:left; border-radius:0; }
+  .mdFoto{
+    width:44px; height:44px; border-radius:50%; background:var(--tekst-svag); color:white; overflow:hidden; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px;
+  }
+  .mdFoto img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .mdTekst{ flex:1; min-width:0; }
+  .mdNavn{ font-weight:800; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mdMeta{ font-size:12px; color:var(--tekst-svag); font-variant-numeric:tabular-nums; }
+  .mdPrik{ width:10px; height:10px; border-radius:50%; background:var(--guld); flex-shrink:0; }
+  .mdPil{ color:var(--tekst-svag); font-size:12px; flex-shrink:0; }
+  .mdValg{ display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 0 12px; }
+  .mdValg button{ padding:12px 8px; font-size:14px; font-weight:700; border-radius:10px; background:var(--baggrund); color:var(--mørk); border:1px solid #d1d9d6; }
+  .mdValg button.valgt{ background:var(--mørk); color:white; border-color:var(--mørk); }
+  .mdValg button.mdAuto{ grid-column:1 / -1; background:none; color:var(--tekst-svag); border:none; padding:8px; font-weight:600; }
+  @media (min-width:900px){
+    #mdBunker{ display:grid; grid-template-columns:1fr 1fr; gap:0 16px; align-items:start; }
+  }
+
   .prioritetVælg{ display:flex; gap:6px; margin:8px 0; }
   .prioritetVælg button{
     flex:1;
@@ -1081,6 +1134,7 @@
 
 <script src="supabase-js.min.js"></script>
 <script src="../shared/ikoner.js"></script>
+<script src="../shared/moededag.js"></script>
 
 <div id="app">
 
@@ -1088,7 +1142,7 @@
   <nav id="sideMenu" aria-label="Hovedmenu"></nav>
 
   <div id="topbar">
-    <button id="tilbageKnap" onclick="visSide('forside')" aria-label="Tilbage"><span data-ikon="tilbage"></span></button>
+    <button id="tilbageKnap" onclick="visSide(aktuelSide === 'moededag' ? 'admin' : 'forside')" aria-label="Tilbage"><span data-ikon="tilbage"></span></button>
     <h1 id="topbarTitel">Møllebakken</h1>
   </div>
 
@@ -1624,6 +1678,12 @@
       </div>
     </header>
     <div class="kort">
+      <h3 style="margin-top:0;">Mødedag</h3>
+      <div style="font-size:12px; color:var(--tekst-svag); margin-bottom:10px;">Ret hvem der er vikar, kun til møde eller fortsætter efter mødet, så beboerskærmen viser det rigtige på p-møde- og kursusdage.</div>
+      <button type="button" class="knap" onclick="visSide('moededag')">Åbn Mødedag</button>
+    </div>
+
+    <div class="kort">
       <h3 style="margin-top:0;">Synlige faner</h3>
       <div id="adminIndstillinger"></div>
     </div>
@@ -1638,6 +1698,33 @@
       <div style="font-size:12px; color:var(--tekst-svag); margin-bottom:8px;">Slukkede felter bliver tomme, resten bliver på sin plads.</div>
       <div id="adminBeboerskaerm"><div class="loading">Henter …</div></div>
     </div>
+  </div>
+
+  <!-- ============ MØDEDAG (kun via Admin) ============ -->
+  <div id="moededag" class="side">
+    <header class="sidehoved">
+      <div>
+        <h2 class="sidehovedTitel">Mødedag</h2>
+        <p class="sidehovedSub">Tryk på en person for at flytte hen i den rigtige bunke</p>
+      </div>
+    </header>
+
+    <div class="mdDatoRække">
+      <button type="button" id="mdDagIdag" onclick="mdVælgOffset(0)">I dag</button>
+      <button type="button" id="mdDagImorgen" onclick="mdVælgOffset(1)">I morgen</button>
+      <input type="date" id="mdDatoFelt" aria-label="Vælg dato" onchange="mdVælgDato(this.value)">
+    </div>
+
+    <div class="mdSkifte" id="mdSkifte"></div>
+    <div id="mdBesked"></div>
+
+    <div class="mdHandlinger">
+      <button type="button" class="mdGem" id="mdGemKnap" onclick="mdGem()" disabled>Gem</button>
+      <button type="button" class="mdIkke" id="mdIkkeKnap" onclick="mdIkkeMoedeDag()">Det er ikke en mødedag</button>
+    </div>
+    <p class="mdStatus" id="mdStatus"></p>
+
+    <div id="mdBunker"><div class="loading">Henter vagter …</div></div>
   </div>
 
   <nav id="bundNav" aria-label="Hovedmenu"></nav>
@@ -1804,7 +1891,8 @@ const sideTitler = {
   traening: 'Beboerapp',
   skaerm: 'Beboerskærm',
   piktogram: 'Piktogrammer',
-  admin: 'Admin'
+  admin: 'Admin',
+  moededag: 'Mødedag'
 };
 
 // ---- Hovedmenu ----
@@ -1964,6 +2052,7 @@ function visSide(side){
   if(side === 'traening') trVis(); else trStop();
   if(side === 'skaerm') visSkaerm();
   if(side === 'piktogram') pkVis();
+  if(side === 'moededag') mdVis();
 }
 
 function gåTilForside(){
@@ -1998,6 +2087,8 @@ function lukMereArk(gendanFokus){
 
 document.addEventListener('keydown', e => { if(e.key === 'Escape'){ lukMereArk(true); lukInstruktion(); } });
 
+let adminAdgang = false;
+
 function visAdminKodeBoks(){
   document.getElementById('adminKodeBoks').style.display = 'block';
 }
@@ -2005,6 +2096,7 @@ function visAdminKodeBoks(){
 function tjekAdminKode(){
   const kode = document.getElementById('adminKodeInput').value.trim();
   if(kode === ADMIN_KODE){
+    adminAdgang = true;   // Mødedag-siden åbner kun efter at koden er tastet
     visSide('admin');
     document.body.classList.remove('paaValg');
   } else {
@@ -7078,6 +7170,331 @@ async function opdaterVisningstid(id, værdi){
     .eq('id', id);
   if(error){ console.error(error); visToast('Fejl'); return; }
   visToast('Gemt');
+}
+
+// ==================================================================
+// ADMIN → MØDEDAG
+// Sorteringsreglerne ligger i ../shared/moededag.js (samme fil som
+// beboerskærmen bruger). Her gemmes KUN de personer brugeren selv flytter
+// (tabellen moededag_rettelser, se shared/moededag-schema.sql); alle andre
+// sorteres stadig automatisk og regnes om når skiftetidspunktet ændrer sig.
+// Rettelser peger på navn + dato (Workfeed-vagt-id'er er ikke stabile).
+// Al tekst sættes med textContent / DOM-metoder.
+// ==================================================================
+
+const MD_BUNKER = [
+  { id: 'vikar',         titel: 'Vikar',                  beskr: 'Dækker gulvet mens det faste personale er til møde. Står som polaroid til vagten slutter.' },
+  { id: 'kun_til_moede', titel: 'Kun til møde',           beskr: 'Kommer kun til mødet og går senest ved skiftetidspunktet. Vises slet ikke på skærmen.' },
+  { id: 'fortsaetter',   titel: 'Fortsætter efter mødet', beskr: 'Står i boksen "Kommer efter mødet" indtil skiftetidspunktet. Døgnvagter der starter før mødet er slut hører også hjemme her.' },
+  { id: 'normal',        titel: 'Normal',                 beskr: 'Alle andre: aftenvagt, nattevagt, leder, pedel, køkken. Ingen ændring på skærmen.' }
+];
+
+let mdDato = null;          // "YYYY-MM-DD"
+let mdVagter = [];          // flettede vagter for datoen
+let mdRettelser = new Map();// navn -> bunke (det brugeren selv har flyttet, ikke gemt endnu)
+let mdIngen = false;        // dagen er markeret "ikke en mødedag"
+let mdDirty = false;
+let mdÅben = null;          // navn med bunke-valg foldet ud
+let mdTravl = false;
+let mdFejl = '';
+
+function mdEl(tag, klasse, tekst){
+  const e = document.createElement(tag);
+  if(klasse) e.className = klasse;
+  if(tekst != null) e.textContent = tekst;
+  return e;
+}
+
+function mdInitialer(navn){
+  const dele = (navn || '').replace(/^(?:(?:Pedel|Vikar|Nat)[:\s]+)+/i, '').trim().split(/\s+/).filter(Boolean);
+  if(dele.length === 0) return '';
+  if(dele.length === 1) return dele[0].charAt(0).toUpperCase();
+  return (dele[0].charAt(0) + dele[dele.length - 1].charAt(0)).toUpperCase();
+}
+
+function mdVisNavn(navn){
+  return (navn || '').replace(/^(?:(?:Pedel|Vikar|Nat)[:\s]+)+/i, '').trim() || navn;
+}
+
+function mdVis(){
+  // Siden kan kun åbnes efter at Admin-koden er tastet (samme gate som Admin).
+  if(!adminAdgang){ visSide('valg'); return; }
+  if(mdDato === null) mdDato = skDagISO(1);   // standard: i morgen
+  hentMoededag();
+}
+
+function mdTjekGemt(){
+  return !mdDirty || window.confirm('Du har ændringer der ikke er gemt. Skift alligevel?');
+}
+
+function mdVælgOffset(offset){
+  if(!mdTjekGemt()) return;
+  mdDato = skDagISO(offset);
+  hentMoededag();
+}
+
+function mdVælgDato(iso){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)){ return; }
+  if(!mdTjekGemt()){ document.getElementById('mdDatoFelt').value = mdDato; return; }
+  mdDato = iso;
+  hentMoededag();
+}
+
+async function hentMoededag(){
+  if(!sb) return;
+  mdÅben = null;
+  mdFejl = '';
+  document.getElementById('mdBunker').replaceChildren(mdEl('div', 'loading', 'Henter vagter …'));
+
+  const dato = mdDato;
+  const [vagterRes, rettelseRes] = await Promise.all([
+    sb.from('personaleskaerm_vagter').select('navn,rolle,start,slut,billede,dag,tag').eq('dag', dato).order('start'),
+    sb.from('moededag_rettelser').select('navn,bunke').eq('dato', dato)
+  ]);
+  if(dato !== mdDato) return;   // brugeren nåede at skifte dato
+
+  if(vagterRes.error){
+    console.error('Fejl vagter (mødedag):', vagterRes.error);
+    document.getElementById('mdBunker').replaceChildren(mdEl('div', 'skTom', 'Kunne ikke hente vagterne. Prøv igen om lidt.'));
+    return;
+  }
+  mdVagter = MoedeDag.flet(vagterRes.data || []);
+
+  mdRettelser = new Map();
+  mdIngen = false;
+  if(rettelseRes.error){
+    console.error('Fejl moededag_rettelser:', rettelseRes.error);
+    mdFejl = 'Kan ikke læse gemte rettelser (er tabellen oprettet? Se shared/moededag-schema.sql). Du ser kun det automatiske forslag.';
+  } else {
+    (rettelseRes.data || []).forEach(r => {
+      if(r.bunke === MoedeDag.INGEN_BUNKE) mdIngen = true;
+      else mdRettelser.set(r.navn, r.bunke);
+    });
+  }
+  mdDirty = false;
+  mdTegn();
+}
+
+// Én række pr. navn: den tidligste vagt er "repræsentanten" der sorteres.
+function mdPersoner(){
+  const pr = new Map();
+  mdVagter.filter(v => v.dag === mdDato).forEach(v => {
+    const e = pr.get(v.navn);
+    if(!e){ pr.set(v.navn, { navn: v.navn, rolle: v.rolle, billede: v.billede, start: new Date(v.start), slut: new Date(v.slut), vagt: v }); return; }
+    if(new Date(v.start) < e.start){ e.vagt = v; e.rolle = v.rolle; e.start = new Date(v.start); }
+    if(new Date(v.slut) > e.slut) e.slut = new Date(v.slut);
+    if(!e.billede && v.billede) e.billede = v.billede;
+  });
+  return Array.from(pr.values());
+}
+
+// Regner alt om ud fra de nuværende rettelser: skiftetidspunkt + bunke pr. person.
+function mdBeregn(){
+  const rækker = [];
+  mdRettelser.forEach((bunke, navn) => rækker.push({ navn: navn, bunke: bunke }));
+  if(mdIngen) rækker.push({ navn: MoedeDag.INGEN_NAVN, bunke: MoedeDag.INGEN_BUNKE });
+  const m = MoedeDag.find(mdVagter, mdDato, rækker);
+  const personer = mdPersoner().map(p => {
+    const rettet = mdRettelser.has(p.navn);
+    const forslag = m ? MoedeDag.BUNKE_AF_KLASSE[m.forslag(p.vagt)] : 'normal';
+    return Object.assign(p, { rettet: rettet, forslag: forslag, bunke: rettet ? mdRettelser.get(p.navn) : forslag });
+  });
+  return { skifteMs: m ? m.skifteMs : null, personer: personer };
+}
+
+function mdTegn(){
+  document.getElementById('mdDagIdag').classList.toggle('valgt', mdDato === skDagISO(0));
+  document.getElementById('mdDagImorgen').classList.toggle('valgt', mdDato === skDagISO(1));
+  document.getElementById('mdDatoFelt').value = mdDato;
+
+  const { skifteMs, personer } = mdBeregn();
+
+  // Skiftetidspunkt — øverst, opdateres med det samme når nogen flyttes.
+  const skifte = document.getElementById('mdSkifte');
+  const tekster = mdEl('div');
+  tekster.appendChild(mdEl('div', 'mdSkifteLabel', 'Skiftetidspunkt'));
+  tekster.appendChild(mdEl('div', 'mdSkifteSub', mdIngen
+    ? 'Dagen er markeret som ikke en mødedag.'
+    : 'Seneste sluttid i Vikar-bunken. Så skifter skærmen fra mødet til normal drift.'));
+  const kl = mdEl('div', 'mdSkifteKl' + (skifteMs === null ? ' ingen' : ''), skifteMs === null ? 'Ikke sat' : skKlok(new Date(skifteMs)));
+  skifte.replaceChildren(tekster, kl);
+
+  // Beskeder
+  const besked = document.getElementById('mdBesked');
+  besked.replaceChildren();
+  const tilføj = (tekst, knapTekst, handler) => {
+    const b = mdEl('div', 'mdBesked', tekst);
+    if(knapTekst){
+      const k = mdEl('button', null, knapTekst);
+      k.type = 'button';
+      k.addEventListener('click', handler);
+      b.appendChild(document.createElement('br'));
+      b.appendChild(k);
+    }
+    besked.appendChild(b);
+  };
+  if(mdFejl) tilføj(mdFejl);
+  if(mdIngen){
+    tilføj('Beboerskærmen behandler denne dag som en almindelig dag.', 'Brug automatisk sortering igen', mdFortrydIngen);
+  } else if(skifteMs === null){
+    tilføj('Ingen er i Vikar-bunken, så skærmen viser en almindelig dag. Flyt vikarerne til Vikar for at gøre dagen til en mødedag.');
+  }
+
+  const bunker = document.getElementById('mdBunker');
+  bunker.replaceChildren();
+  if(personer.length === 0){
+    bunker.appendChild(mdEl('div', 'skTom', 'Ingen vagter fundet for ' + skDagTekst(mdDato).toLowerCase() + '.'));
+  } else if(!mdIngen){
+    MD_BUNKER.forEach(b => {
+      const liste = personer.filter(p => p.bunke === b.id);
+      const kort = mdEl('div', 'kort mdBunke ' + b.id);
+      const hoved = mdEl('div', 'mdBunkeHoved');
+      hoved.appendChild(mdEl('h3', null, b.titel));
+      hoved.appendChild(mdEl('span', 'mdAntal', String(liste.length)));
+      kort.appendChild(hoved);
+      kort.appendChild(mdEl('div', 'mdBeskr', b.beskr));
+      if(liste.length === 0) kort.appendChild(mdEl('div', 'skTom', 'Ingen'));
+      liste.forEach(p => kort.appendChild(mdPersonRække(p)));
+      bunker.appendChild(kort);
+    });
+  }
+
+  const status = document.getElementById('mdStatus');
+  status.textContent = mdDirty ? 'Ændringer er ikke gemt endnu.' : (mdRettelser.size > 0 || mdIngen ? 'Gemt. Prikkerne viser det du selv har rettet.' : '');
+  status.classList.toggle('ugemt', mdDirty);
+  document.getElementById('mdGemKnap').disabled = !mdDirty || mdTravl;
+  document.getElementById('mdIkkeKnap').disabled = mdTravl || mdIngen;
+}
+
+function mdPersonRække(p){
+  const ydre = mdEl('div', 'mdPerson');
+  const knap = mdEl('button', 'mdRække');
+  knap.type = 'button';
+  knap.setAttribute('aria-expanded', mdÅben === p.navn ? 'true' : 'false');
+  knap.addEventListener('click', () => { mdÅben = (mdÅben === p.navn ? null : p.navn); mdTegn(); });
+
+  const foto = mdEl('div', 'mdFoto');
+  const initialerFoto = () => { foto.replaceChildren(document.createTextNode(mdInitialer(p.navn))); };
+  if(p.billede){
+    const img = document.createElement('img');
+    img.alt = '';
+    img.onerror = initialerFoto;
+    img.src = p.billede;
+    foto.appendChild(img);
+  } else {
+    initialerFoto();
+  }
+  knap.appendChild(foto);
+
+  const tekst = mdEl('div', 'mdTekst');
+  tekst.appendChild(mdEl('div', 'mdNavn', mdVisNavn(p.navn)));
+  tekst.appendChild(mdEl('div', 'mdMeta', p.rolle + ' · ' + skKlok(p.start) + '–' + skKlok(p.slut) + (datoISO(p.slut) !== mdDato ? ' (næste dag)' : '')));
+  knap.appendChild(tekst);
+
+  if(p.rettet){
+    const prik = mdEl('span', 'mdPrik');
+    prik.title = 'Rettet af dig';
+    prik.setAttribute('aria-label', 'Rettet af dig');
+    knap.appendChild(prik);
+  }
+  knap.appendChild(mdEl('span', 'mdPil', mdÅben === p.navn ? '▲' : '▼'));
+  ydre.appendChild(knap);
+
+  if(mdÅben === p.navn){
+    const valg = mdEl('div', 'mdValg');
+    MD_BUNKER.forEach(b => {
+      const k = mdEl('button', p.bunke === b.id ? 'valgt' : '', b.titel);
+      k.type = 'button';
+      k.addEventListener('click', () => mdFlyt(p.navn, b.id));
+      valg.appendChild(k);
+    });
+    if(p.rettet){
+      const auto = mdEl('button', 'mdAuto', 'Fortryd min rettelse (automatisk: ' + MD_BUNKER.find(b => b.id === p.forslag).titel + ')');
+      auto.type = 'button';
+      auto.addEventListener('click', () => mdFlyt(p.navn, null));
+      valg.appendChild(auto);
+    }
+    ydre.appendChild(valg);
+  }
+  return ydre;
+}
+
+// Flytter én person (bunke = null: fjern rettelsen, tilbage til automatisk).
+// Alt regnes om med det samme i mdTegn(): skiftetid og de andres forslag.
+function mdFlyt(navn, bunke){
+  if(bunke === null) mdRettelser.delete(navn);
+  else mdRettelser.set(navn, bunke);
+  mdDirty = true;
+  mdÅben = null;
+  mdTegn();
+}
+
+function mdFejlTekst(error){
+  if(error && (error.code === 'PGRST205' || error.code === '42P01')) return 'Tabellen moededag_rettelser mangler – kør shared/moededag-schema.sql i Supabase.';
+  return 'Fejl – prøv igen';
+}
+
+// Skriver præcis det rækkesæt der skal stå for datoen: upsert + slet resten.
+async function mdSkriv(rækker){
+  const eks = await sb.from('moededag_rettelser').select('id,navn').eq('dato', mdDato);
+  if(eks.error) return eks.error;
+  if(rækker.length > 0){
+    const ny = rækker.map(r => ({ dato: mdDato, navn: r.navn, bunke: r.bunke, rettet_af_bruger: true, opdateret: new Date().toISOString() }));
+    const { error } = await sb.from('moededag_rettelser').upsert(ny, { onConflict: 'dato,navn' });
+    if(error) return error;
+  }
+  const behold = new Set(rækker.map(r => r.navn));
+  const slet = (eks.data || []).filter(r => !behold.has(r.navn)).map(r => r.id);
+  if(slet.length > 0){
+    const { error } = await sb.from('moededag_rettelser').delete().in('id', slet);
+    if(error) return error;
+  }
+  return null;
+}
+
+async function mdGem(){
+  if(!sb || mdTravl || !mdDirty) return;
+  mdTravl = true;
+  mdTegn();
+  try {
+    const rækker = [];
+    mdRettelser.forEach((bunke, navn) => rækker.push({ navn: navn, bunke: bunke }));
+    const fejl = await mdSkriv(rækker);
+    if(fejl){ console.error('Fejl gem mødedag:', fejl); visToast(mdFejlTekst(fejl), 4000); }
+    else { visToast('Gemt – skærmen opdateres inden for 1 min.', 3500); mdDirty = false; }
+  } finally {
+    mdTravl = false;
+    mdTegn();
+  }
+}
+
+// "Det er ikke en mødedag": sletter datoens rettelser og lægger en markering,
+// så skærmen behandler dagen som almindelig — også hvis der er Vikar-tags.
+async function mdIkkeMoedeDag(){
+  if(!sb || mdTravl) return;
+  if(!window.confirm('Markér ' + skDagTekst(mdDato).toLowerCase() + ' som ikke en mødedag? Dine rettelser for datoen slettes, og skærmen viser en almindelig dag.')) return;
+  mdTravl = true;
+  try {
+    const fejl = await mdSkriv([{ navn: MoedeDag.INGEN_NAVN, bunke: MoedeDag.INGEN_BUNKE }]);
+    if(fejl){ console.error('Fejl ikke mødedag:', fejl); visToast(mdFejlTekst(fejl), 4000); }
+    else { mdRettelser = new Map(); mdIngen = true; mdDirty = false; visToast('Gemt – skærmen viser en almindelig dag.', 3500); }
+  } finally {
+    mdTravl = false;
+    mdTegn();
+  }
+}
+
+async function mdFortrydIngen(){
+  if(!sb || mdTravl) return;
+  mdTravl = true;
+  try {
+    const fejl = await mdSkriv([]);
+    if(fejl){ console.error('Fejl fortryd:', fejl); visToast(mdFejlTekst(fejl), 4000); }
+    else { mdIngen = false; mdRettelser = new Map(); mdDirty = false; visToast('Automatisk sortering bruges igen.', 3000); }
+  } finally {
+    mdTravl = false;
+    mdTegn();
+  }
 }
 
 // ==================================================================

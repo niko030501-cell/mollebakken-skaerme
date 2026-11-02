@@ -260,7 +260,7 @@
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1bXh2cWhsbW9rc3BxbmF6aHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzc3NTMsImV4cCI6MjA5OTYxMzc1M30.WvVrbqZWaY1V-6sC4XwoYDOciBULeCxcnxvB7TlAMno';
 </script>
 <script src="supabase-js.min.js"></script>
-<script src="p-moede.js"></script>
+<script src="../shared/moededag.js"></script>
 
 <div id="top">
   <div id="hej" class="haand">Hej! I dag er vi her</div>
@@ -584,6 +584,22 @@ async function hentSkjulninger(){
   }
 }
 
+// Rettelser fra appens Admin → Mødedag (moededag_rettelser). Hentes højst
+// hvert 45. sekund, så en rettelse slår igennem ved næste minuts-polling.
+// Fail-safe: kan tabellen ikke læses, bruges kun Vikar-tagget.
+const RETTELSE_CACHE_MS = 45 * 1000;
+async function hentMoedeRettelser(dage){
+  try {
+    const { data, error } = await cachetHent('moededag|' + dage.join(','), RETTELSE_CACHE_MS, () =>
+      sb.from('moededag_rettelser').select('dato,navn,bunke').in('dato', dage));
+    if(error){ console.error('Fejl moededag_rettelser (bruger Vikar-tag):', error); return []; }
+    return data || [];
+  } catch (e) {
+    console.error('Fejl moededag_rettelser (bruger Vikar-tag):', e);
+    return [];
+  }
+}
+
 function skStartAfDag(iso){
   const d = iso.split('-');
   return new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]));
@@ -805,10 +821,11 @@ async function hentPersonale(){
   // En vagt har samme dag som da den startede, også efter midnat, så
   // gårsdagens nat- og døgnvagter hentes med.
   const dage = [datoISO(nyDag(nu, -1)), iDagISO, iMorgenISO];
-  const [vagterRes, skjulninger] = await Promise.all([
+  const [vagterRes, skjulninger, rettelser] = await Promise.all([
     cachetHent('vagter|' + dage.join(','), DATA_CACHE_MS, () =>
       sb.from('personaleskaerm_vagter').select('*').in('dag', dage).order('start')),
-    hentSkjulninger()
+    hentSkjulninger(),
+    hentMoedeRettelser([iDagISO, iMorgenISO])
   ]);
   const { data, error } = vagterRes;
   if(error){ console.error('Fejl personale:', error); return; }
@@ -818,10 +835,12 @@ async function hentPersonale(){
   const erNat = p => p.rolle === 'Nattevagt';
   const vistFor = (dagISO) => (p => !findSkjulning(skjulninger, p.navn, dagISO, nu));
 
-  // P-møde-dage (se p-moede.js): vikarer står på gulvet mens det faste
-  // personale er til møde. "skjul" vises slet ikke, "kommer" står i boksen
-  // "Kommer efter mødet" indtil skiftetidspunktet. Alle andre dage: null.
-  const møde = pMøde.find(alle, forbered ? iMorgenISO : iDagISO);
+  // Mødedage (se ../shared/moededag.js): vikarer står på gulvet mens det
+  // faste personale er til møde. "skjul" vises slet ikke, "kommer" står i
+  // boksen "Kommer efter mødet" indtil skiftetidspunktet. Gemte rettelser fra
+  // appen vinder over Vikar-tagget. Alle andre dage: null, ingen ændringer.
+  const mødeDagISO = forbered ? iMorgenISO : iDagISO;
+  const møde = MoedeDag.find(alle, mødeDagISO, rettelser.filter(r => r.dato === mødeDagISO));
   const mødeKlasse = p => møde ? møde.klasse(p) : 'normal';
   const førSkifte = møde !== null && nu.getTime() < møde.skifteMs;
   mødeSkifteMs = møde ? møde.skifteMs : null;
@@ -834,19 +853,23 @@ async function hentPersonale(){
     // personale på gulvet vises; I nat-kortet viser aftenens nattevagt.
     // Mødedag: "skjul" og "kommer" fjernes før énPrPerson, så en senere
     // vagt samme dag ikke tabes.
-    const morgenGulv = alle.filter(p => erGulv(p) && p.dag === iMorgenISO);
-    gulv = énPrPerson(morgenGulv.filter(p => mødeKlasse(p) !== 'skjul' && mødeKlasse(p) !== 'kommer')).filter(vistFor(iMorgenISO));
-    kommer = énPrPerson(morgenGulv.filter(p => mødeKlasse(p) === 'kommer')).filter(vistFor(iMorgenISO));
+    // Døgnvagt, nattevagt og andre funktioner påvirkes kun hvis brugeren selv
+    // har flyttet dem i appen (automatisk er de altid "normal").
+    const morgen = alle.filter(p => !erNat(p) && p.dag === iMorgenISO);
+    const synlig = p => mødeKlasse(p) !== 'skjul' && mødeKlasse(p) !== 'kommer';
+    gulv = énPrPerson(morgen.filter(p => erGulv(p) && synlig(p))).filter(vistFor(iMorgenISO));
+    kommer = énPrPerson(morgen.filter(p => mødeKlasse(p) === 'kommer')).filter(vistFor(iMorgenISO));
     // Andre funktioner (leder, køkken, pedel osv.) der starter i morgen.
-    funktioner = énPrPerson(alle.filter(p => !erGulv(p) && !erNat(p) && p.dag === iMorgenISO)).filter(vistFor(iMorgenISO));
+    funktioner = énPrPerson(morgen.filter(p => !erGulv(p) && synlig(p))).filter(vistFor(iMorgenISO));
   } else {
     // Resten af døgnet (00:00–19:30): kun dem der er på arbejde lige nu.
     // Folk dukker op når deres vagt starter og forsvinder når den slutter.
     const påArbejde = alle.filter(p => new Date(p.start) <= nu && nu < new Date(p.slut)).filter(vistFor(iDagISO));
-    gulv = påArbejde.filter(p => erGulv(p) && mødeKlasse(p) !== 'skjul' && !(mødeKlasse(p) === 'kommer' && førSkifte));
-    funktioner = påArbejde.filter(p => !erGulv(p) && !erNat(p));
+    const synlig = p => mødeKlasse(p) !== 'skjul' && !(mødeKlasse(p) === 'kommer' && førSkifte);
+    gulv = påArbejde.filter(p => erGulv(p) && synlig(p));
+    funktioner = påArbejde.filter(p => !erGulv(p) && !erNat(p) && synlig(p));
     // Efter skiftetidspunktet er boksen væk og de er almindelige polaroids.
-    if(førSkifte) kommer = påArbejde.filter(p => mødeKlasse(p) === 'kommer');
+    if(førSkifte) kommer = påArbejde.filter(p => !erNat(p) && mødeKlasse(p) === 'kommer');
   }
 
   // "I nat" står hele døgnet og skifter ikke kl. 19:30: det er den nats
@@ -856,7 +879,7 @@ async function hentPersonale(){
   const natIkkeSlut = alle.filter(p => erNat(p) && new Date(p.slut) > nu);
   if(natIkkeSlut.length > 0){
     const natDag = natIkkeSlut.map(p => p.dag).sort()[0];
-    nat = alle.filter(p => erNat(p) && p.dag === natDag).filter(vistFor(natDag));
+    nat = alle.filter(p => erNat(p) && p.dag === natDag && mødeKlasse(p) !== 'skjul').filter(vistFor(natDag));
   } else {
     nat = [];
   }
