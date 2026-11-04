@@ -80,31 +80,6 @@
     .side{ max-width:1100px; }
   }
 
-  #topbar{
-    padding:calc(16px + env(safe-area-inset-top)) 20px 16px 20px;
-    background:var(--mørk);
-    color:white;
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-
-  #topbar h1{ font-size:18px; margin:0; flex:1; }
-
-  #tilbageKnap{
-    background:none;
-    color:white;
-    font-size:20px;
-    padding:4px 8px;
-    display:none;
-  }
-
-  #tilbageKnap.vis{ display:inline-block; }
-
-  @media (min-width:900px){
-    #topbar{ display:none; }
-  }
-
   /* ---- Hovedmenu: bundmenu (telefon) og sidemenu (PC). Samme punkter og samme ikoner. ---- */
 
   :root{
@@ -154,8 +129,6 @@
   #bundNav button.aktivFane{ color:var(--ny-sort); font-weight:800; }
   #bundNav button.aktivFane .ikon{ background:var(--ny-sort); color:#fff; }
 
-  body.paaValg #bundNav{ display:none; }
-
   #sideMenu{ display:none; }
 
   /* På PC erstattes bundmenuen af en hvid sidemenu. Den ligger i flowet (hverken sticky eller 100vh):
@@ -163,14 +136,12 @@
   @media (min-width:900px){
     #bundNav{ display:none; }
     #app{ padding-left:248px; }
-    body.paaValg #app{ padding-left:0; }
     #sideMenu{
       display:flex; flex-direction:column; gap:4px;
       position:absolute; top:0; bottom:0; left:0; width:248px;
       background:#fff; border-right:1px solid var(--ny-streg);
       padding:28px 14px 24px;
     }
-    body.paaValg #sideMenu{ display:none; }
   }
 
   .smBrand{ font-size:22px; font-weight:800; color:var(--ny-sort); padding:0 14px 18px; }
@@ -186,175 +157,8 @@
   .smKnap.aktiv{ background:var(--ny-sort); color:#fff; }
   .smKnap.aktiv:hover{ background:var(--ny-sort); }
 
-  /* ---- Valg-skærm ---- */
-
-  /* Skal matches sammen med .aktiv — ellers vinder ID-specificiteten over
-     .side{display:none} og #valg forbliver synlig hele tiden, uanset
-     hvilken side der reelt er aktiv (så den "spøger" bag ved alt andet). */
-  #valg.aktiv{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    min-height:100vh;
-    padding:24px 20px;
-  }
-
-  /* Startskærmen har ingen menu, så der skal ikke være plads til den i bunden */
-  body.paaValg #app{ padding-bottom:0; }
-
-  .valgKort{
-    width:100%;
-    max-width:400px;
-    background:var(--kort);
-    border:1px solid #e1e7e4;
-    border-radius:12px;
-    padding:36px 28px 32px;
-    text-align:center;
-  }
-
-  #valg h1{ font-size:34px; line-height:1.1; margin:0 0 8px; color:var(--mørk); }
-  .valgSub{ font-size:16px; line-height:1.5; color:var(--tekst-svag); margin:0 0 28px; }
-
-  #valg .valgKnap{
-    display:block;
-    width:100%;
-    min-height:48px;
-    padding:12px 16px;
-    margin:0 0 12px;
-    font-size:16px;
-    font-weight:600;
-    border-radius:10px;
-    background:var(--guld);          /* primær: Normal brug */
-    border:1.5px solid var(--guld);
-    color:var(--mørk);
-  }
-
-  #valg .valgKnap.sekundær{        /* Admin og Log ind: outline */
-    background:transparent;
-    border:1.5px solid var(--mørk);
-    color:var(--mørk);
-  }
-
-  #adminKodeBoks{
-    display:none;
-    margin-top:20px;
-    padding-top:20px;
-    border-top:1px solid #e1e7e4;
-  }
-
-  #adminKodeBoks input{
-    width:160px;
-    text-align:center;
-    font-size:18px;
-    letter-spacing:4px;
-  }
-
-  #adminFejl{ color:#991b1b; font-size:14px; margin:8px 0 12px; min-height:20px; }
-
-  /* ---- Forside: hilsen, dagens ret/aktivitet, beskeder pr. beboer, HUSET, "Lige nu" (PC) ---- */
-  #forside{ padding:calc(20px + env(safe-area-inset-top)) 16px 24px; }
-  @media (min-width:900px){ #forside{ max-width:1280px; padding:36px 32px 32px; } }
-
-  .fsHoved{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
-  .fsHilsen{ font-family:'Archivo', sans-serif; font-size:32px; font-weight:800; line-height:1.1; margin:0 0 4px; color:var(--ny-sort); }
-  .fsDatoLinje{ font-size:16px; line-height:1.4; color:var(--ny-graa); margin:0; }
-  .fsNyBesked{ display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 22px; border-radius:12px; background:var(--ny-sort); color:#fff; font-size:16px; font-weight:700; }
-  .fsNyBesked[hidden]{ display:none; }
-  @media (max-width:599px){ .fsNyBesked{ width:100%; } }
-
-  .fsKolonner{ display:grid; grid-template-columns:minmax(0, 1fr); gap:20px; }
-  @media (min-width:900px){ .fsKolonner{ grid-template-columns:minmax(0, 1fr) 340px; align-items:start; gap:28px; } }
-  .fsVenstre{ min-width:0; }
-
-  .fsToppen{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:22px; }
-  @media (min-width:900px){ .fsToppen{ grid-template-columns:1fr 1fr 1fr; gap:16px; } }
-  @media (max-width:359px){ .fsToppen{ grid-template-columns:1fr; } }
-  .fsToppen > section[hidden]{ display:none; }
-
-  .fsDagen{
-    display:flex; flex-direction:column; align-items:flex-start; gap:6px; width:100%; min-height:104px;
-    background:#fff; color:var(--ny-sort); border-radius:16px; padding:14px 16px; text-align:left;
-    border:1px solid var(--ny-streg);
-  }
-  .fsDagenLabel{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--ny-graa); }
-  .fsDagenTekst{ font-size:19px; font-weight:700; line-height:1.3; overflow-wrap:anywhere; }
-  .fsDagenTekst.tom{ font-weight:500; color:var(--ny-graa); }
-  .fsViktigKort{ display:none; background:var(--ny-orange); color:#fff; border-radius:16px; padding:14px 16px; min-height:104px; }
-  @media (min-width:900px){ .fsViktigKort:not([hidden]){ display:block; } }
-  .fsViktigLabel{ font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.9; margin-bottom:6px; }
-  .fsViktigTekst{ font-size:19px; font-weight:700; line-height:1.3; overflow-wrap:anywhere; }
-
-  .fsTitel{ font-family:'Archivo', sans-serif; font-size:22px; font-weight:800; margin:0; color:var(--ny-sort); }
-  .fsTitelRække{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; }
-  .fsSeAlle{ background:none; color:var(--ny-sort); font-size:15px; font-weight:700; min-height:44px; padding:0 4px; text-decoration:underline; text-underline-offset:4px; }
-
-  .fsRækker{ display:flex; flex-direction:column; gap:10px; }
-  .fsRække{ background:#fff; border:1px solid var(--ny-streg); border-radius:16px; padding:14px; display:grid; gap:10px; }
-  @media (min-width:900px){ .fsRække{ grid-template-columns:150px minmax(0, 1fr); align-items:start; } }
-  .fsBeboer{ display:flex; align-items:center; gap:10px; font-size:18px; font-weight:800; color:var(--ny-sort); min-height:36px; }
   .fsCirkel{ width:36px; height:36px; border-radius:50%; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; flex-shrink:0; }
-  .fsChips{ display:flex; flex-wrap:wrap; gap:8px; min-width:0; }
-  .fsChipB{
-    display:inline-flex; align-items:center; gap:8px; max-width:100%; min-height:40px;
-    padding:8px 12px; border-radius:10px; background:#F4F2EE; color:var(--ny-sort);
-    font-size:15px; font-weight:600; line-height:1.25;
-  }
-  .fsChipB.vigtig{ background:var(--ny-orange); color:#fff; }
-  .fsChipIkon{ display:inline-flex; flex-shrink:0; }
-  .fsChipTekst{ min-width:0; overflow-wrap:anywhere; }
-  .fsTid{ background:var(--ny-sort); color:#fff; font-size:11px; font-weight:800; letter-spacing:.04em; padding:3px 7px; border-radius:6px; white-space:nowrap; }
-  .fsNy{ background:var(--ny-gul); color:var(--ny-sort); font-size:11px; font-weight:800; letter-spacing:.04em; padding:3px 7px; border-radius:6px; white-space:nowrap; }
-  .fsChipFil{ min-width:44px; min-height:44px; margin:-6px -10px -6px -4px; background:none; color:inherit; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; }
   .fsIngen{ color:#8a8a8a; font-size:15px; padding:8px 0; }
-
-  .fsHusetBoks{ background:var(--ny-sort); color:#fff; border-radius:16px; padding:16px; margin-top:12px; }
-  .fsHusetMaerke{ font-size:13px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; margin-bottom:10px; }
-  .fsHusetListe{ display:flex; flex-direction:column; gap:8px; }
-  .fsHusetPunkt{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:16px; font-weight:600; line-height:1.35; }
-  .fsHusetPunkt .fsChipTekst{ flex:1 1 auto; }
-  .fsVigtigt{ color:#FDBA74; font-weight:800; }
-  .fsHusetBoks .fsTid{ background:#fff; color:var(--ny-sort); }
-  .fsHusetBoks .fsChipFil{ color:#fff; }
-  .fsHusetBoks .fsIngen{ color:#B5B5B5; padding:0; }
-
-  .fsHøjre{ display:none; }
-  @media (min-width:900px){
-    .fsHøjre{ display:block; background:#fff; border:1px solid var(--ny-streg); border-radius:16px; padding:16px; }
-  }
-  .fsNuRække{ padding:12px 0; border-top:1px solid var(--ny-streg); display:flex; flex-direction:column; gap:6px; }
-  .fsNuRække:first-of-type{ border-top:none; padding-top:4px; }
-  .fsNuNavn{ display:flex; align-items:center; gap:10px; font-size:16px; font-weight:800; }
-  .fsNuNavn .fsCirkel{ width:30px; height:30px; font-size:14px; }
-  .fsNuBlok{ background:var(--ny-sort); color:#fff; border-radius:10px; padding:8px 10px; font-size:15px; font-weight:700; line-height:1.3; }
-  .fsNuBlok .fsNuTid{ display:block; color:var(--ny-gul); font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; margin-bottom:2px; }
-  .fsNuNaeste{ font-size:14px; color:var(--ny-graa); line-height:1.3; }
-  .fsNuNaeste b{ color:var(--ny-sort); font-variant-numeric:tabular-nums; }
-
-  /* Overblik nederst (På vagt, På vej) */
-  .fsSektion{ margin-top:28px; }
-  .fsSektion[hidden]{ display:none; }
-  .fsSektionTitel{ font-family:'Archivo', sans-serif; font-size:22px; font-weight:800; margin:0 0 12px; color:var(--ny-sort); }
-  .fsTo{ display:grid; grid-template-columns:1fr; gap:12px; }
-  @media (min-width:900px){ .fsTo{ grid-template-columns:1fr 1fr; } }
-  .fsKort{ background:#fff; border:1px solid var(--ny-streg); border-radius:16px; padding:18px; min-width:0; }
-  .fsKort[hidden]{ display:none; }
-  .fsTom, .fsFejl{ font-size:16px; color:var(--ny-graa); padding:14px 0; }
-  .fsFejl{ color:var(--ny-roed); }
-  #fsVagtIndhold .fsTom, #fsVagtIndhold .fsFejl{ padding:4px 0; }
-  .fsPerson{ padding:10px 0; border-top:1px solid var(--ny-streg); }
-  .fsPerson:first-child{ border-top:none; padding-top:0; }
-  .fsNavn{ font-size:17px; font-weight:700; }
-  .fsMeta{ font-size:14px; color:var(--ny-graa); }
-  .fsLinje{ display:flex; gap:10px; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid var(--ny-streg); font-size:15px; }
-  .fsLinjeIkon{ display:inline-flex; color:var(--ny-graa); flex-shrink:0; }
-  #fsRengoringIndhold[hidden]{ display:none; }
-  .fsPaavejKort{ display:flex; gap:14px; align-items:flex-start; }
-  .fsIkon{ display:inline-flex; color:var(--ny-graa); flex-shrink:0; margin-top:1px; }
-  .fsLabel{ font-size:13px; color:var(--ny-graa); margin-bottom:2px; }
-  .fsVærdi{ font-size:17px; line-height:1.4; overflow-wrap:anywhere; }
-  .fsFod{ margin-top:40px; padding:24px 0 8px; border-top:1px solid var(--ny-streg); text-align:center; color:var(--ny-graa); font-size:14px; }
-
-  .fsHøjre[hidden]{ display:none !important; }
 
   /* Alt herunder er dimensioneret til en telefonskærm (max ~480px). I
      sidemenu-layoutet (≥900px, se ovenfor) er indholdskolonnen derimod op
@@ -1042,10 +846,8 @@
 
   /* ---- Topmenu (PC): lys, sticky, med "Mere"-rullemenu ---- */
 
-  #valg.aktiv{ max-width:none; }
   /* ---- Sidehoved, flade kort, hover, overgange og fokus ---- */
 
-  #topbar{ display:none; }   /* sidehovedet erstatter den mørke topbjælke på mobil */
   html{ scroll-padding-top:80px; }
 
   /* #topbar (med sin egen safe-area-top-kompensation) blev erstattet af
@@ -1075,7 +877,6 @@
 
   /* Bløde, korte overgange mellem faner */
   .side.aktiv{ animation:sideInd .2s ease-out; }
-  #valg.aktiv{ animation:none; }
   @keyframes sideInd{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
   @media (prefers-reduced-motion:reduce){ .side.aktiv{ animation:none; } .kort, .fsKort{ transition:none; } }
 
@@ -1118,10 +919,172 @@
   .trForhaandsvisning img{ width:100%; height:100%; object-fit:cover; display:block; }
   .trIngenBillede{ color:var(--tekst-svag); font-size:14px; }
   .trPrik{ display:inline-block; width:14px; height:14px; border-radius:50%; vertical-align:middle; margin-right:8px; }
+
+  /* Beskedchips og Huset-boks (bruges af Beskeder-siden og forhåndsvisningen) */
+  .fsRækker{ display:flex; flex-direction:column; gap:10px; }
+  .fsRække{ background:#fff; border:1px solid var(--ny-streg); border-radius:16px; padding:14px; display:grid; gap:10px; }
+  @media (min-width:900px){ .fsRække{ grid-template-columns:150px minmax(0, 1fr); align-items:start; } }
+  .fsBeboer{ display:flex; align-items:center; gap:10px; font-size:18px; font-weight:800; color:var(--ny-sort); min-height:36px; }
+  .fsTom, .fsFejl{ font-size:16px; color:var(--ny-graa); padding:14px 0; }
+  .fsFejl{ color:var(--ny-roed); }
+  .fsChips{ display:flex; flex-wrap:wrap; gap:8px; min-width:0; }
+  .fsChipB{
+    display:inline-flex; align-items:center; gap:8px; max-width:100%; min-height:40px;
+    padding:8px 12px; border-radius:10px; background:#F4F2EE; color:var(--ny-sort);
+    font-size:15px; font-weight:600; line-height:1.25;
+  }
+  .fsChipB.vigtig{ background:var(--ny-orange); color:#fff; }
+  .fsChipIkon{ display:inline-flex; flex-shrink:0; }
+  .fsChipTekst{ min-width:0; overflow-wrap:anywhere; }
+  .fsTid{ background:var(--ny-sort); color:#fff; font-size:11px; font-weight:800; letter-spacing:.04em; padding:3px 7px; border-radius:6px; white-space:nowrap; }
+  .fsNy{ background:var(--ny-gul); color:var(--ny-sort); font-size:11px; font-weight:800; letter-spacing:.04em; padding:3px 7px; border-radius:6px; white-space:nowrap; }
+  .fsChipFil{ min-width:44px; min-height:44px; margin:-6px -10px -6px -4px; background:none; color:inherit; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; }
+  .fsIngen{ color:#8a8a8a; font-size:15px; padding:8px 0; }
+
+  .fsHusetBoks{ background:var(--ny-sort); color:#fff; border-radius:16px; padding:16px; margin-top:12px; }
+  .fsHusetMaerke{ font-size:13px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; margin-bottom:10px; }
+  .fsHusetListe{ display:flex; flex-direction:column; gap:8px; }
+  .fsHusetPunkt{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:16px; font-weight:600; line-height:1.35; }
+  .fsHusetPunkt .fsChipTekst{ flex:1 1 auto; }
+  .fsVigtigt{ color:#FDBA74; font-weight:800; }
+  .fsHusetBoks .fsTid{ background:#fff; color:var(--ny-sort); }
+  .fsHusetBoks .fsChipFil{ color:#fff; }
+  .fsHusetBoks .fsIngen{ color:#B5B5B5; padding:0; }
+
+
+  /* ==================================================================
+     Ny forside, Normal/Admin-knap og Admin-bjælke.
+     Farver og tokens kommer fra ../shared/tokens.css (--f-*).
+     ================================================================== */
+
+  :root{ --baggrund:var(--f-baggrund); }
+  body{ background:var(--f-baggrund); color:var(--f-tekst); }
+  #sideMenu{ border-right-color:var(--f-streg); }
+  .smBrand{ color:var(--f-tekst); }
+  .smKnap{ color:var(--f-tekst); }
+  .smKnap.aktiv{ background:var(--f-nu); }
+  .smKnap.aktiv:hover{ background:var(--f-nu); }
+  #bundNav button.aktivFane .ikon{ background:var(--f-nu); }
+
+  /* ---- Normal / Admin ---- */
+  .modeVaelger{ display:flex; gap:4px; padding:4px; background:var(--f-flade); border:2px solid var(--f-streg); border-radius:16px; }
+  .modeVaelger button{ flex:1 1 0; min-height:44px; padding:0 14px; border-radius:12px; background:transparent; color:var(--f-tekst); font-size:16px; font-weight:800; }
+  .modeVaelger button[aria-pressed="true"]{ background:var(--f-nu); color:#fff; }
+  .smMode{ position:sticky; top:0; z-index:3; background:var(--f-flade); padding:0 0 12px; }
+
+  #topStribe{ position:sticky; top:0; z-index:998; }
+  .mvRamme{ padding:calc(10px + env(safe-area-inset-top)) 16px 10px; background:var(--f-baggrund); border-bottom:2px solid var(--f-streg); }
+  @media (min-width:900px){ .mvRamme{ display:none; } }
+
+  #adminBjaelke{ display:none; align-items:center; gap:12px; min-height:40px; padding:4px 16px; background:var(--f-admin); color:#fff; font-size:15px; font-weight:600; }
+  body.erAdmin #adminBjaelke{ display:flex; }
+  .abMaerke{ background:#fff; color:var(--f-admin); font-weight:800; font-size:13px; letter-spacing:.14em; text-transform:uppercase; padding:3px 10px; border-radius:8px; }
+
+  /* Telefon: forsiden og Admin har ingen bundmenu (felterne er menuen) */
+  body.paaForside #bundNav, body.erAdmin #bundNav{ display:none; }
+  body.paaForside #app, body.erAdmin #app{ padding-bottom:0; }
+  @media (max-width:899px){ .side{ padding-top:20px; } }
+
+  /* ---- Forside ---- */
+  #forside{ max-width:1360px; padding:18px 16px 120px; }
+  @media (min-width:900px){ #forside{ padding:36px 40px 48px; } }
+  .foRamme{ display:grid; grid-template-columns:minmax(0, 1fr); gap:24px; }
+  @media (min-width:900px){ .foRamme{ grid-template-columns:minmax(0, 1fr) 320px; gap:32px; align-items:start; } }
+  .foMidte{ display:flex; flex-direction:column; gap:20px; min-width:0; }
+
+  .foHoved{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .foDato{ margin:0 0 2px; font-size:16px; line-height:1.4; color:var(--f-tekst-2); }
+  .foHilsen{ margin:0; font-size:32px; line-height:1.1; font-weight:800; color:var(--f-tekst); }
+  @media (min-width:900px){ .foHilsen{ font-size:40px; } }
+  .foNyPC{ display:none; align-items:center; gap:10px; min-height:56px; padding:0 26px; border-radius:28px; background:var(--f-nu); color:#fff; font-size:18px; font-weight:800; }
+  @media (min-width:900px){ .foNyPC:not([hidden]){ display:inline-flex; } }
+
+  .foNu{ background:var(--f-nu); color:#fff; border-radius:22px; padding:16px 18px; display:flex; flex-direction:column; gap:4px; }
+  .foNu[hidden]{ display:none; }
+  @media (min-width:900px){ .foNu{ border-radius:24px; padding:22px 26px; } }
+  .foNuMaerke{ font-size:14px; font-weight:800; letter-spacing:.12em; color:var(--f-nu-tekst); }
+  .foNuTitel{ font-size:22px; font-weight:800; }
+  .foNuSub{ font-size:16px; line-height:1.4; color:var(--f-nu-tekst); overflow-wrap:anywhere; }
+  @media (min-width:900px){ .foNuTitel{ font-size:28px; } .foNuSub{ font-size:18px; } }
+
+  .foSektionTitel{ margin:0 0 8px; font-size:16px; font-weight:800; color:var(--f-tekst); }
+  @media (min-width:900px){ .foSektionTitel{ font-size:20px; margin-bottom:12px; } }
+
+  /* Navnemærker med antal nye beskeder (telefon). På PC står de i højre kolonne. */
+  .foMaerker[hidden]{ display:none; }
+  @media (min-width:900px){ .foMaerker{ display:none; } }
+  .foMaerkeListe{ display:flex; flex-wrap:wrap; gap:8px; }
+  .foMaerke{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:6px 14px; background:var(--f-flade); border:2px solid var(--f-streg); border-radius:22px; color:var(--f-tekst); font-size:16px; font-weight:600; }
+  .foPrik{ width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+  .foAntal{ min-width:22px; height:22px; padding:0 6px; border-radius:11px; background:var(--f-nu); color:#fff; font-size:13px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
+
+  /* Store farvede felter: 2 kolonner på telefon, 3 på PC. Et ensomt sidste felt fylder resten af rækken. */
+  .foFelter{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+  .foFelter > :last-child:nth-child(odd){ grid-column:1 / -1; }
+  @media (min-width:900px){
+    .foFelter{ grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
+    .foFelter > :last-child:nth-child(odd){ grid-column:auto; }
+    .foFelter > :last-child:nth-child(3n+2){ grid-column:span 2; }
+    .foFelter > :last-child:nth-child(3n+1){ grid-column:1 / -1; }
+  }
+  .foFelt{ display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start; gap:12px; min-height:96px; padding:14px; border-radius:22px; color:var(--f-tekst); text-align:left; }
+  @media (min-width:900px){
+    #adminFelter{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    #adminFelter > :last-child{ grid-column:auto; }
+  }
+  .foFelt:active, .foLille:active{ transform:scale(.98); }
+  @media (min-width:900px){ .foFelt{ min-height:150px; padding:20px; border-radius:24px; } }
+  .foFeltIkon{ width:40px; height:40px; border-radius:50%; background:#fff; color:var(--f-tekst); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+  @media (min-width:900px){ .foFelt .foFeltIkon{ width:48px; height:48px; } }
+  .foFeltTekst{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .foFeltTitel{ font-size:20px; font-weight:800; line-height:1.15; overflow-wrap:anywhere; }
+  .foFeltSub{ font-size:14px; line-height:1.3; overflow-wrap:anywhere; }
+  .foFeltSub:empty{ display:none; }
+  @media (min-width:900px){ .foFeltTitel{ font-size:24px; } .foFeltSub{ font-size:16px; } }
+
+  /* Små felter under overskrifterne Beboere / Personale / Skærme og apps */
+  #foGrupper{ display:flex; flex-direction:column; gap:18px; }
+  .foGruppeTitel{ margin:0 0 8px; font-size:16px; font-weight:800; color:var(--f-tekst); }
+  .foSmaa{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+  @media (min-width:900px){ .foSmaa{ grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; } }
+  .foLille{ display:flex; align-items:center; gap:10px; min-height:56px; padding:8px 12px; border-radius:18px; color:var(--f-tekst); text-align:left; }
+  .foLille .foFeltIkon{ width:36px; height:36px; }
+  .foLille .foFeltTitel{ font-size:16px; overflow-wrap:break-word; }
+
+  /* Højre kolonne (PC): nye beskeder pr. beboer */
+  .foHoejre{ display:none; background:var(--f-flade); border:2px solid var(--f-streg); border-radius:24px; padding:22px; }
+  @media (min-width:900px){ .foHoejre:not([hidden]){ display:block; } }
+  .foRaekker{ display:flex; flex-direction:column; gap:12px; }
+  .foRaekke{ display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; min-height:48px; padding:12px 14px; background:var(--f-flade); border:2px solid var(--f-streg); border-radius:16px; color:var(--f-tekst); font-size:18px; font-weight:600; text-align:left; }
+  .foRaekkeNavn{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .foRaekkeAntal{ font-size:16px; font-weight:400; color:var(--f-tekst-2); white-space:nowrap; }
+  .foRaekkeTom{ padding:8px 0; font-size:16px; color:var(--f-tekst-2); }
+
+  /* Rund "Ny besked"-knap nederst til højre (telefon) */
+  .foFab{ display:none; position:fixed; right:16px; bottom:calc(24px + env(safe-area-inset-bottom)); height:60px; padding:0 22px; border-radius:30px; background:var(--f-nu); color:#fff; align-items:center; gap:10px; font-size:18px; font-weight:800; z-index:900; box-shadow:0 4px 14px rgba(28, 35, 38, .28); }
+  body.paaForside .foFab:not([hidden]){ display:inline-flex; }
+  @media (min-width:900px){ body.paaForside .foFab:not([hidden]){ display:none; } }
+
+  /* ---- Admin ---- */
+  .adminTilbage{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 16px 0 10px; margin:0 0 14px; background:var(--f-flade); border:2px solid var(--f-streg); border-radius:14px; color:var(--f-tekst); font-size:16px; font-weight:800; }
+  #adminForside .foHoved{ margin-bottom:20px; }
+
+  /* Kode-dialog til Admin (bruger den eksisterende kode) */
+  #kodeBaggrund{ position:fixed; inset:0; background:rgba(28, 35, 38, .5); z-index:1100; }
+  #kodeDialog{ position:fixed; z-index:1101; left:50%; top:50%; transform:translate(-50%, -50%); width:min(92vw, 380px); background:var(--f-flade); border-radius:24px; padding:24px; }
+  #kodeBaggrund[hidden], #kodeDialog[hidden]{ display:none; }
+  #kodeDialog h3{ margin:0 0 6px; font-size:24px; font-weight:800; color:var(--f-tekst); }
+  #kodeDialog p{ margin:0 0 16px; font-size:16px; color:var(--f-tekst-2); }
+  #adminKodeInput{ width:100%; min-height:52px; text-align:center; font-size:22px; letter-spacing:6px; }
+  #adminFejl{ min-height:22px; margin:8px 0; font-size:15px; color:#991b1b; }
+  .kodeKnapper{ display:flex; gap:10px; }
+  .kodeKnapper button{ flex:1 1 0; min-height:48px; font-size:16px; font-weight:800; border-radius:14px; }
+  .kodeJa{ background:var(--f-nu); color:#fff; }
+  .kodeNej{ background:var(--f-baggrund); color:var(--f-tekst); border:2px solid var(--f-streg); }
 </style>
 </head>
 
-<body class="paaValg">
+<body class="paaForside">
 
 <!-- ============================================================ -->
 <!-- KONFIGURATION -->
@@ -1141,77 +1104,46 @@
   <!-- Sidemenu (PC, ≥900 px). På telefon bruges bundmenuen (#bundNav). Begge bygges af tegnNav(). -->
   <nav id="sideMenu" aria-label="Hovedmenu"></nav>
 
-  <div id="topbar">
-    <button id="tilbageKnap" onclick="visSide(aktuelSide === 'moededag' ? 'admin' : 'forside')" aria-label="Tilbage"><span data-ikon="tilbage"></span></button>
-    <h1 id="topbarTitel">Møllebakken</h1>
-  </div>
-
-  <!-- ============ VALG (gate) ============ -->
-  <div id="valg" class="side aktiv">
-    <div class="valgKort">
-      <h1>Møllebakken</h1>
-      <p class="valgSub">Vælg, hvordan du vil bruge appen</p>
-      <button type="button" class="valgKnap" onclick="gåTilForside()">Normal brug</button>
-      <button type="button" class="valgKnap sekundær" onclick="visAdminKodeBoks()">Admin</button>
-      <div id="adminKodeBoks">
-        <input type="password" id="adminKodeInput" maxlength="4" inputmode="numeric" placeholder="Kode" aria-label="Kode">
-        <div id="adminFejl" role="alert"></div>
-        <button type="button" class="valgKnap sekundær" onclick="tjekAdminKode()">Log ind</button>
-      </div>
-    </div>
+  <!-- Øverst: Normal/Admin-knappen (telefon) og den farvede Admin-bjælke (alle skærme). Bygges af tegnNav(). -->
+  <div id="topStribe">
+    <div class="mvRamme" id="mvTelefon"></div>
+    <div id="adminBjaelke" role="status"><span class="abMaerke">Admin</span><span>Du er i Admin</span></div>
   </div>
 
   <!-- ============ FORSIDE ============ -->
-  <div id="forside" class="side">
-    <header class="fsHoved">
-      <div>
-        <h2 class="fsHilsen" id="fsHilsen"></h2>
-        <p class="fsDatoLinje" id="fsDatoLinje"></p>
-      </div>
-      <button type="button" class="fsNyBesked" id="fsNyBesked" onclick="åbnSkrivBesked()"><span data-ikon="plus" data-storrelse="22"></span>Ny besked</button>
-    </header>
-
-    <div class="fsKolonner">
-      <div class="fsVenstre">
-        <div class="fsToppen">
-          <section id="fsKortMad"><div id="fsMadIndhold"><div class="fsTom">Henter …</div></div></section>
-          <section id="fsKortAkt"><div id="fsAktIndhold"><div class="fsTom">Henter …</div></div></section>
-          <section class="fsViktigKort" id="fsViktigKort" hidden></section>
-        </div>
-
-        <section id="fsKortBeskeder">
-          <div class="fsTitelRække">
-            <h3 class="fsTitel">Beskeder</h3>
-            <button type="button" class="fsSeAlle" onclick="gåTilNav('beskeder')">Se alle</button>
+  <div id="forside" class="side aktiv">
+    <div class="foRamme">
+      <div class="foMidte">
+        <header class="foHoved">
+          <div>
+            <p class="foDato" id="fsDatoLinje"></p>
+            <h2 class="foHilsen" id="fsHilsen"></h2>
           </div>
-          <div id="fsBeskedIndhold"><div class="fsTom">Henter …</div></div>
-          <div class="fsHusetBoks" id="fsHusetBoks">
-            <div class="fsHusetMaerke">Huset</div>
-            <div id="fsHusetIndhold"></div>
-          </div>
+          <button type="button" class="foNyPC" id="fsNyBesked" onclick="åbnSkrivBesked()"><span data-ikon="plus" data-storrelse="24"></span>Ny besked</button>
+        </header>
+
+        <section class="foNu" id="foNu" aria-label="Nu">
+          <span class="foNuMaerke">NU</span>
+          <span class="foNuTitel">Aftensmad i dag</span>
+          <span class="foNuSub" id="foNuSub">Henter …</span>
         </section>
 
-        <section class="fsSektion" id="fsSektionIdag">
-          <h3 class="fsSektionTitel">På vagt</h3>
-          <section class="fsKort" id="fsKortVagt">
-            <div id="fsVagtIndhold"><div class="fsTom">Henter …</div></div>
-            <div id="fsRengoringIndhold"></div>
-          </section>
+        <section class="foMaerker" id="foMaerker" aria-label="Nye beskeder">
+          <h3 class="foSektionTitel">Nye beskeder</h3>
+          <div class="foMaerkeListe" id="foMaerkeListe"></div>
         </section>
 
-        <section class="fsSektion" id="fsSektionPaavej" hidden>
-          <h3 class="fsSektionTitel">På vej</h3>
-          <div id="fsPaavejIndhold"></div>
-        </section>
+        <div class="foFelter" id="foFelter"></div>
+        <div id="foGrupper"></div>
       </div>
 
-      <aside class="fsHøjre" id="fsLigeNu" aria-label="Lige nu">
-        <h3 class="fsTitel">Lige nu</h3>
-        <div id="fsLigeNuIndhold"><div class="fsTom">Henter …</div></div>
+      <aside class="foHoejre" id="foHoejre" aria-label="Nye beskeder pr. beboer">
+        <h3 class="foSektionTitel">Nye beskeder</h3>
+        <div class="foRaekker" id="foRaekker"></div>
       </aside>
     </div>
 
-    <footer class="fsFod">Møllebakken botilbud</footer>
+    <button type="button" class="foFab" id="foFab" onclick="åbnSkrivBesked()" aria-label="Skriv ny besked"><span data-ikon="plus" data-storrelse="26"></span>Ny besked</button>
   </div>
 
   <!-- ============ OPGAVER (Besked & opgaver) ============ -->
@@ -1669,32 +1601,55 @@
     <div id="pkRod"><div class="loading">Henter …</div></div>
   </div>
 
-  <!-- ============ ADMIN ============ -->
-  <div id="admin" class="side">
+  <!-- ============ ADMIN: forside ============ -->
+  <div id="adminForside" class="side">
+    <header class="foHoved">
+      <div>
+        <p class="foDato">Kun for dem med koden</p>
+        <h2 class="foHilsen">Admin</h2>
+      </div>
+    </header>
+    <div class="foFelter" id="adminFelter"></div>
+  </div>
+
+  <!-- ============ ADMIN: synlige faner ============ -->
+  <div id="adminFaner" class="side">
+    <button type="button" class="adminTilbage" onclick="visSide('adminForside')"><span data-ikon="tilbage" data-storrelse="22"></span>Admin</button>
     <header class="sidehoved">
       <div>
-        <h2 class="sidehovedTitel">Admin</h2>
-        <p class="sidehovedSub">Styr faner og skærme</p>
+        <h2 class="sidehovedTitel">Synlige faner</h2>
+        <p class="sidehovedSub">Slå faner til og fra i appen</p>
       </div>
     </header>
     <div class="kort">
-      <h3 style="margin-top:0;">Mødedag</h3>
-      <div style="font-size:12px; color:var(--tekst-svag); margin-bottom:10px;">Ret hvem der er vikar, kun til møde eller fortsætter efter mødet, så beboerskærmen viser det rigtige på p-møde- og kursusdage.</div>
-      <button type="button" class="knap" onclick="visSide('moededag')">Åbn Mødedag</button>
-    </div>
-
-    <div class="kort">
-      <h3 style="margin-top:0;">Synlige faner</h3>
       <div id="adminIndstillinger"></div>
     </div>
+  </div>
 
+  <!-- ============ ADMIN: infoskærm (kontoret) ============ -->
+  <div id="adminInfo" class="side">
+    <button type="button" class="adminTilbage" onclick="visSide('adminForside')"><span data-ikon="tilbage" data-storrelse="22"></span>Admin</button>
+    <header class="sidehoved">
+      <div>
+        <h2 class="sidehovedTitel">Infoskærm</h2>
+        <p class="sidehovedSub">Skærmen på kontoret</p>
+      </div>
+    </header>
     <div class="kort">
-      <h3 style="margin-top:0;">Infoskærm (kontoret)</h3>
       <div id="adminInfoskaerm"><div class="loading">Henter …</div></div>
     </div>
+  </div>
 
+  <!-- ============ ADMIN: beboerskærm (gangen) ============ -->
+  <div id="adminSkaerm" class="side">
+    <button type="button" class="adminTilbage" onclick="visSide('adminForside')"><span data-ikon="tilbage" data-storrelse="22"></span>Admin</button>
+    <header class="sidehoved">
+      <div>
+        <h2 class="sidehovedTitel">Beboerskærm</h2>
+        <p class="sidehovedSub">Skærmen på gangen</p>
+      </div>
+    </header>
     <div class="kort">
-      <h3 style="margin-top:0;">Beboerskærm (gangen)</h3>
       <div style="font-size:12px; color:var(--tekst-svag); margin-bottom:8px;">Slukkede felter bliver tomme, resten bliver på sin plads.</div>
       <div id="adminBeboerskaerm"><div class="loading">Henter …</div></div>
     </div>
@@ -1702,6 +1657,7 @@
 
   <!-- ============ MØDEDAG (kun via Admin) ============ -->
   <div id="moededag" class="side">
+    <button type="button" class="adminTilbage" onclick="visSide('adminForside')"><span data-ikon="tilbage" data-storrelse="22"></span>Admin</button>
     <header class="sidehoved">
       <div>
         <h2 class="sidehovedTitel">Mødedag</h2>
@@ -1739,6 +1695,19 @@
     <div id="mereListe"></div>
   </div>
 
+</div>
+
+<!-- Kode til Admin (bruger den eksisterende ADMIN_KODE) -->
+<div id="kodeBaggrund" onclick="annullerAdminKode()" hidden></div>
+<div id="kodeDialog" role="dialog" aria-modal="true" aria-labelledby="kodeTitel" hidden>
+  <h3 id="kodeTitel">Admin</h3>
+  <p>Skriv koden for at åbne Admin.</p>
+  <input type="password" id="adminKodeInput" maxlength="4" inputmode="numeric" autocomplete="off" aria-label="Kode" onkeydown="if(event.key === 'Enter'){ tjekAdminKode(); }">
+  <div id="adminFejl" role="alert"></div>
+  <div class="kodeKnapper">
+    <button type="button" class="kodeNej" onclick="annullerAdminKode()">Annuller</button>
+    <button type="button" class="kodeJa" onclick="tjekAdminKode()">Åbn Admin</button>
+  </div>
 </div>
 
 <!-- Instruktion til et dagsplan-punkt (bundark) -->
@@ -1879,22 +1848,6 @@ function fyldBeboerSelects(){
 // NAVIGATION
 // ==================================================================
 
-const sideTitler = {
-  forside: 'Forside',
-  opgaver: 'Besked & opgaver',
-  program: 'Mad & aktivitet',
-  la2: 'LA2-planer',
-  sammenMed: 'Hvem er du med',
-  rengoring: 'Rengøring',
-  paragraf104: '§104',
-  personalemoede: 'Personalemøde',
-  traening: 'Beboerapp',
-  skaerm: 'Beboerskærm',
-  piktogram: 'Piktogrammer',
-  admin: 'Admin',
-  moededag: 'Mødedag'
-};
-
 // ---- Hovedmenu ----
 // Ét sæt punkter bruges af bundmenuen (telefon), sidemenuen (PC) og "Mere"-arket.
 // Beskeder/Dagsplan og Madplan/Aktivitet er stadig to sider med hver sin tilstandsvælger
@@ -1919,8 +1872,28 @@ const NAV_PUNKTER = [
 ];
 const NAV_MODE_VÆLGER = { opgaver: 'opgaverMode', program: 'programMode' };
 
-let aktuelSide = 'valg';
+// Admin-menuen: kun admin-ting. Vises i stedet for hovedmenuen, når man er i Admin.
+const NAV_ADMIN = [
+  { id: 'adminForside', side: 'adminForside', ikon: 'forside',  titel: 'Forside',      fane: null, bund: true },
+  { id: 'moededag',     side: 'moededag',     ikon: 'kalender', titel: 'Mødedag',      fane: null, bund: true },
+  { id: 'adminFaner',   side: 'adminFaner',   ikon: 'liste',    titel: 'Synlige faner', fane: null, bund: true },
+  { id: 'adminInfo',    side: 'adminInfo',    ikon: 'skaerm',   titel: 'Infoskærm',    fane: null, bund: true },
+  { id: 'adminSkaerm',  side: 'adminSkaerm',  ikon: 'skaerm',   titel: 'Beboerskærm',  fane: null, bund: true }
+];
+const ADMIN_SIDER = NAV_ADMIN.map(p => p.side);
+const MODE_NOEGLE = 'mollebakken_mode';
+
+let aktuelSide = 'forside';
 let mereFokusFør = null;
+let erAdmin = false;
+
+function navPunkt(id){
+  return NAV_PUNKTER.concat(NAV_ADMIN).find(x => x.id === id) || null;
+}
+
+function aktivNavListe(){
+  return erAdmin ? NAV_ADMIN : NAV_PUNKTER;
+}
 
 function navSynlig(p){
   return !p.fane || fsFaneTilladt(p.fane);
@@ -1935,7 +1908,7 @@ function navErAktiv(p){
 
 // Åbner et menupunkt: sætter evt. tilstandsvælgeren og viser siden
 function gåTilNav(id){
-  const p = NAV_PUNKTER.find(x => x.id === id);
+  const p = navPunkt(id);
   if(!p) return;
   if(p.mode) document.getElementById(NAV_MODE_VÆLGER[p.side]).value = p.mode;
   visSide(p.side);
@@ -1959,16 +1932,57 @@ function lavNavKnap(p, klasse, ikonStørrelse){
   return knap;
 }
 
-// Bygger bundmenu, sidemenu og "Mere"-arket op fra NAV_PUNKTER (kaldes igen når Admin slår faner til/fra)
+// ---- Normal / Admin ----
+// Knappen står øverst på telefon (#mvTelefon) og øverst i sidemenuen på PC. Begge bygges af tegnNav().
+
+function gemMode(){
+  try { localStorage.setItem(MODE_NOEGLE, erAdmin ? 'admin' : 'normal'); } catch(e){ /* ingen lagring: ikke et problem */ }
+}
+
+function hentGemtMode(){
+  try { return localStorage.getItem(MODE_NOEGLE) === 'admin' ? 'admin' : 'normal'; } catch(e){ return 'normal'; }
+}
+
+function lavModeVælger(){
+  const rod = document.createElement('div');
+  rod.className = 'modeVaelger';
+  rod.setAttribute('role', 'group');
+  rod.setAttribute('aria-label', 'Normal eller Admin');
+  [['normal', 'Normal'], ['admin', 'Admin']].forEach(valg => {
+    const knap = document.createElement('button');
+    knap.type = 'button';
+    knap.dataset.mode = valg[0];
+    knap.textContent = valg[1];
+    knap.addEventListener('click', () => vælgMode(valg[0]));
+    rod.appendChild(knap);
+  });
+  return rod;
+}
+
+function opdaterModeVælgere(){
+  document.querySelectorAll('.modeVaelger button').forEach(knap => {
+    knap.setAttribute('aria-pressed', String((knap.dataset.mode === 'admin') === erAdmin));
+  });
+}
+
+// Normal → forsiden i normal brug. Admin → forsiden i Admin (koden kræves første gang).
+function vælgMode(valg){
+  if(valg === 'normal'){ visSide('forside'); return; }
+  visSide('adminForside');
+}
+
+// Bygger bundmenu, sidemenu og "Mere"-arket op (kaldes igen når Admin slår faner til/fra, og når man skifter mellem Normal og Admin)
 function tegnNav(){
   const bund = document.getElementById('bundNav');
   const sidemenu = document.getElementById('sideMenu');
   const mereListe = document.getElementById('mereListe');
+  const telefonMode = document.getElementById('mvTelefon');
   bund.textContent = '';
   sidemenu.textContent = '';
   mereListe.textContent = '';
+  telefonMode.textContent = '';
 
-  const synlige = NAV_PUNKTER.filter(navSynlig);
+  const synlige = aktivNavListe().filter(navSynlig);
   const fast = synlige.filter(p => p.bund);
   const flere = synlige.filter(p => !p.bund);
 
@@ -1976,6 +1990,12 @@ function tegnNav(){
   brand.className = 'smBrand';
   brand.textContent = 'Møllebakken';
   sidemenu.appendChild(brand);
+
+  const menuMode = document.createElement('div');
+  menuMode.className = 'smMode';
+  menuMode.appendChild(lavModeVælger());
+  sidemenu.appendChild(menuMode);
+  telefonMode.appendChild(lavModeVælger());
 
   fast.forEach(p => {
     bund.appendChild(lavNavKnap(p, '', 24));
@@ -2008,13 +2028,15 @@ function tegnNav(){
       mereListe.appendChild(lavNavKnap(p, 'mereRække', 24));
     });
   }
+  opdaterModeVælgere();
   opdaterNav();
+  tegnForsideFelter();
 }
 
 // Markerer det aktive punkt (uden at bygge menuerne om)
 function opdaterNav(){
   let mereAktiv = false;
-  NAV_PUNKTER.forEach(p => {
+  NAV_PUNKTER.concat(NAV_ADMIN).forEach(p => {
     const aktiv = navErAktiv(p);
     if(aktiv && !p.bund) mereAktiv = true;
     document.querySelectorAll('[data-nav="' + p.id + '"]').forEach(knap => {
@@ -2027,26 +2049,41 @@ function opdaterNav(){
 }
 
 function visSide(side){
+  const adminSide = ADMIN_SIDER.indexOf(side) !== -1;
+
+  // Admin kræver koden. Uden den bliver man på forsiden og bliver spurgt.
+  if(adminSide && !adminAdgang){
+    if(aktuelSide !== 'forside') visSide('forside');
+    bedOmAdminKode(() => visSide(side));
+    return;
+  }
+
   document.querySelectorAll('.side').forEach(el => el.classList.remove('aktiv'));
   document.getElementById(side).classList.add('aktiv');
+  document.body.classList.toggle('paaForside', side === 'forside');
 
-  document.body.classList.remove('paaForside', 'paaValg');
-  if(side === 'forside') document.body.classList.add('paaForside');
-  if(side === 'valg') document.body.classList.add('paaValg');
-
-  document.getElementById('tilbageKnap').classList.toggle('vis', side !== 'forside' && side !== 'valg');
-  document.getElementById('topbarTitel').textContent = sideTitler[side] || 'Møllebakken';
-
+  const sideSkiftet = aktuelSide !== side;
   aktuelSide = side;
+
+  // Normal/Admin følger siden: en admin-side betyder Admin, alt andet betyder Normal
+  if(adminSide !== erAdmin){
+    erAdmin = adminSide;
+    gemMode();
+    tegnNav();
+  }
+  document.body.classList.toggle('erAdmin', erAdmin);
+  opdaterModeVælgere();
   opdaterNav();
   lukMereArk(false);
+  if(sideSkiftet) window.scrollTo(0, 0);
 
   if(side === 'forside') tegnForside();
   if(side === 'opgaver') visOpgaverMode();
   if(side === 'program') visProgramMode();
   if(side === 'sammenMed') visSammenMed();
   if(side === 'paragraf104') visP104Mode();
-  if(side === 'admin'){ hentIndstillingerAdmin(); hentSkaermIndstillinger(); }
+  if(side === 'adminFaner') hentIndstillingerAdmin();
+  if(side === 'adminInfo' || side === 'adminSkaerm') hentSkaermIndstillinger();
   if(side === 'rengoring') hentRengoring();
   if(side === 'personalemoede') visMoedeMode();
   if(side === 'traening') trVis(); else trStop();
@@ -2056,10 +2093,9 @@ function visSide(side){
 }
 
 function gåTilForside(){
-  // tegnForside() kaldes nu inde fra visSide() selv (samme mønster som
+  // tegnForside() kaldes inde fra visSide() selv (samme mønster som
   // opgaver/program/osv.), så forsiden altid tegnes uanset hvor man
-  // navigerer fra — fx tilbage-knappen fra Admin, som tidligere gav en
-  // tom forside fordi den kaldte visSide('forside') direkte.
+  // navigerer fra.
   visSide('forside');
 }
 
@@ -2085,34 +2121,62 @@ function lukMereArk(gendanFokus){
   mereFokusFør = null;
 }
 
-document.addEventListener('keydown', e => { if(e.key === 'Escape'){ lukMereArk(true); lukInstruktion(); } });
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ lukMereArk(true); lukInstruktion(); annullerAdminKode(); } });
+
+// ---- Admin-kode ----
+// Samme kode og samme gate som før (ADMIN_KODE): den holder kun Admin-siderne lukkede, det er ikke reel sikkerhed.
+// Det der huskes i browseren er kun sidste valg (Normal/Admin) — ikke at koden er tastet.
 
 let adminAdgang = false;
+let adminKodeEfter = null;
+let adminKodeFokusFør = null;
 
-function visAdminKodeBoks(){
-  document.getElementById('adminKodeBoks').style.display = 'block';
+function bedOmAdminKode(efter){
+  adminKodeEfter = efter || null;
+  adminKodeFokusFør = document.activeElement;
+  const felt = document.getElementById('adminKodeInput');
+  felt.value = '';
+  document.getElementById('adminFejl').textContent = '';
+  document.getElementById('kodeBaggrund').hidden = false;
+  document.getElementById('kodeDialog').hidden = false;
+  felt.focus();
+}
+
+function lukAdminKode(){
+  document.getElementById('kodeBaggrund').hidden = true;
+  document.getElementById('kodeDialog').hidden = true;
+  document.getElementById('adminKodeInput').value = '';
+  adminKodeEfter = null;
+  if(adminKodeFokusFør && adminKodeFokusFør.focus) adminKodeFokusFør.focus();
+  adminKodeFokusFør = null;
+}
+
+function annullerAdminKode(){
+  if(document.getElementById('kodeDialog').hidden) return;
+  lukAdminKode();
+  gemMode();   // man blev i Normal: husk det
 }
 
 function tjekAdminKode(){
   const kode = document.getElementById('adminKodeInput').value.trim();
   if(kode === ADMIN_KODE){
-    adminAdgang = true;   // Mødedag-siden åbner kun efter at koden er tastet
-    visSide('admin');
-    document.body.classList.remove('paaValg');
+    adminAdgang = true;   // Admin-siderne (og Mødedag) åbner kun efter at koden er tastet
+    const efter = adminKodeEfter;
+    lukAdminKode();
+    if(efter) efter();
   } else {
     document.getElementById('adminFejl').textContent = 'Forkert kode';
   }
 }
 
 // ==================================================================
-// FORSIDE — hjemmesidens startside: velkomst, "I dag", "Beskeder", "På vej"
+// FORSIDE — startside: NU-blok, nye beskeder pr. beboer og felter til alle faner
 // ==================================================================
-// Sektionerne genbruger appens egne hent-funktioner (hentBeskederData,
-// hentRengoringData, hentMadplanUge, hentAktiviteterUge, hentPlanlagtMoede …)
-// — ingen hentelogik er duplikeret. Hvert kort henter og tegner sig selv, så
-// ét kort der fejler ikke tager de andre med. Almindelig 60-sekunders polling
-// (kun mens forsiden er synlig), og et kort tegnes kun om når dets data
-// faktisk er ændret — så intet flimrer.
+// Forsiden genbruger appens egne hent-funktioner (hentBeskederData,
+// hentRengoringData, hentMadplanUge, hentAktiviteterUge …) — ingen hentelogik
+// er duplikeret. Hver del henter og tegner sig selv, så én der fejler ikke
+// tager de andre med. Almindelig 60-sekunders polling (kun mens forsiden er
+// synlig), og en del tegnes kun om når dens data faktisk er ændret.
 
 const FS_MÅNEDER = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
 const FS_UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
@@ -2121,21 +2185,6 @@ let indstillingerCache = {};
 let fsSignaturer = {};   // kort-id -> signatur for det der står tegnet nu
 let fsInterval = null;
 let fsHenter = false;
-
-// Skjuler menu-knapper for faner der er slået fra i Admin — samme filtrering
-// som forsidens sektioner og genveje, så en slukket fane ikke kan tilgås.
-const FEATURE_KORT = [
-  { fane: 'opgaver',        side: 'opgaver' },
-  { fane: 'program',        side: 'program' },
-  { fane: 'la2',            side: 'la2' },
-  { fane: 'sammenMed',      side: 'sammenMed' },
-  { fane: 'rengøring',      side: 'rengoring' },
-  { fane: 'paragraf104',    side: 'paragraf104' },
-  { fane: 'personalemoede', side: 'personalemoede' },
-  { fane: 'traening',       side: 'traening' },
-  { fane: 'skaerm',         side: 'skaerm' },
-  { fane: 'piktogram',      side: 'piktogram' }
-];
 
 function fsFaneTilladt(fane){
   return indstillingerCache[fane] !== false;
@@ -2189,164 +2238,6 @@ function fsFejl(id, tekst, fejl){
   const rod = document.getElementById(id);
   rod.textContent = '';
   rod.appendChild(fsLav('div', 'fsFejl', tekst));
-}
-
-// ---------- På vagt ----------
-// Workfeed splitter døgn-/nattevagter ved midnat i to rækker. Vi henter i går,
-// i dag og i morgen, sætter sammenhængende rækker for samme navn sammen til én
-// blok, og viser dem hvis blok indeholder "nu" (browserens lokale tid).
-// Visningsnavn via SK_ROLLE (Rådighedsvagt → Døgnvagt).
-
-const FS_ROLLE_RÆKKEFØLGE = ['Døgnvagt', 'Nattevagt', 'Medarbejder', 'Leder', 'Medicinvagt', 'Køkken'];
-
-function fsFindPåVagtNu(rækker, nu){
-  const perNavn = new Map();
-  rækker.forEach(r => {
-    if(!perNavn.has(r.navn)) perNavn.set(r.navn, []);
-    perNavn.get(r.navn).push({ rolle: r.rolle, start: new Date(r.start), slut: new Date(r.slut) });
-  });
-
-  const resultat = [];
-  perNavn.forEach((vagter, navn) => {
-    vagter.sort((a, b) => a.start - b.start);
-    let blok = null;
-    const blokke = [];
-    vagter.forEach(v => {
-      if(blok && v.start.getTime() <= blok.slut.getTime() + 60000){
-        if(v.slut > blok.slut) blok.slut = v.slut;
-      } else {
-        blok = { start: v.start, slut: v.slut, rolle: v.rolle };
-        blokke.push(blok);
-      }
-      if(v.start <= nu && nu < v.slut) blok.rolleNu = v.rolle;
-    });
-    blokke.forEach(b => {
-      if(b.start <= nu && nu < b.slut){
-        resultat.push({ navn: navn, rolle: SK_ROLLE[b.rolleNu || b.rolle] || b.rolleNu || b.rolle, slut: b.slut });
-      }
-    });
-  });
-
-  resultat.sort((a, b) => {
-    const ra = FS_ROLLE_RÆKKEFØLGE.indexOf(a.rolle);
-    const rb = FS_ROLLE_RÆKKEFØLGE.indexOf(b.rolle);
-    const forskel = (ra === -1 ? 99 : ra) - (rb === -1 ? 99 : rb);
-    return forskel !== 0 ? forskel : a.navn.localeCompare(b.navn, 'da');
-  });
-  return resultat;
-}
-
-async function fsVagtKort(){
-  try{
-    const { data, error } = await sb.from('personaleskaerm_vagter')
-      .select('navn,rolle,start,slut')
-      .in('dag', [skDagISO(-1), skDagISO(0), skDagISO(1)])
-      .order('start');
-    if(error) throw error;
-
-    const nu = new Date();
-    const påVagt = fsFindPåVagtNu(data || [], nu);
-    fsTegn('fsVagtIndhold', JSON.stringify(påVagt.map(p => [p.navn, p.rolle, p.slut.getTime()])), () => {
-      const boks = document.createElement('div');
-      if(påVagt.length === 0){
-        boks.appendChild(fsLav('div', 'fsTom', 'Ingen på vagt lige nu'));
-        return boks;
-      }
-      påVagt.forEach(p => {
-        const række = fsLav('div', 'fsPerson');
-        række.appendChild(fsLav('div', 'fsNavn', p.navn));
-        række.appendChild(fsLav('div', 'fsMeta', p.rolle + ' · ' + skUdloebTekst(p.slut)));
-        boks.appendChild(række);
-      });
-      return boks;
-    });
-  } catch(e){
-    fsFejl('fsVagtIndhold', 'Kunne ikke hente vagterne. Prøv igen om lidt.', e);
-  }
-}
-
-// Rengøringsansvar som en lille linje nederst i "På vagt". Dagen afgøres af
-// rengoringAktueltDato() (fra kl. 10:00 vises næste dags ansvar).
-async function fsRengøringLinje(){
-  const rod = document.getElementById('fsRengoringIndhold');
-  if(!fsFaneTilladt('rengøring')){ rod.hidden = true; return; }
-  rod.hidden = false;
-  try{
-    const d = await hentRengoringData();
-    if(d.fejl) throw d.fejl;
-    const dagTekst = d.aktuelDatoISO === datoISO(new Date()) ? 'i dag' : 'i morgen';
-    const navn = d.ansvarligPerDato[d.aktuelDatoISO] || 'ikke fundet';
-    fsTegn('fsRengoringIndhold', dagTekst + '|' + navn, () => {
-      const linje = fsLav('div', 'fsLinje');
-      const ikon = fsLav('span', 'fsLinjeIkon');
-      ikon.appendChild(moelleIkon('rengoering', { stoerrelse: 18 }));
-      linje.appendChild(ikon);
-      const tekst = fsLav('span');
-      tekst.appendChild(document.createTextNode('Rengøring ' + dagTekst + ': '));
-      tekst.appendChild(fsLav('strong', null, navn));
-      linje.appendChild(tekst);
-      return linje;
-    });
-  } catch(e){
-    fsFejl('fsRengoringIndhold', 'Kunne ikke hente rengøringsansvar.', e);
-  }
-}
-
-// ---------- Aktivitet og mad ----------
-// Et "medie-kort": øverst en billedflade (foto hvis der er et, ellers en rolig
-// farveflade med ikon), derunder label og tekst.
-
-// Kort til "Dagens ret" / "Dagens aktivitet": et tryk åbner den tilhørende side
-function fsDagKort(ikonNavn, label, tekst, tomTekst, mål){
-  const kort = fsLav('button', 'fsDagen');
-  kort.type = 'button';
-  const labelEl = fsLav('div', 'fsDagenLabel');
-  labelEl.appendChild(moelleIkon(ikonNavn, { stoerrelse: 20 }));
-  labelEl.appendChild(fsLav('span', null, label));
-  kort.appendChild(labelEl);
-  kort.appendChild(fsLav('div', tekst ? 'fsDagenTekst' : 'fsDagenTekst tom', tekst || tomTekst));
-  kort.addEventListener('click', () => gåTilNav(mål));
-  return kort;
-}
-
-function fsUgeStartFor(dato){
-  const d = new Date(dato);
-  const dag = d.getDay();
-  d.setDate(d.getDate() + (dag === 0 ? -6 : 1 - dag));
-  return datoISO(d);
-}
-
-async function fsAktivitetKort(){
-  const kort = document.getElementById('fsKortAkt');
-  if(!fsFaneTilladt('program')){ kort.hidden = true; return; }
-  kort.hidden = false;
-  try{
-    const dag = UGEDAGE[(new Date().getDay() + 6) % 7];
-    const { data, error } = await hentAktiviteterUge(datoISO(effektivMandag(0)));
-    if(error) throw error;
-    const række = (data || []).find(r => r.dag === dag);
-    const tekst = række && række.aktivitet ? række.aktivitet : '';
-    fsTegn('fsAktIndhold', JSON.stringify([dag, tekst]), () => fsDagKort('aktivitet', 'Dagens aktivitet', tekst, 'Ingen aktivitet planlagt', 'aktivitet'));
-  } catch(e){
-    fsFejl('fsAktIndhold', 'Kunne ikke hente aktiviteten. Prøv igen om lidt.', e);
-  }
-}
-
-// Databasen har kun én ret pr. dag (ingen måltidstype), så kortet hedder "Dagens ret".
-async function fsMadKort(){
-  const kort = document.getElementById('fsKortMad');
-  if(!fsFaneTilladt('program')){ kort.hidden = true; return; }
-  kort.hidden = false;
-  try{
-    const dag = UGEDAGE[(new Date().getDay() + 6) % 7];
-    const { data, error } = await hentMadplanUge(datoISO(effektivMandag(0)));
-    if(error) throw error;
-    const række = (data || []).find(r => r.dag === dag);
-    const tekst = række && række.ret ? række.ret : '';
-    fsTegn('fsMadIndhold', JSON.stringify([dag, tekst]), () => fsDagKort('mad', 'Dagens ret', tekst, 'Ikke planlagt', 'madplan'));
-  } catch(e){
-    fsFejl('fsMadIndhold', 'Kunne ikke hente madplanen. Prøv igen om lidt.', e);
-  }
 }
 
 // ---------- Beskeder ----------
@@ -2458,195 +2349,6 @@ function fsBeboerCirkel(navn){
   return cirkel;
 }
 
-async function fsBeskedKort(){
-  const sektion = document.getElementById('fsKortBeskeder');
-  const ny = document.getElementById('fsNyBesked');
-  if(!fsFaneTilladt('opgaver')){ sektion.hidden = true; ny.hidden = true; return; }
-  sektion.hidden = false;
-  ny.hidden = false;
-
-  try{
-    if(beboereListe.length === 0) await hentBeboere();
-    const { data, error } = await hentBeskederData();
-    if(error) throw error;
-    const nu = new Date();
-    const alle = (data || []).map(b => beskedTilVisning(b, nu)).filter(v => v);
-
-    const iHuset = fsSorterBeskeder(alle.filter(v => v.beboere.indexOf('Huset') !== -1));
-    const perBeboer = beboereListe.map(b => ({
-      navn: b.navn,
-      beskeder: fsSorterBeskeder(alle.filter(v => v.beboere.indexOf(b.navn) !== -1))
-    }));
-
-    fsTegn('fsBeskedIndhold', JSON.stringify(perBeboer.map(r => [r.navn, farveForBeboer(r.navn), r.beskeder])), () => {
-      const boks = fsLav('div', 'fsRækker');
-      perBeboer.forEach(r => {
-        const række = fsLav('div', 'fsRække');
-        const navn = fsLav('div', 'fsBeboer');
-        navn.appendChild(fsBeboerCirkel(r.navn));
-        navn.appendChild(fsLav('span', null, r.navn));
-        række.appendChild(navn);
-        const chips = fsLav('div', 'fsChips');
-        if(r.beskeder.length === 0) chips.appendChild(fsLav('span', 'fsIngen', 'Ingen beskeder'));
-        r.beskeder.forEach(v => chips.appendChild(fsBeskedChip(v, true)));
-        række.appendChild(chips);
-        boks.appendChild(række);
-      });
-      return boks;
-    });
-
-    fsTegn('fsHusetIndhold', JSON.stringify(iHuset), () => {
-      const liste = fsLav('div', 'fsHusetListe');
-      if(iHuset.length === 0) liste.appendChild(fsLav('div', 'fsIngen', 'Ingen beskeder til huset'));
-      iHuset.forEach(v => {
-        const punkt = fsLav('div', 'fsHusetPunkt');
-        if(v.vigtig) punkt.appendChild(fsLav('span', 'fsVigtigt', 'Vigtigt:'));
-        punkt.appendChild(fsLav('span', 'fsChipTekst', v.titel));
-        if(v.tid) punkt.appendChild(fsLav('span', 'fsTid', v.tid));
-        if(v.ny) punkt.appendChild(fsLav('span', 'fsNy', 'NY'));
-        if(v.fil){
-          const fil = fsLav('button', 'fsChipFil');
-          fil.type = 'button';
-          fil.setAttribute('aria-label', 'Åbn vedhæftning: ' + v.fil);
-          fil.appendChild(moelleIkon('vedhaeftning', { stoerrelse: 20 }));
-          fil.addEventListener('click', () => åbnBeskedFil(v.id));
-          punkt.appendChild(fil);
-        }
-        liste.appendChild(punkt);
-      });
-      return liste;
-    });
-
-    // PC: orange kort med den vigtigste besked til huset (kun hvis der er en vigtig)
-    const vigtigste = iHuset.find(v => v.vigtig) || null;
-    const viktig = document.getElementById('fsViktigKort');
-    viktig.hidden = !vigtigste;
-    fsTegn('fsViktigKort', JSON.stringify(vigtigste), () => {
-      const boks = document.createDocumentFragment();
-      if(vigtigste){
-        boks.appendChild(fsLav('div', 'fsViktigLabel', 'Vigtigt i huset'));
-        boks.appendChild(fsLav('div', 'fsViktigTekst', vigtigste.titel));
-      }
-      return boks;
-    });
-  } catch(e){
-    fsFejl('fsBeskedIndhold', 'Kunne ikke hente beskeder. Prøv igen om lidt.', e);
-  }
-}
-
-// ---------- Lige nu (PC) ----------
-// Hvad hver beboer laver nu (seneste punkt i dagens plan der er startet) og hvornår det næste starter.
-// "Nu" afgøres i browseren med lokal tid.
-
-async function fsLigeNuKort(){
-  const rod = document.getElementById('fsLigeNu');
-  if(!fsFaneTilladt('opgaver')){ rod.hidden = true; return; }
-  rod.hidden = false;
-  try{
-    if(beboereListe.length === 0) await hentBeboere();
-    const nu = new Date();
-    const dag = UGEDAGE[(nu.getDay() + 6) % 7];
-    const nuMinutter = nu.getHours() * 60 + nu.getMinutes();
-    const { data, error } = await sb.from('ugeplaner').select('beboer,tid,aktivitet').eq('ugedag', dag);
-    if(error) throw error;
-
-    const rækker = beboereListe.map(b => {
-      const punkter = (data || [])
-        .filter(r => r.beboer === b.navn)
-        .map(r => ({ tid: r.tid, aktivitet: r.aktivitet, min: tidTilMinutter(r.tid) }))
-        .filter(r => r.min !== 9999)
-        .sort((x, y) => x.min - y.min);
-      let nuIndeks = -1;
-      punkter.forEach((p, i) => { if(p.min <= nuMinutter) nuIndeks = i; });
-      return { navn: b.navn, nu: nuIndeks >= 0 ? punkter[nuIndeks] : null, næste: punkter[nuIndeks + 1] || null };
-    });
-
-    fsTegn('fsLigeNuIndhold', JSON.stringify(rækker.map(r => [r.navn, farveForBeboer(r.navn), r.nu, r.næste])), () => {
-      const boks = fsLav('div');
-      rækker.forEach(r => {
-        const række = fsLav('div', 'fsNuRække');
-        const navn = fsLav('div', 'fsNuNavn');
-        navn.appendChild(fsBeboerCirkel(r.navn));
-        navn.appendChild(fsLav('span', null, r.navn));
-        række.appendChild(navn);
-        if(r.nu){
-          const blok = fsLav('div', 'fsNuBlok');
-          blok.appendChild(fsLav('span', 'fsNuTid', 'NU · ' + r.nu.tid));
-          blok.appendChild(document.createTextNode(r.nu.aktivitet));
-          række.appendChild(blok);
-        }
-        if(r.næste){
-          const næste = fsLav('div', 'fsNuNaeste');
-          næste.appendChild(document.createTextNode('Næste kl. '));
-          næste.appendChild(fsLav('b', null, r.næste.tid));
-          næste.appendChild(document.createTextNode(' · ' + r.næste.aktivitet));
-          række.appendChild(næste);
-        } else if(!r.nu){
-          række.appendChild(fsLav('div', 'fsNuNaeste', 'Intet planlagt i dag'));
-        }
-        boks.appendChild(række);
-      });
-      return boks;
-    });
-  } catch(e){
-    fsFejl('fsLigeNuIndhold', 'Kunne ikke hente dagsplanen. Prøv igen om lidt.', e);
-  }
-}
-
-// ---------- På vej (vises kun hvis der er noget at vise) ----------
-// Næste planlagte personalemøde og i morgens aktivitet.
-
-async function fsPåvejKort(){
-  const sektion = document.getElementById('fsSektionPaavej');
-  const visMøde = fsFaneTilladt('personalemoede');
-  const visAkt = fsFaneTilladt('program');
-  if(!visMøde && !visAkt){ sektion.hidden = true; return; }
-
-  try{
-    const imorgen = new Date();
-    imorgen.setDate(imorgen.getDate() + 1);
-    const imorgenDag = UGEDAGE[(imorgen.getDay() + 6) % 7];
-
-    const [mødeRes, aktRes] = await Promise.all([
-      visMøde ? hentPlanlagtMoede().catch(e => ({ error: e })) : Promise.resolve(null),
-      visAkt ? hentAktiviteterUge(fsUgeStartFor(imorgen)).catch(e => ({ error: e })) : Promise.resolve(null)
-    ]);
-
-    const punkter = [];
-    if(mødeRes && !mødeRes.error && mødeRes.data && mødeRes.data.length > 0){
-      const m = mødeRes.data[0];
-      punkter.push({ ikon: 'pmoede', label: 'Næste personalemøde', tekst: moedeDatoLabel(m.dato) + (m.starttid ? ' kl. ' + m.starttid.slice(0, 5) : '') });
-    }
-    if(aktRes && !aktRes.error){
-      const række = (aktRes.data || []).find(r => r.dag === imorgenDag);
-      if(række && række.aktivitet && række.aktivitet !== AKTIVITET_SENTINEL){
-        punkter.push({ ikon: 'kalender', label: 'I morgen', tekst: række.aktivitet });
-      }
-    }
-
-    sektion.hidden = punkter.length === 0;
-    fsTegn('fsPaavejIndhold', JSON.stringify(punkter), () => {
-      const boks = fsLav('div', 'fsTo');
-      punkter.forEach(p => {
-        const kort = fsLav('div', 'fsKort fsPåvejKort');
-        const ikon = fsLav('span', 'fsIkon');
-        ikon.appendChild(moelleIkon(p.ikon, { stoerrelse: 24 }));
-        const tekst = fsLav('div');
-        tekst.appendChild(fsLav('div', 'fsLabel', p.label));
-        tekst.appendChild(fsLav('div', 'fsVærdi', p.tekst));
-        kort.appendChild(ikon);
-        kort.appendChild(tekst);
-        boks.appendChild(kort);
-      });
-      return boks;
-    });
-  } catch(e){
-    // "På vej" er valgfri — ved fejl skjules den bare (og fejlen logges)
-    console.error('Forside (På vej):', e);
-    sektion.hidden = true;
-  }
-}
-
 // ---------- Genveje ----------
 
 function åbnSkrivBesked(){
@@ -2686,9 +2388,207 @@ function hovedIndsendPunkt(){
   if(felt){ felt.scrollIntoView({ block: 'center' }); felt.focus(); }
 }
 
-// "Se alle" ved Beskeder: åbner Besked-listen
-function seAlleBeskeder(){
-  gåTilNav('beskeder');
+// ---------- Felter ----------
+// De fem store "Hver dag"-felter og de små felter under Beboere, Personale og Skærme og apps.
+// Alle faner er med. En fane der er slået fra i Admin ("Synlige faner") skjules her og i menuen (navSynlig).
+
+const FO_STORE = [
+  { id: 'beskeder',  farve: 'beskeder',   sub: '' },
+  { id: 'dagsplan',  farve: 'dagsplan',   sub: 'Lav eller ret' },
+  { id: 'madplan',   farve: 'madplan',    sub: 'Hele ugen' },
+  { id: 'aktivitet', farve: 'aktivitet',  sub: '' },
+  { id: 'rengoring', farve: 'rengoering', sub: '' }
+];
+
+const FO_GRUPPER = [
+  { titel: 'Beboere',        farve: 'beboere',   punkter: ['sammenMed', 'la2', 'piktogram', 'paragraf104'] },
+  { titel: 'Personale',      farve: 'personale', punkter: ['personalemoede'] },
+  { titel: 'Skærme og apps', farve: 'skaerme',   punkter: ['traening', 'skaerm'] }
+];
+
+const ADMIN_FELTER = [
+  { id: 'moededag',   farve: 'beskeder',  sub: 'Vikar og mødedage' },
+  { id: 'adminFaner', farve: 'dagsplan',  sub: 'Slå faner til og fra' },
+  { id: 'adminInfo',  farve: 'madplan',   sub: 'Skærmen på kontoret' },
+  { id: 'adminSkaerm', farve: 'aktivitet', sub: 'Skærmen på gangen' }
+];
+
+let foSub = {};   // felt-id -> undertekst (huskes, så felterne kan tegnes om uden at miste den)
+
+// stor = stort farvet felt (ikon øverst, tekst nederst); ellers lille felt (ikon og tekst på en linje)
+function foFeltKnap(p, farve, stor, sub){
+  const knap = fsLav('button', stor ? 'foFelt' : 'foLille');
+  knap.type = 'button';
+  knap.style.background = 'var(--f-' + farve + ')';
+  const ikon = fsLav('span', 'foFeltIkon');
+  ikon.appendChild(moelleIkon(p.ikon, { stoerrelse: stor ? 26 : 22 }));
+  knap.appendChild(ikon);
+  const tekst = fsLav('span', 'foFeltTekst');
+  tekst.appendChild(fsLav('span', 'foFeltTitel', p.titel));
+  if(stor){
+    const undertekst = fsLav('span', 'foFeltSub', sub || '');
+    undertekst.dataset.sub = p.id;
+    tekst.appendChild(undertekst);
+  }
+  knap.appendChild(tekst);
+  knap.addEventListener('click', () => gåTilNav(p.id));
+  return knap;
+}
+
+function sætFeltSub(id, tekst){
+  foSub[id] = tekst;
+  document.querySelectorAll('[data-sub="' + id + '"]').forEach(el => { el.textContent = tekst; });
+}
+
+function tegnForsideFelter(){
+  const store = document.getElementById('foFelter');
+  const grupper = document.getElementById('foGrupper');
+  store.textContent = '';
+  grupper.textContent = '';
+
+  FO_STORE.forEach(f => {
+    const p = navPunkt(f.id);
+    if(!p || !navSynlig(p)) return;
+    if(foSub[f.id] === undefined) foSub[f.id] = f.sub;
+    store.appendChild(foFeltKnap(p, f.farve, true, foSub[f.id]));
+  });
+
+  FO_GRUPPER.forEach(g => {
+    const punkter = g.punkter.map(navPunkt).filter(p => p && navSynlig(p));
+    if(punkter.length === 0) return;
+    const sektion = fsLav('section', 'foGruppe');
+    sektion.appendChild(fsLav('h3', 'foGruppeTitel', g.titel));
+    const rist = fsLav('div', 'foSmaa');
+    punkter.forEach(p => rist.appendChild(foFeltKnap(p, g.farve, false)));
+    sektion.appendChild(rist);
+    grupper.appendChild(sektion);
+  });
+
+  // "Ny besked" og beskedoversigten følger Beskeder-fanen
+  const kanBesked = fsFaneTilladt('opgaver');
+  document.getElementById('fsNyBesked').hidden = !kanBesked;
+  document.getElementById('foFab').hidden = !kanBesked;
+  document.getElementById('foMaerker').hidden = !kanBesked;
+  document.getElementById('foHoejre').hidden = !kanBesked;
+  document.getElementById('foNu').hidden = !fsFaneTilladt('program');
+}
+
+// Admin-forsiden: samme stil og farver, men kun admin-ting
+function tegnAdminFelter(){
+  const rod = document.getElementById('adminFelter');
+  rod.textContent = '';
+  ADMIN_FELTER.forEach(f => rod.appendChild(foFeltKnap(navPunkt(f.id), f.farve, true, f.sub)));
+}
+
+// ---------- NU: dagens ret ----------
+// Databasen har kun én ret pr. dag (ingen måltidstype eller tidspunkt), og den vises som aftensmad.
+
+async function foNuKort(){
+  if(!fsFaneTilladt('program')) return;
+  try{
+    const dag = UGEDAGE[(new Date().getDay() + 6) % 7];
+    const { data, error } = await hentMadplanUge(datoISO(effektivMandag(0)));
+    if(error) throw error;
+    const række = (data || []).find(r => r.dag === dag);
+    document.getElementById('foNuSub').textContent = række && række.ret ? række.ret : 'Ikke planlagt endnu';
+  } catch(e){
+    console.error('Forside (NU):', e);
+    const sub = document.getElementById('foNuSub');
+    if(sub.textContent === 'Henter …') sub.textContent = 'Kunne ikke hente madplanen';
+  }
+}
+
+async function foAktivitetSub(){
+  if(!fsFaneTilladt('program')) return;
+  try{
+    const dag = UGEDAGE[(new Date().getDay() + 6) % 7];
+    const { data, error } = await hentAktiviteterUge(datoISO(effektivMandag(0)));
+    if(error) throw error;
+    const række = (data || []).find(r => r.dag === dag);
+    const tekst = række && række.aktivitet && række.aktivitet !== AKTIVITET_SENTINEL ? række.aktivitet : '';
+    sætFeltSub('aktivitet', tekst ? 'I dag: ' + tekst : 'Intet planlagt i dag');
+  } catch(e){
+    console.error('Forside (aktivitet):', e);
+  }
+}
+
+// Rengøringsansvar. Dagen afgøres af rengoringAktueltDato() (fra kl. 10:00 vises næste dags ansvar).
+async function foRengøringSub(){
+  if(!fsFaneTilladt('rengøring')) return;
+  try{
+    const d = await hentRengoringData();
+    if(d.fejl) throw d.fejl;
+    const dagTekst = d.aktuelDatoISO === datoISO(new Date()) ? 'I dag' : 'I morgen';
+    const navn = d.ansvarligPerDato[d.aktuelDatoISO] || 'ikke fundet';
+    sætFeltSub('rengoring', dagTekst + ': ' + navn);
+  } catch(e){
+    console.error('Forside (rengøring):', e);
+  }
+}
+
+// ---------- Nye beskeder ----------
+// "Ny" = oprettet inden for de seneste 48 timer (beskedTilVisning). Udløbne beskeder tælles ikke med.
+
+function foAntalTekst(n){
+  return n === 0 ? 'Ingen nye' : (n === 1 ? '1 besked' : n + ' beskeder');
+}
+
+async function foBeskedKort(){
+  if(!fsFaneTilladt('opgaver')) return;
+  try{
+    if(beboereListe.length === 0) await hentBeboere();
+    const { data, error } = await hentBeskederData();
+    if(error) throw error;
+    const nu = new Date();
+    const alle = (data || []).map(b => beskedTilVisning(b, nu)).filter(v => v);
+    const nye = alle.filter(v => v.ny);
+
+    const personer = beboereListe.map(b => ({ navn: b.navn, farve: farveForBeboer(b.navn), antal: nye.filter(v => v.beboere.indexOf(b.navn) !== -1).length }));
+    const huset = nye.filter(v => v.beboere.indexOf('Huset') !== -1).length;
+    if(huset > 0) personer.push({ navn: 'Huset', farve: '#1C2326', antal: huset });
+
+    sætFeltSub('beskeder', nye.length === 0 ? 'Ingen nye' : nye.length + ' nye');
+    const signatur = JSON.stringify(personer);
+
+    // Telefon: små navnemærker med antal nye
+    fsTegn('foMaerkeListe', signatur, () => {
+      const liste = document.createDocumentFragment();
+      personer.forEach(p => {
+        const mærke = fsLav('button', 'foMaerke');
+        mærke.type = 'button';
+        const prik = fsLav('span', 'foPrik');
+        prik.style.background = p.farve;
+        mærke.appendChild(prik);
+        mærke.appendChild(fsLav('span', null, p.navn));
+        if(p.antal > 0) mærke.appendChild(fsLav('span', 'foAntal', String(p.antal)));
+        mærke.addEventListener('click', () => gåTilNav('beskeder'));
+        liste.appendChild(mærke);
+      });
+      return liste;
+    });
+
+    // PC: en række pr. beboer i højre kolonne
+    fsTegn('foRaekker', signatur, () => {
+      const liste = document.createDocumentFragment();
+      personer.forEach(p => {
+        const række = fsLav('button', 'foRaekke');
+        række.type = 'button';
+        const navn = fsLav('span', 'foRaekkeNavn');
+        const prik = fsLav('span', 'foPrik');
+        prik.style.background = p.farve;
+        navn.appendChild(prik);
+        navn.appendChild(fsLav('span', null, p.navn));
+        række.appendChild(navn);
+        række.appendChild(fsLav('span', 'foRaekkeAntal', foAntalTekst(p.antal)));
+        række.addEventListener('click', () => gåTilNav('beskeder'));
+        liste.appendChild(række);
+      });
+      return liste;
+    });
+  } catch(e){
+    fsFejl('foMaerkeListe', 'Kunne ikke hente beskeder. Prøv igen om lidt.', e);
+    fsFejl('foRaekker', 'Kunne ikke hente beskeder. Prøv igen om lidt.', e);
+  }
 }
 
 // ---------- Opdatering ----------
@@ -2698,12 +2598,13 @@ async function opdaterForside(){
   fsHenter = true;
   try{
     opdaterForsideHoved();
-    await Promise.all([fsVagtKort(), fsRengøringLinje(), fsAktivitetKort(), fsMadKort(), fsBeskedKort(), fsLigeNuKort(), fsPåvejKort()]);
+    await Promise.all([foNuKort(), foAktivitetSub(), foRengøringSub(), foBeskedKort()]);
   } finally {
     fsHenter = false;
   }
 }
 
+// Almindelig polling hvert 60. sekund (kun mens forsiden er synlig). Browserens lokale tid bruges overalt.
 function startForsidePolling(){
   if(fsInterval) return;
   fsInterval = setInterval(() => {
@@ -7218,7 +7119,7 @@ function mdVisNavn(navn){
 
 function mdVis(){
   // Siden kan kun åbnes efter at Admin-koden er tastet (samme gate som Admin).
-  if(!adminAdgang){ visSide('valg'); return; }
+  if(!adminAdgang) return;   // visSide() spørger efter koden, før siden vises
   if(mdDato === null) mdDato = skDagISO(1);   // standard: i morgen
   hentMoededag();
 }
@@ -7503,8 +7404,13 @@ async function mdFortrydIngen(){
 
 hentBeboere();
 
-// Menuen (bundmenu, sidemenu og "Mere"-arket) bygges af NAV_PUNKTER
+// Menuen (bundmenu, sidemenu og "Mere"-arket) bygges af NAV_PUNKTER (Normal) eller NAV_ADMIN (Admin)
 tegnNav();
+tegnAdminFelter();
+visSide('forside');
+
+// Sidste valg huskes i browseren. Var det Admin, spørger vi efter koden igen.
+if(hentGemtMode() === 'admin'){ bedOmAdminKode(() => visSide('adminForside')); }
 
 // PWA: registrér service worker, så appen kan installeres på telefonen.
 if('serviceWorker' in navigator){

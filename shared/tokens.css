@@ -40,6 +40,24 @@
   /* ---- personalemoede-v2: highlight-typer (opgave=--guld, til_naeste=--brand, genbrugt) ---- */
   --hl-beslutning: #be185d;
   --hl-info:       #475569;
+
+  /* ---- Ny forside + Normal/Admin (mollebakken-app-v2) ---- */
+  --f-baggrund:   #FBF7EF;  /* lys, varm sidebaggrund */
+  --f-flade:      #FFFFFF;  /* hvide flader, menu */
+  --f-streg:      #E6DFCF;  /* kanter */
+  --f-tekst:      #1C2326;  /* mørk tekst — også på farvefelterne */
+  --f-tekst-2:    #4A555A;  /* sekundær tekst */
+  --f-nu:         #1C2326;  /* mørk "nu"-blok / aktiv markering */
+  --f-nu-tekst:   #C9D3D6;  /* lys tekst på den mørke blok */
+  --f-beskeder:   #F6C177;  /* orange */
+  --f-dagsplan:   #A9C8F0;  /* blå */
+  --f-madplan:    #B5DDB0;  /* grøn */
+  --f-aktivitet:  #F4B6C8;  /* lyserød */
+  --f-beboere:    #CDB8EA;  /* lilla */
+  --f-rengoering: #9FD8D3;  /* turkis */
+  --f-personale:  #EBDD8A;  /* smørgul */
+  --f-skaerme:    #F0A99A;  /* koral */
+  --f-admin:      #3B3F9E;  /* Admin-bjælken */
 }
 
 /* ---------- Tal der ikke må hoppe ved opdatering ---------- */
