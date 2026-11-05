@@ -1787,7 +1787,7 @@
     </div>
     <div class="kort">
       <h3 style="margin-top:0;">Beskeder: udseende</h3>
-      <p class="beskedMeta" style="margin:0 0 10px;">Mørk er standard. Lys er en reserve, hvis TV'et har svært ved den mørke baggrund.</p>
+      <p class="beskedMeta" style="margin:0 0 10px;">Lys er standard. Mørk kan vælges, hvis du hellere vil have en mørk baggrund.</p>
       <div class="bfVæk" id="adminBeskedUdseende" role="group" aria-label="Beskeder: udseende"></div>
     </div>
   </div>
@@ -3151,15 +3151,15 @@ function bfRydDato(){
 }
 
 // "Sådan ser den ud på tavlen": et lille billede af infoskærmen (samme emne-farver, ikoner og navne).
-// Følger indstillingen "Beskeder: udseende" (Mørk/Lys); findes den ikke, bruges Mørk.
-let bfUdseende = 'moerk';
+// Følger indstillingen "Beskeder: udseende" (Mørk/Lys); findes den ikke, bruges Lys.
+let bfUdseende = 'lys';
 
 async function hentBfUdseende(){
   if(!sb) return;
   try{
     const { data, error } = await sb.from('app_indstillinger').select('vaerdi').eq('noegle', 'beskeder_udseende').maybeSingle();
     if(error) return;
-    const nyt = data && data.vaerdi === 'lys' ? 'lys' : 'moerk';
+    const nyt = data && data.vaerdi === 'moerk' ? 'moerk' : 'lys';
     if(nyt !== bfUdseende){ bfUdseende = nyt; opdaterBfForhaand(); }
   } catch(e){ console.error(e); }
 }
@@ -7689,7 +7689,7 @@ async function hentBeskedUdseende(){
   if(!sb) return;
   const { data, error } = await sb.from('app_indstillinger').select('vaerdi').eq('noegle', 'beskeder_udseende').maybeSingle();
   if(error){ console.error(error); }
-  tegnBeskedUdseende(data && data.vaerdi === 'lys' ? 'lys' : 'moerk');
+  tegnBeskedUdseende(data && data.vaerdi === 'moerk' ? 'moerk' : 'lys');
 }
 
 function tegnBeskedUdseende(valgt){

@@ -336,7 +336,7 @@
       gap: calc(var(--s) * 8);
     }
     #beskeder.lys{
-      --bg: #F3F1EA; --tekst: #1F2A24; --streg: #D9DCD3;
+      --bg: #F6F3EB; --tekst: #1F2A24; --streg: #D9D3C4;
       --pille-bg: #1F2A24; --pille-tekst: #FFFFFF;
     }
 
@@ -360,7 +360,7 @@
     #beskederContainer.maal > *{ margin-top: 0; }
 
     .bSektion{ min-width: 0; --navnefarve: var(--lys); --ikonfarve: var(--staerk); --ikonbg: #FFFFFF; }
-    #beskeder.lys .bSektion{ --navnefarve: var(--staerk); --ikonfarve: #FFFFFF; --ikonbg: var(--staerk); }
+    #beskeder.lys .bSektion{ --navnefarve: var(--moerk); --ikonfarve: #FFFFFF; --ikonbg: var(--staerk); }
 
     .bHoved{ display: flex; align-items: center; gap: calc(var(--s) * 16); }
     .bIkonFirkant{
@@ -428,6 +428,27 @@
     .bTid{ background: var(--pille-bg); color: var(--pille-tekst); }
     .bNy{ background: #FACC15; color: #1A1A1A; }
     .bVigtigt{ background: #FB923C; color: #1A1A1A; }
+
+    /* Lyst tema: 14 px luft omkring stregen mellem beskeder, linjehøjde 1,35 og mærker med 8 px afrunding */
+    #beskeder.lys .bBesked + .bBesked{ margin-top: calc(var(--s) * 14); padding-top: calc(var(--s) * 14); }
+    #beskeder.lys .bTekstKol{ line-height: 1.35; }
+    #beskeder.lys .bTid, #beskeder.lys .bNy, #beskeder.lys .bVigtigt{
+      font-size: calc(var(--s) * 14); border-radius: calc(var(--s) * 8); letter-spacing: .04em;
+    }
+    #beskeder.lys .bVigtigt{ background: #F2B84B; color: #2A1D00; }
+    #beskeder.lys.kompakt .bBesked + .bBesked{ margin-top: calc(var(--s) * 7); padding-top: calc(var(--s) * 7); }
+    #beskeder.lys.kompakt .bTekstKol, #beskeder.lys.kompakt .bNavnKol{ line-height: 1.2; }
+
+    /* Beskeder i kolonner under én overskrift: streg under hver besked (ingen streg øverst i en ny kolonne) */
+    #beskeder{ --luft: 10; }
+    #beskeder.lys{ --luft: 14; }
+    #beskeder.kompakt, #beskeder.lys.kompakt{ --luft: 7; }
+    #beskeder .bBeskeder .bBesked, #beskeder .bBeskeder .bBesked + .bBesked{
+      margin-top: 0; border-top: 0;
+      padding-top: calc(var(--s) * var(--luft)); padding-bottom: calc(var(--s) * var(--luft));
+      border-bottom: 1px solid var(--streg);
+    }
+    #beskeder .bBeskeder .bBesked:last-child{ border-bottom: 0; }
 
     .bBesked .filKnap{
       margin-left: calc(var(--s) * 8);
@@ -514,7 +535,7 @@
 
 <!-- ==================== BESKEDER ==================== -->
 
-<div id="beskeder" class="side active">
+<div id="beskeder" class="side active lys">
   <div id="beskederContainer">
     <div class="loading">Henter beskeder...</div>
   </div>
@@ -974,7 +995,7 @@ const BESKED_TRIN = [
   { t: 20, o: 20, n: 20, h: 24, b: 30, k: 1 }
 ];
 const BESKED_SIDE_MS = 20000;
-let beskedUdseende = 'moerk';   // 'moerk' (standard) eller 'lys', læses fra app_indstillinger ved hver polling
+let beskedUdseende = 'lys';     // 'lys' (standard) eller 'moerk', læses fra app_indstillinger ved hver polling
 let beskedAlle = [];            // beskeder klar til visning (beskedTilVisning)
 let beskedSider = [];           // [[{ emne, beskeder, fortsat }, …], …] — tom når alt står på én side
 let beskedSideIndex = 0;
@@ -1032,6 +1053,7 @@ function lavEmneSektion(del){
   const sek = lavEl('section', 'bSektion' + (e.id === 'obs' ? ' obs' : ''));
   sek.style.setProperty('--staerk', e.staerk);
   sek.style.setProperty('--lys', e.lys);
+  sek.style.setProperty('--moerk', e.moerk);
 
   const hoved = lavEl('div', 'bHoved');
   const firkant = lavEl('span', 'bIkonFirkant');
@@ -1252,13 +1274,13 @@ function visBeskeder(data){
 // "Beskeder: udseende" (Mørk/Lys) sættes i appens Admin og gemmes i app_indstillinger. Standard: Mørk.
 async function hentBeskedUdseende(){
   if(BESKED_TEST_MANGE){
-    beskedUdseende = new URLSearchParams(location.search).get('udseende') === 'lys' ? 'lys' : 'moerk';
+    beskedUdseende = new URLSearchParams(location.search).get('udseende') === 'moerk' ? 'moerk' : 'lys';
     return;
   }
   if(!sb) return;
   try{
     const svar = await sb.from('app_indstillinger').select('vaerdi').eq('noegle', 'beskeder_udseende').maybeSingle();
-    if(!svar.error) beskedUdseende = (svar.data && svar.data.vaerdi === 'lys') ? 'lys' : 'moerk';
+    if(!svar.error) beskedUdseende = (svar.data && svar.data.vaerdi === 'moerk') ? 'moerk' : 'lys';
   } catch(e){ console.error('Fejl udseende:', e); }
 }
 

@@ -23,5 +23,5 @@ create policy "app_indstillinger_select" on public.app_indstillinger for select 
 create policy "app_indstillinger_insert" on public.app_indstillinger for insert with check (true);
 create policy "app_indstillinger_update" on public.app_indstillinger for update using (true) with check (true);
 
-insert into public.app_indstillinger (noegle, vaerdi) values ('beskeder_udseende', 'moerk')
+insert into public.app_indstillinger (noegle, vaerdi) values ('beskeder_udseende', 'lys')
 on conflict (noegle) do nothing;
