@@ -935,6 +935,15 @@
   .trRække{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .trProgramNavn{ font-weight:700; font-size:17px; }
   .trMeta{ font-size:13px; color:var(--tekst-svag); line-height:1.5; }
+  .synListe{ padding:4px 16px; }
+  .synRække{ display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; min-height:64px; padding:10px 0; background:none; border:none; border-bottom:1px solid #eef2ef; text-align:left; color:var(--mørk); font-family:inherit; cursor:pointer; }
+  .synRække:last-child{ border-bottom:none; }
+  .synTekst{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .synNavn{ font-size:17px; font-weight:700; }
+  .synBeskr{ font-size:14px; color:var(--tekst-svag); }
+  .synRække .toggleSwitch{ flex:0 0 auto; width:52px; height:30px; border-radius:15px; }
+  .synRække .toggleSwitch .knop{ top:3px; left:3px; width:24px; height:24px; }
+  .synRække .toggleSwitch.til .knop{ left:25px; }
   .trChips{ display:flex; gap:6px; flex-wrap:wrap; }
   .trChip{ min-width:52px; min-height:46px; padding:8px 10px; border:1px solid #d1d9d6; background:#fff; color:var(--mørk); font-weight:600; font-size:15px; }
   .trChip.til{ background:var(--mørk); color:#fff; border-color:var(--mørk); }
@@ -6104,7 +6113,7 @@ let trOvelseGemmer = false;
 let trProgrammer = [];
 let trStatus = [];
 let trKladde = null;       // program under redigering
-let trMode = 'programmer'; // programmer | ovelser | log | beboere | editor | ovelseForm
+let trMode = 'programmer'; // programmer | ovelser | log | beboere | synlighed | editor | ovelseForm
 let trFilterBeboer = '';   // beboer-id eller '' = alle
 let trPoll = null;
 let trFejlTekst = '';
@@ -6190,7 +6199,8 @@ async function trHentAlt(){
   const svar = await Promise.all([
     trKald('personale_hent_ovelser', { p_inkl_skjulte: true }),
     trKald('personale_hent_programmer'),
-    trKald('personale_beboer_status')
+    trKald('personale_beboer_status'),
+    trKald('personale_hent_synlighed')
   ]);
   if(!trToken) return;   // blev logget ud under hentningen
   const fejl = svar.find(s => s.fejl);
@@ -6201,6 +6211,7 @@ async function trHentAlt(){
     trOvelser = trAlleOvelser.filter(o => o.aktiv !== false);
     trProgrammer = svar[1].data || [];
     trStatus = svar[2].data || [];
+    trSynlighed = svar[3].data || [];
   }
   trTegn();
 }
@@ -6280,7 +6291,7 @@ function trTegn(){
     const vælger = document.createElement('select');
     vælger.className = 'modeVælger';
     vælger.setAttribute('aria-label', 'Visning');
-    [['programmer', 'Programmer'], ['ovelser', 'Øvelser'], ['log', 'Seneste træninger'], ['beboere', 'Koder og enheder']].forEach(function(p){
+    [['programmer', 'Programmer'], ['ovelser', 'Øvelser'], ['log', 'Seneste træninger'], ['beboere', 'Koder og enheder'], ['synlighed', 'Hvad beboeren ser']].forEach(function(p){
       const o = document.createElement('option');
       o.value = p[0];
       o.textContent = p[1];
@@ -6298,6 +6309,7 @@ function trTegn(){
   else if(trMode === 'ovelser') trTegnOvelser(rod);
   else if(trMode === 'log') trTegnLog(rod);
   else if(trMode === 'beboere') trTegnBeboere(rod);
+  else if(trMode === 'synlighed') trTegnSynlighed(rod);
   else trTegnProgrammer(rod);
 
   indsætIkoner(document.getElementById('traening'));
@@ -7100,6 +7112,88 @@ function trTegnLogListe(){
 }
 
 // ---------- Koder og enheder ----------
+
+// ---------- Hvad beboeren kan se (til/fra pr. modul) ----------
+// Samlet liste over moduler. Nøglen bruges i databasen og i beboer-v2/app.js (BEBOERAPP_MODULNOEGLER).
+// Nyt modul: tilføj en linje her og brug nøglen i beboer-v2. Uden gemt række er et modul synligt.
+const BEBOERAPP_MODULER = [
+  { noegle: 'dagsplan',   navn: 'Min dag',         beskrivelse: 'Dagsplanen på Hjem' },
+  { noegle: 'traening',   navn: 'Træning',         beskrivelse: 'Fanen Træning og dagens træning på Hjem' },
+  { noegle: 'mad',        navn: 'Mad',             beskrivelse: 'Dagens mad og ugens mad' },
+  { noegle: 'paaarbejde', navn: 'På arbejde nu',   beskrivelse: 'Hvem der er på arbejde, på Hjem' },
+  { noegle: 'kalender',   navn: 'Kalender',        beskrivelse: 'Fanen Kalender' },
+  { noegle: 'statistik',  navn: 'Statistik',       beskrivelse: 'Fanen Statistik' },
+  { noegle: 'tema',       navn: 'Vælg tema',       beskrivelse: 'Valg af tema under Mere' }
+];
+
+let trSynlighed = [];      // [{ beboer, modul, synlig }] — kun gemte rækker
+let trSynBeboer = '';      // fornavn på den beboer der redigeres
+
+function trModulSynlig(beboer, modul){
+  const r = trSynlighed.find(function(x){ return x.beboer === beboer && x.modul === modul; });
+  return r ? r.synlig : true;   // ingen række = synligt
+}
+
+function trTegnSynlighed(rod){
+  if(!trSynBeboer || !trStatus.some(function(s){ return s.navn === trSynBeboer; })){
+    trSynBeboer = trStatus.length > 0 ? trStatus[0].navn : '';
+  }
+
+  const info = trEl('div', 'kort');
+  info.appendChild(trEl('p', 'trMeta',
+    'Vælg en beboer og slå dele af beboerappen til eller fra. En del der er slået fra, forsvinder helt hos beboeren inden for ca. 1 minut.'));
+  const chips = trEl('div', 'trChips');
+  chips.style.marginTop = '10px';
+  trStatus.forEach(function(s){
+    const k = trEl('button', 'knap trChip' + (s.navn === trSynBeboer ? ' til' : ''), s.navn);
+    k.type = 'button';
+    k.setAttribute('aria-pressed', s.navn === trSynBeboer ? 'true' : 'false');
+    k.addEventListener('click', function(){ trSynBeboer = s.navn; trTegn(); });
+    chips.appendChild(k);
+  });
+  info.appendChild(chips);
+  rod.appendChild(info);
+
+  const liste = trEl('div', 'kort synListe');
+  BEBOERAPP_MODULER.forEach(function(m){
+    const til = trModulSynlig(trSynBeboer, m.noegle);
+    const række = trEl('button', 'synRække');
+    række.type = 'button';
+    række.setAttribute('role', 'switch');
+    række.setAttribute('aria-checked', til ? 'true' : 'false');
+    const tekst = trEl('span', 'synTekst');
+    tekst.appendChild(trEl('span', 'synNavn', m.navn));
+    tekst.appendChild(trEl('span', 'synBeskr', m.beskrivelse));
+    række.appendChild(tekst);
+    const kontakt = trEl('span', 'toggleSwitch' + (til ? ' til' : ''));
+    kontakt.appendChild(trEl('span', 'knop'));
+    række.appendChild(kontakt);
+    række.addEventListener('click', function(){ trSaetSynlighed(trSynBeboer, m.noegle, !trModulSynlig(trSynBeboer, m.noegle)); });
+    liste.appendChild(række);
+  });
+  rod.appendChild(liste);
+}
+
+function trGemSynlighedLokalt(beboer, modul, synlig){
+  const r = trSynlighed.find(function(x){ return x.beboer === beboer && x.modul === modul; });
+  if(r) r.synlig = synlig;
+  else trSynlighed.push({ beboer: beboer, modul: modul, synlig: synlig });
+}
+
+// Gemmer med det samme. Går det galt, rulles kontakten tilbage.
+async function trSaetSynlighed(beboer, modul, synlig){
+  const før = trModulSynlig(beboer, modul);
+  trGemSynlighedLokalt(beboer, modul, synlig);
+  trTegn();
+  const res = await trKald('personale_saet_synlighed', { p_beboer: beboer, p_modul: modul, p_synlig: synlig });
+  if(res.fejl){
+    trGemSynlighedLokalt(beboer, modul, før);
+    trTegn();
+    visToast('Kunne ikke gemme. Prøv igen.');
+    return;
+  }
+  visToast('Gemt');
+}
 
 function trTegnBeboere(rod){
   const info = trEl('div', 'kort');
