@@ -417,6 +417,13 @@
   .bfChips{ display:flex; flex-wrap:wrap; gap:8px; }
   .bfChip{ display:inline-flex; align-items:center; gap:10px; min-height:48px; padding:6px 16px 6px 8px; border-radius:24px; background:#F4F2EE; color:var(--ny-sort); border:2px solid transparent; font-size:16px; font-weight:700; }
   .bfChip.valgt{ background:var(--ny-sort); color:#fff; }
+  .bfEmner{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+  .bfEmne{ display:flex; align-items:center; gap:8px; min-height:64px; padding:8px; border-radius:16px; border:4px solid transparent; text-align:left; font-size:16px; font-weight:800; color:#1F2A24; min-width:0; }
+  .bfEmneFirkant{ width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .bfEmneNavn{ min-width:0; overflow-wrap:anywhere; line-height:1.15; }
+  .bfEmne.valgt{ border-color:#1F2A24; }
+  @media (min-width:900px){ .bfEmneNavn{ font-size:21px; } }
+  @media (max-width:420px){ .bfEmne{ flex-direction:column; justify-content:center; text-align:center; padding:8px 4px; } .bfEmneNavn{ font-size:14px; } }
   .bfKategorier{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
   .bfKategori{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:76px; padding:8px 4px; border-radius:12px; background:#F4F2EE; color:var(--ny-sort); font-size:13px; font-weight:700; border:2px solid transparent; }
   .bfKategori.valgt{ background:var(--ny-sort); color:#fff; }
@@ -1097,6 +1104,7 @@
 
 <script src="supabase-js.min.js"></script>
 <script src="../shared/ikoner.js"></script>
+<script src="../shared/emner.js"></script>
 <script src="../shared/moededag.js"></script>
 
 <div id="app">
@@ -1185,12 +1193,17 @@
             </section>
 
             <section class="bfSektion">
-              <h4><span class="bfNr">2</span>Hvad drejer det sig om?</h4>
+              <h4><span class="bfNr">2</span>Vælg emne</h4>
+              <div class="bfEmner" id="bfEmner" role="group" aria-label="Vælg emne"></div>
+            </section>
+
+            <section class="bfSektion">
+              <h4><span class="bfNr">3</span>Hvad drejer det sig om?</h4>
               <div class="bfKategorier" id="bfKategorier"></div>
             </section>
 
             <section class="bfSektion">
-              <h4><span class="bfNr">3</span>Skriv kort</h4>
+              <h4><span class="bfNr">4</span>Skriv kort</h4>
               <div class="formRække">
                 <label for="beskedTitel">Titel</label>
                 <input id="beskedTitel" type="text" maxlength="80" autocomplete="off" oninput="opdaterBfForhaand()">
@@ -1221,7 +1234,7 @@
             </section>
 
             <section class="bfSektion">
-              <h4><span class="bfNr">4</span>Hvornår? <span class="bfValgfri">(valgfri)</span></h4>
+              <h4><span class="bfNr">5</span>Hvornår? <span class="bfValgfri">(valgfri)</span></h4>
               <div class="bfDatoRække">
                 <input id="beskedDato" type="date" aria-label="Dato" onchange="bfÆndret()">
                 <input id="beskedTid" type="time" aria-label="Tidspunkt" onchange="bfÆndret()">
@@ -1230,7 +1243,7 @@
             </section>
 
             <section class="bfSektion">
-              <h4><span class="bfNr">5</span>Hvornår skal den væk fra tavlen?</h4>
+              <h4><span class="bfNr">6</span>Hvornår skal den væk fra tavlen?</h4>
               <div class="bfVæk" id="bfVæk"></div>
               <div class="bfDatoRække" id="bfVækDatoRække" hidden>
                 <input id="beskedVækDato" type="date" aria-label="Væk fra tavlen d." onchange="bfÆndret()">
@@ -1637,6 +1650,11 @@
     </header>
     <div class="kort">
       <div id="adminInfoskaerm"><div class="loading">Henter …</div></div>
+    </div>
+    <div class="kort">
+      <h3 style="margin-top:0;">Beskeder: udseende</h3>
+      <p class="beskedMeta" style="margin:0 0 10px;">Mørk er standard. Lys er en reserve, hvis TV'et har svært ved den mørke baggrund.</p>
+      <div class="bfVæk" id="adminBeskedUdseende" role="group" aria-label="Beskeder: udseende"></div>
     </div>
   </div>
 
@@ -2759,6 +2777,7 @@ async function sletBeskedFil(sti){
 // bfVæk: hvornår beskeden forsvinder fra tavlen: 'dagen' (dagen efter datoen), 'uge', 'dato' eller 'staaende' (fast info).
 let bfHvem = [];
 let bfKategori = 'info';
+let bfEmne = null;         // emne-nøgle fra BESKED_EMNER (skal vælges før der kan gemmes)
 let bfVæk = 'staaende';
 let beskedCache = {};      // id -> række fra databasen (til Ret)
 let beskedSletId = null;   // besked der lige nu spørger "Slet?"
@@ -2819,6 +2838,7 @@ function nulstilBeskedForm(){
   beskedFil = { ny: null, nyMime: null, eksisterende: null };
   bfHvem = [];
   bfKategori = 'info';
+  bfEmne = null;
   bfVæk = 'staaende';
   document.getElementById('beskedTitel').value = '';
   document.getElementById('beskedDetalje').value = '';
@@ -2842,6 +2862,7 @@ function startRedigerBesked(b){
 
   bfHvem = (b.beboere && b.beboere.length > 0) ? b.beboere.slice() : [b.beboer === 'Personale' ? 'Huset' : b.beboer];
   bfKategori = b.kategori || 'info';
+  bfEmne = emneFind(b.emne || 'andet').id;
   document.getElementById('beskedTitel').value = b.titel || b.besked;
   document.getElementById('beskedDetalje').value = b.detalje || '';
   document.getElementById('beskedAfsender').value = b.afsender || '';
@@ -2895,6 +2916,35 @@ function tegnBfHvem(){
       tegnBfHvem();
       opdaterBfForhaand();
       opdaterBfAktive();
+    });
+    rod.appendChild(knap);
+  });
+}
+
+// Emne-trin: 3 x 3 knapper. Rod = hvert emnes farve (EMNE-farver, ikke rum-farver)
+function hexTilLys(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const bland = c => Math.round(c + (255 - c) * 0.9);
+  return 'rgb(' + bland(n >> 16) + ',' + bland((n >> 8) & 255) + ',' + bland(n & 255) + ')';
+}
+
+function tegnBfEmner(){
+  const rod = document.getElementById('bfEmner');
+  rod.textContent = '';
+  BESKED_EMNER.forEach(e => {
+    const valgt = bfEmne === e.id;
+    const knap = fsLav('button', 'bfEmne' + (valgt ? ' valgt' : ''));
+    knap.type = 'button';
+    knap.style.background = hexTilLys(e.staerk);
+    knap.setAttribute('aria-pressed', valgt ? 'true' : 'false');
+    const firkant = fsLav('span', 'bfEmneFirkant');
+    firkant.style.background = e.staerk;
+    firkant.appendChild(emneIkon(e.id, 28, '#FFFFFF'));
+    knap.appendChild(firkant);
+    knap.appendChild(fsLav('span', 'bfEmneNavn', e.navn));
+    knap.addEventListener('click', () => {
+      bfEmne = e.id;
+      tegnBfEmner();
     });
     rod.appendChild(knap);
   });
@@ -2957,6 +3007,7 @@ function tegnBfVæk(){
 
 function tegnBeskedForm(){
   tegnBfHvem();
+  tegnBfEmner();
   tegnBfKategorier();
   tegnBfVæk();
   opdaterBfForhaand();
@@ -3044,6 +3095,7 @@ async function sendBesked(){
   const vigtig = document.getElementById('beskedVigtig').checked;
 
   if(bfHvem.length === 0){ visToast('Vælg, hvem det handler om'); return; }
+  if(!bfEmne){ visToast('Vælg et emne'); return; }
   if(!titel){ visToast('Skriv en kort titel'); return; }
   if(tid && !dato){ visToast('Vælg også en dato til tidspunktet'); return; }
   if(bfVæk === 'dato' && !document.getElementById('beskedVækDato').value){ visToast('Vælg, hvilken dato beskeden skal væk'); return; }
@@ -3058,6 +3110,7 @@ async function sendBesked(){
     beboer: beboerNavne.length > 0 ? beboerNavne[0] : 'Personale',
     beboere: bfHvem.slice(),
     kategori: bfKategori,
+    emne: bfEmne,
     titel: titel,
     detalje: detalje || null,
     besked: detalje ? titel + ' – ' + detalje : titel,
@@ -6982,6 +7035,7 @@ async function hentSkaermIndstillinger(){
     .sort((a, b) => a.raekkefoelge - b.raekkefoelge);
   const beboerskaerm = (data || []).filter(r => r.skaerm === 'beboerskaerm');
 
+  hentBeskedUdseende();
   renderInfoskaermIndstillinger(infoskaerm);
   renderBeboerskaermIndstillinger(beboerskaerm);
 }
@@ -7016,6 +7070,33 @@ function renderBeboerskaermIndstillinger(rows){
       </div>
     </div>
   `).join('');
+}
+
+// Beskeder: udseende (Mørk/Lys) — gemmes i app_indstillinger, infoskærmen læser den ved hver polling
+async function hentBeskedUdseende(){
+  if(!sb) return;
+  const { data, error } = await sb.from('app_indstillinger').select('vaerdi').eq('noegle', 'beskeder_udseende').maybeSingle();
+  if(error){ console.error(error); }
+  tegnBeskedUdseende(data && data.vaerdi === 'lys' ? 'lys' : 'moerk');
+}
+
+function tegnBeskedUdseende(valgt){
+  const rod = document.getElementById('adminBeskedUdseende');
+  rod.textContent = '';
+  [{ id: 'moerk', navn: 'Mørk' }, { id: 'lys', navn: 'Lys' }].forEach(v => {
+    const knap = fsLav('button', 'bfVækKnap' + (valgt === v.id ? ' valgt' : ''));
+    knap.type = 'button';
+    knap.setAttribute('aria-pressed', valgt === v.id ? 'true' : 'false');
+    knap.appendChild(fsLav('span', 'bfVækNavn', v.navn));
+    knap.addEventListener('click', async () => {
+      const { error } = await sb.from('app_indstillinger')
+        .upsert({ noegle: 'beskeder_udseende', vaerdi: v.id, opdateret: new Date().toISOString() }, { onConflict: 'noegle' });
+      if(error){ console.error(error); visToast('Fejl'); return; }
+      tegnBeskedUdseende(v.id);
+      visToast('Gemt');
+    });
+    rod.appendChild(knap);
+  });
 }
 
 async function toggleSkaermIndstilling(id, skaerm, nuværendeVærdi){
