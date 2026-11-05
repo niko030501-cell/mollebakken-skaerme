@@ -544,9 +544,25 @@
   .bfChip{ min-height:48px; }
   .bfPrik{ width:16px; height:16px; border-radius:50%; flex:0 0 auto; }
   .bfForhaandTitel, .bfAktivTitel{ margin:0 0 10px; font-size:16px; font-weight:800; }
-  .bfForhaand{ background:#EAE6DD; border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px; }
-  .bfForhaand .fsRække{ grid-template-columns:1fr; }
-  .bfForhaand .fsHusetBoks{ margin-top:0; }
+  .bfPreview .bfForhaandTitel{ font-size:20px; }
+  .bfForhaand{ display:block; }
+  .bfTavle{ background:#1B2A26; color:#fff; border-radius:22px; padding:22px 20px 12px; }
+  .bfTavleHoved{ display:flex; align-items:center; gap:14px; }
+  .bfTavleIkon{ width:48px; height:48px; border-radius:14px; background:#fff; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .bfTavleNavn{ font-size:26px; font-weight:800; line-height:1.1; min-width:0; overflow-wrap:anywhere; }
+  .bfTavleStreg{ height:5px; border-radius:3px; margin:12px 0 14px; }
+  .bfTavleBesked{ display:grid; grid-template-columns:minmax(74px, max-content) minmax(0, 1fr); column-gap:12px; padding-bottom:14px; }
+  .bfTavleBorger{ font-size:18px; font-weight:800; line-height:1.3; max-width:120px; overflow-wrap:break-word; }
+  .bfTavleTekst{ font-size:19px; line-height:1.3; color:#fff; overflow-wrap:anywhere; word-break:break-word; min-width:0; }
+  .bfTavleTekst.tom{ opacity:.5; }
+  .bfTavleMaerker{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .bfTavleMaerke{ font-size:12px; font-weight:800; letter-spacing:.06em; padding:3px 9px; border-radius:999px; color:#2A1D00; }
+  .bfTavleMaerke.ny{ background:#F4D04B; }
+  .bfTavleMaerke.vigtig{ background:#F2B84B; }
+  .bfTavle.lys{ background:#F3F1EA; color:#1F2A24; }
+  .bfTavle.lys .bfTavleTekst{ color:#1F2A24; }
+  .bfTavle.lys .bfTavleIkon{ background:transparent; }
+  .bfTavleHint{ margin:10px 0 0; font-size:14px; color:#6B7075; }
   #beskedFormular .knap, #beskedFormular .knapLille{ min-height:44px; }
   .sidehoved .sidehovedKnap{ background:var(--ny-sort); color:#fff; }
   .sidehoved .sidehovedTitel{ color:var(--ny-sort); }
@@ -2946,6 +2962,7 @@ function beskedTilOversigt(){
 function beskedNy(){
   nulstilBeskedForm();
   beskedVis('form');
+  hentBfUdseende();
   hentBeskeder();   // fylder "aktive beskeder" til højre på PC
   window.scrollTo(0, 0);
 }
@@ -3005,6 +3022,7 @@ function startRedigerBesked(b){
   opdaterFilVisning();
   tegnBeskedForm();
   beskedVis('form');
+  hentBfUdseende();
   hentBeskeder();
   window.scrollTo(0, 0);
 }
@@ -3132,46 +3150,64 @@ function bfRydDato(){
   bfÆndret();
 }
 
-// "Sådan ser den ud på tavlen": samme chip som på forsiden og tavlen
+// "Sådan ser den ud på tavlen": et lille billede af infoskærmen (samme emne-farver, ikoner og navne).
+// Følger indstillingen "Beskeder: udseende" (Mørk/Lys); findes den ikke, bruges Mørk.
+let bfUdseende = 'moerk';
+
+async function hentBfUdseende(){
+  if(!sb) return;
+  try{
+    const { data, error } = await sb.from('app_indstillinger').select('vaerdi').eq('noegle', 'beskeder_udseende').maybeSingle();
+    if(error) return;
+    const nyt = data && data.vaerdi === 'lys' ? 'lys' : 'moerk';
+    if(nyt !== bfUdseende){ bfUdseende = nyt; opdaterBfForhaand(); }
+  } catch(e){ console.error(e); }
+}
+
 function opdaterBfForhaand(){
   const rod = document.getElementById('bfForhaand');
   rod.textContent = '';
-  const v = {
-    id: null,
-    titel: document.getElementById('beskedTitel').value.trim() || 'Din titel vises her',
-    kategori: bfKategori,
-    vigtig: document.getElementById('beskedVigtig').checked,
-    tid: document.getElementById('beskedDato').value
-      ? beskedTidMaerke({ hvornaar_dato: document.getElementById('beskedDato').value, hvornaar_tid: document.getElementById('beskedTid').value })
-      : '',
-    ny: true,
-    fil: null
-  };
-  if(bfHvem.length === 0){
-    rod.appendChild(fsLav('div', 'fsIngen', 'Vælg først, hvem det handler om'));
-    return;
+  const lys = bfUdseende === 'lys';
+  const e = emneFind(bfEmne || 'andet');
+  const tekst = document.getElementById('beskedTitel').value.trim();
+  const vigtig = document.getElementById('beskedVigtig').checked;
+  const hoved = lys ? e.staerk : e.lys;
+
+  const tavle = fsLav('div', 'bfTavle' + (lys ? ' lys' : ''));
+  const top = fsLav('div', 'bfTavleHoved');
+  const ikon = fsLav('span', 'bfTavleIkon');
+  if(lys){
+    ikon.style.background = e.staerk;
+    ikon.appendChild(emneIkon(e.id, 28, '#FFFFFF'));
+  } else {
+    ikon.appendChild(emneIkon(e.id, 28, e.staerk));
   }
-  bfHvem.filter(n => n !== 'Huset').forEach(navn => {
-    const række = fsLav('div', 'fsRække');
-    const hoved = fsLav('div', 'fsBeboer');
-    hoved.appendChild(fsBeboerCirkel(navn));
-    hoved.appendChild(fsLav('span', null, navn));
-    række.appendChild(hoved);
-    const chips = fsLav('div', 'fsChips');
-    chips.appendChild(fsBeskedChip(v, true));
-    række.appendChild(chips);
-    rod.appendChild(række);
-  });
-  if(bfHvem.indexOf('Huset') !== -1){
-    const boks = fsLav('div', 'fsHusetBoks');
-    boks.appendChild(fsLav('div', 'fsHusetMaerke', 'Huset'));
-    const punkt = fsLav('div', 'fsHusetPunkt');
-    if(v.vigtig) punkt.appendChild(fsLav('span', 'fsVigtigt', 'Vigtigt:'));
-    punkt.appendChild(fsLav('span', 'fsChipTekst', v.titel));
-    if(v.tid) punkt.appendChild(fsLav('span', 'fsTid', v.tid));
-    boks.appendChild(punkt);
-    rod.appendChild(boks);
-  }
+  top.appendChild(ikon);
+  const navn = fsLav('span', 'bfTavleNavn', bfEmne ? e.navn : 'Vælg emne');
+  navn.style.color = hoved;
+  if(!bfEmne) navn.style.opacity = '0.5';
+  top.appendChild(navn);
+  tavle.appendChild(top);
+  const streg = fsLav('div', 'bfTavleStreg');
+  streg.style.background = e.staerk;
+  tavle.appendChild(streg);
+
+  const række = fsLav('div', 'bfTavleBesked');
+  const borger = fsLav('div', 'bfTavleBorger', bfHvem.length > 0 ? bfHvem.join(', ') : 'Hvem?');
+  borger.style.color = hoved;
+  if(bfHvem.length === 0) borger.style.opacity = '0.5';
+  række.appendChild(borger);
+  const højre = fsLav('div', null);
+  højre.appendChild(fsLav('div', 'bfTavleTekst' + (tekst ? '' : ' tom'), tekst || 'Her kommer din besked'));
+  const mærker = fsLav('div', 'bfTavleMaerker');
+  mærker.appendChild(fsLav('span', 'bfTavleMaerke ny', 'NY'));
+  if(vigtig) mærker.appendChild(fsLav('span', 'bfTavleMaerke vigtig', 'VIGTIGT'));
+  højre.appendChild(mærker);
+  række.appendChild(højre);
+  tavle.appendChild(række);
+  rod.appendChild(tavle);
+
+  rod.appendChild(fsLav('p', 'bfTavleHint', 'Beskeder med samme emne står sammen under overskriften.'));
 }
 
 // PC: "[Beboer]s aktive beskeder" med Ret/Slet, så man ikke skriver det samme to gange
