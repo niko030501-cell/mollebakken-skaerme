@@ -490,19 +490,24 @@
   .bfGrid{ display:grid; grid-template-columns:minmax(0, 1fr); gap:16px; grid-template-areas:"steps" "preview" "submit"; }
   .bfSteps{ grid-area:steps; display:flex; flex-direction:column; gap:14px; min-width:0; }
   .bfPreview{ grid-area:preview; min-width:0; }
-  .bfSubmit{ grid-area:submit; }
-  .bfAktive{ grid-area:aktive; display:none; min-width:0; }
-  @media (min-width:900px){
-    .bfGrid{ grid-template-columns:minmax(0, 1fr) 420px; grid-template-areas:"steps preview" "steps aktive" "submit aktive"; gap:20px 28px; align-items:start; }
-    .bfAktive{ display:flex; flex-direction:column; gap:12px; }
+  .bfSubmit{ grid-area:submit; display:flex; gap:8px; }
+  .bfSubmit .bsStorKnap{ flex:1 1 auto; width:auto; }
+  .bfAnnuller{ min-height:56px; padding:0 22px; border-radius:14px; background:#fff; color:#1F2A24; border:1.5px solid #1F2A24; font-size:18px; font-weight:800; }
+  .bfAktive{ display:none; min-width:0; }
+  @media (min-width:700px){
+    .bfGrid{ grid-template-columns:minmax(0, 1fr) 380px; grid-template-areas:"steps preview" "submit preview"; gap:16px 24px; align-items:start; }
+    .bfPreview{ position:sticky; top:96px; align-self:start; max-height:calc(100vh - 112px); overflow:auto; }
+    .bfAktive{ display:flex; flex-direction:column; gap:12px; margin-top:20px; }
   }
+  @media (min-width:900px){ .bfPreview{ top:16px; max-height:calc(100vh - 32px); } }
+  #beskedFormular{ padding-bottom:24px; }
   .bfSektion{ background:#fff; border:1px solid var(--ny-streg); border-radius:16px; padding:16px; }
   .bfSektion h4{ display:flex; align-items:center; gap:10px; margin:0 0 12px; font-size:18px; font-weight:800; }
   .bfNr{ width:28px; height:28px; border-radius:50%; background:var(--ny-sort); color:#fff; font-size:14px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
   .bfValgfri{ font-size:14px; font-weight:500; color:var(--ny-graa); }
   #beskedFormular input[type="text"], #beskedFormular input[type="date"], #beskedFormular input[type="time"], #beskedFormular textarea{ min-height:44px; width:100%; font-size:16px; border-radius:10px; }
   .bfChips{ display:flex; flex-wrap:wrap; gap:8px; }
-  .bfChip{ display:inline-flex; align-items:center; gap:10px; min-height:48px; padding:6px 16px 6px 8px; border-radius:24px; background:#F4F2EE; color:var(--ny-sort); border:2px solid transparent; font-size:16px; font-weight:700; }
+  .bfChip{ display:inline-flex; align-items:center; gap:10px; min-height:48px; padding:6px 18px 6px 14px; border-radius:24px; background:#F4F2EE; color:var(--ny-sort); border:2px solid transparent; font-size:16px; font-weight:700; }
   .bfChip.valgt{ background:var(--ny-sort); color:#fff; }
   .bfEmner{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
   @media (min-width:700px){ .bfEmner{ grid-template-columns:repeat(3, minmax(0, 1fr)); } }
@@ -522,11 +527,22 @@
   .bfVækKnap.valgt{ background:var(--ny-sort); color:#fff; }
   .bfVækNavn{ font-size:16px; font-weight:800; }
   .bfVækSub{ font-size:12px; font-weight:600; opacity:.8; }
-  .bfVigtig{ display:flex; align-items:center; gap:14px; min-height:44px; cursor:pointer; }
-  .bfVigtig input{ width:28px; height:28px; accent-color:var(--ny-orange); flex-shrink:0; }
-  .bfVigtigTekst{ display:flex; flex-direction:column; }
-  .bfVigtigTekst strong{ font-size:17px; }
-  .bfVigtigTekst small{ font-size:13px; color:var(--ny-graa); }
+  .bfVigtig{ display:flex; align-items:center; justify-content:space-between; gap:14px; min-height:56px; margin-top:12px; padding:0 4px; cursor:pointer; font-size:18px; font-weight:800; }
+  .bfVigtig input{ appearance:none; -webkit-appearance:none; position:relative; width:56px; height:32px; min-height:0 !important; border-radius:16px; background:#D5D0C3; border:0; flex-shrink:0; transition:background .15s; }
+  .bfVigtig input::after{ content:''; position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:#fff; transition:transform .15s; }
+  .bfVigtig input:checked{ background:#1F2A24; }
+  .bfVigtig input:checked::after{ transform:translateX(24px); }
+  .bfVigtig input:focus-visible{ outline:3px solid #F2B84B; outline-offset:2px; }
+  #beskedFormular textarea#beskedTitel{ min-height:112px; font-size:18px; line-height:1.4; }
+  .bfFlere{ background:#fff; border:1px solid var(--ny-streg); border-radius:16px; }
+  .bfFlere > summary{ display:flex; align-items:center; min-height:56px; padding:0 16px; font-size:18px; font-weight:800; cursor:pointer; list-style:none; }
+  .bfFlere > summary::-webkit-details-marker{ display:none; }
+  .bfFlere > summary::after{ content:'+'; margin-left:auto; font-size:26px; font-weight:600; }
+  .bfFlere[open] > summary::after{ content:'–'; }
+  .bfFlereIndhold{ padding:0 12px 12px; display:flex; flex-direction:column; gap:12px; }
+  .bfFlereIndhold .bfSektion{ border-radius:12px; }
+  .bfChip{ min-height:48px; }
+  .bfPrik{ width:16px; height:16px; border-radius:50%; flex:0 0 auto; }
   .bfForhaandTitel, .bfAktivTitel{ margin:0 0 10px; font-size:16px; font-weight:800; }
   .bfForhaand{ background:#EAE6DD; border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px; }
   .bfForhaand .fsRække{ grid-template-columns:1fr; }
@@ -1289,86 +1305,89 @@
         <div class="bfGrid">
           <div class="bfSteps">
             <section class="bfSektion">
-              <h4><span class="bfNr">1</span>Hvem handler det om?</h4>
+              <h4><span class="bfNr">1</span>Hvem gælder det?</h4>
               <div class="bfChips" id="bfHvem"></div>
             </section>
 
             <section class="bfSektion">
               <h4><span class="bfNr">2</span>Vælg emne</h4>
-              <div class="bfEmner" id="bfEmner" role="group" aria-label="Vælg emne"></div>
+              <div id="bfEmner" role="group" aria-label="Vælg emne"></div>
             </section>
 
             <section class="bfSektion">
-              <h4><span class="bfNr">3</span>Hvad drejer det sig om?</h4>
-              <div class="bfKategorier" id="bfKategorier"></div>
-            </section>
-
-            <section class="bfSektion">
-              <h4><span class="bfNr">4</span>Skriv kort</h4>
-              <div class="formRække">
-                <label for="beskedTitel">Titel</label>
-                <input id="beskedTitel" type="text" maxlength="80" autocomplete="off" oninput="opdaterBfForhaand()">
-              </div>
-              <div class="formRække">
-                <label for="beskedDetalje">Mere tekst (valgfrit)</label>
-                <textarea id="beskedDetalje" rows="3"></textarea>
-              </div>
-              <div class="formRække">
-                <label for="beskedAfsender">Dit navn (valgfrit)</label>
-                <input id="beskedAfsender" type="text" autocomplete="off">
-              </div>
-              <div class="formRække">
-                <label>Vedhæftning (valgfrit)</label>
-                <input id="beskedFil" type="file" style="display:none;"
-                       accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                       onchange="beskedFilValgt(this)">
-                <div>
-                  <button type="button" class="knap knapGuld" id="beskedFilKnap" onclick="document.getElementById('beskedFil').click()"><span data-ikon="vedhaeftning"></span>Vedhæft fil</button>
-                </div>
-                <div id="beskedFilValgt" class="beskedFilValgt" style="display:none;">
-                  <span id="beskedFilNavn"></span>
-                  <button type="button" class="knap knapLille knapFare" onclick="fjernBeskedFil()">Fjern</button>
-                </div>
-                <div id="beskedFilFejl" class="beskedFilFejl" style="display:none;"></div>
-                <span class="beskedMeta">PDF, JPG, PNG eller Word (.docx) · maks. 10 MB</span>
-              </div>
-            </section>
-
-            <section class="bfSektion">
-              <h4><span class="bfNr">5</span>Hvornår? <span class="bfValgfri">(valgfri)</span></h4>
-              <div class="bfDatoRække">
-                <input id="beskedDato" type="date" aria-label="Dato" onchange="bfÆndret()">
-                <input id="beskedTid" type="time" aria-label="Tidspunkt" onchange="bfÆndret()">
-                <button type="button" class="bsKnap" onclick="bfRydDato()">Ryd</button>
-              </div>
-            </section>
-
-            <section class="bfSektion">
-              <h4><span class="bfNr">6</span>Hvornår skal den væk fra tavlen?</h4>
-              <div class="bfVæk" id="bfVæk"></div>
-              <div class="bfDatoRække" id="bfVækDatoRække" hidden>
-                <input id="beskedVækDato" type="date" aria-label="Væk fra tavlen d." onchange="bfÆndret()">
-              </div>
-            </section>
-
-            <section class="bfSektion">
+              <h4><span class="bfNr">3</span>Skriv beskeden</h4>
+              <textarea id="beskedTitel" maxlength="240" rows="4" aria-label="Beskeden" oninput="opdaterBfForhaand()"></textarea>
               <label class="bfVigtig">
+                <span>Vigtig besked</span>
                 <input id="beskedVigtig" type="checkbox" onchange="opdaterBfForhaand()">
-                <span class="bfVigtigTekst"><strong>Marker som vigtig</strong><small>Bliver orange på tavlen</small></span>
               </label>
             </section>
+
+            <details class="bfFlere" id="bfFlere">
+              <summary>Flere valg</summary>
+              <div class="bfFlereIndhold">
+                <section class="bfSektion">
+                  <h4>Hvad drejer det sig om?</h4>
+                  <div class="bfKategorier" id="bfKategorier"></div>
+                </section>
+
+                <section class="bfSektion">
+                  <h4>Mere tekst og vedhæftning</h4>
+                  <div class="formRække">
+                    <label for="beskedDetalje">Mere tekst (valgfrit)</label>
+                    <textarea id="beskedDetalje" rows="3"></textarea>
+                  </div>
+                  <div class="formRække">
+                    <label for="beskedAfsender">Dit navn (valgfrit)</label>
+                    <input id="beskedAfsender" type="text" autocomplete="off">
+                  </div>
+                  <div class="formRække">
+                    <label>Vedhæftning (valgfrit)</label>
+                    <input id="beskedFil" type="file" style="display:none;"
+                           accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                           onchange="beskedFilValgt(this)">
+                    <div>
+                      <button type="button" class="knap knapGuld" id="beskedFilKnap" onclick="document.getElementById('beskedFil').click()"><span data-ikon="vedhaeftning"></span>Vedhæft fil</button>
+                    </div>
+                    <div id="beskedFilValgt" class="beskedFilValgt" style="display:none;">
+                      <span id="beskedFilNavn"></span>
+                      <button type="button" class="knap knapLille knapFare" onclick="fjernBeskedFil()">Fjern</button>
+                    </div>
+                    <div id="beskedFilFejl" class="beskedFilFejl" style="display:none;"></div>
+                    <span class="beskedMeta">PDF, JPG, PNG eller Word (.docx) · maks. 10 MB</span>
+                  </div>
+                </section>
+
+                <section class="bfSektion">
+                  <h4>Hvornår? <span class="bfValgfri">(valgfri)</span></h4>
+                  <div class="bfDatoRække">
+                    <input id="beskedDato" type="date" aria-label="Dato" onchange="bfÆndret()">
+                    <input id="beskedTid" type="time" aria-label="Tidspunkt" onchange="bfÆndret()">
+                    <button type="button" class="bsKnap" onclick="bfRydDato()">Ryd</button>
+                  </div>
+                </section>
+
+                <section class="bfSektion">
+                  <h4>Hvornår skal den væk fra tavlen?</h4>
+                  <div class="bfVæk" id="bfVæk"></div>
+                  <div class="bfDatoRække" id="bfVækDatoRække" hidden>
+                    <input id="beskedVækDato" type="date" aria-label="Væk fra tavlen d." onchange="bfÆndret()">
+                  </div>
+                </section>
+              </div>
+            </details>
           </div>
 
           <div class="bfPreview">
             <h4 class="bfForhaandTitel">Sådan ser den ud på tavlen</h4>
             <div id="bfForhaand" class="bfForhaand"></div>
+            <div class="bfAktive" id="bfAktive"></div>
           </div>
 
           <div class="bfSubmit">
-            <button type="button" class="bsStorKnap" id="beskedGemKnap" onclick="sendBesked()">Sæt på tavlen</button>
+            <button type="button" class="bsStorKnap" id="beskedGemKnap" onclick="sendBesked()">Gem besked</button>
+            <button type="button" class="bfAnnuller" onclick="beskedTilOversigt()">Annuller</button>
           </div>
-
-          <div class="bfAktive" id="bfAktive"></div>
         </div>
       </div>
     </div>
@@ -2948,7 +2967,8 @@ function nulstilBeskedForm(){
   document.getElementById('beskedVækDato').value = '';
   document.getElementById('beskedVigtig').checked = false;
   document.getElementById('beskedOverskrift').textContent = 'Ny besked';
-  document.getElementById('beskedGemKnap').textContent = 'Sæt på tavlen';
+  document.getElementById('beskedGemKnap').textContent = 'Gem besked';
+  document.getElementById('bfFlere').open = false;
   visFilFejl('');
   opdaterFilVisning();
   tegnBeskedForm();
@@ -2979,7 +2999,9 @@ function startRedigerBesked(b){
   }
 
   document.getElementById('beskedOverskrift').textContent = 'Ret besked';
-  document.getElementById('beskedGemKnap').textContent = 'Gem ændringer';
+  document.getElementById('beskedGemKnap').textContent = 'Gem besked';
+  // Flere valg åbnes, når beskeden har noget af det
+  document.getElementById('bfFlere').open = !!(b.detalje || b.afsender || b.fil_sti || b.hvornaar_dato || b.fjernes_efter || (b.kategori && b.kategori !== 'info'));
   opdaterFilVisning();
   tegnBeskedForm();
   beskedVis('form');
@@ -3002,13 +3024,9 @@ function tegnBfHvem(){
     const knap = fsLav('button', 'bfChip' + (valgt ? ' valgt' : ''));
     knap.type = 'button';
     knap.setAttribute('aria-pressed', valgt ? 'true' : 'false');
-    if(navn === 'Huset'){
-      const ikon = fsLav('span', 'fsCirkel bfHusCirkel');
-      ikon.appendChild(moelleIkon('forside', { stoerrelse: 18 }));
-      knap.appendChild(ikon);
-    } else {
-      knap.appendChild(fsBeboerCirkel(navn));
-    }
+    const prik = fsLav('span', 'bfPrik');
+    prik.style.background = beskedFarveFor(navn);
+    knap.appendChild(prik);
     knap.appendChild(fsLav('span', null, navn));
     knap.addEventListener('click', () => {
       const i = bfHvem.indexOf(navn);
@@ -3031,23 +3049,11 @@ function hexTilLys(hex){
 function tegnBfEmner(){
   const rod = document.getElementById('bfEmner');
   rod.textContent = '';
-  BESKED_EMNER.forEach(e => {
-    const valgt = bfEmne === e.id;
-    const knap = fsLav('button', 'bfEmne' + (valgt ? ' valgt' : ''));
-    knap.type = 'button';
-    knap.style.background = hexTilLys(e.staerk);
-    knap.setAttribute('aria-pressed', valgt ? 'true' : 'false');
-    const firkant = fsLav('span', 'bfEmneFirkant');
-    firkant.style.background = e.staerk;
-    firkant.appendChild(emneIkon(e.id, 28, '#FFFFFF'));
-    knap.appendChild(firkant);
-    knap.appendChild(fsLav('span', 'bfEmneNavn', e.navn));
-    knap.addEventListener('click', () => {
-      bfEmne = e.id;
-      tegnBfEmner();
-    });
-    rod.appendChild(knap);
-  });
+  rod.appendChild(lavEmneKnapper(bfEmne, id => {
+    bfEmne = id;
+    tegnBfEmner();
+    opdaterBfForhaand();
+  }));
 }
 
 function tegnBfKategorier(){
@@ -3196,7 +3202,7 @@ async function sendBesked(){
 
   if(bfHvem.length === 0){ visToast('Vælg, hvem det handler om'); return; }
   if(!bfEmne){ visToast('Vælg et emne'); return; }
-  if(!titel){ visToast('Skriv en kort titel'); return; }
+  if(!titel){ visToast('Skriv beskeden'); return; }
   if(tid && !dato){ visToast('Vælg også en dato til tidspunktet'); return; }
   if(bfVæk === 'dato' && !document.getElementById('beskedVækDato').value){ visToast('Vælg, hvilken dato beskeden skal væk'); return; }
 
@@ -3284,7 +3290,7 @@ async function sendBesked(){
   } finally {
     gemmerBesked = false;
     gemKnap.disabled = false;
-    gemKnap.textContent = redigerId ? 'Gem ændringer' : 'Sæt på tavlen';
+    gemKnap.textContent = 'Gem besked';
   }
 }
 
