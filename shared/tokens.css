@@ -11,6 +11,7 @@
 
 :root{
   color-scheme: light;  /* beder browseren lade være med at "nattetema"-invertere siden */
+  --font-sans:  'Archivo', sans-serif;  /* én skrift, skiftes her */
 
   --papir:      #eef1ee;  /* skærmbaggrund */
   --flade:      #e3e8e3;  /* sekundær flade, fx rollekort */
