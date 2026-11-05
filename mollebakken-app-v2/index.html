@@ -429,16 +429,53 @@
     flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:0 14px;
     border-radius:10px; background:#fff; color:var(--ny-sort); border:1.5px solid var(--ny-sort); font-size:15px; font-weight:700;
   }
-  .bsFilterRække{ margin-bottom:12px; }
-  .bsFilter{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 16px; border-radius:22px; background:#fff; color:var(--ny-sort); border:1.5px solid var(--ny-sort); font-size:15px; font-weight:800; }
-  .bsFilter[aria-pressed="true"]{ background:var(--ny-sort); color:#fff; }
-  .bsEmneMaerke{ display:inline-flex; align-items:center; gap:8px; min-height:44px; align-self:flex-start; max-width:100%; padding:4px 14px 4px 5px; border-radius:12px; border:2px solid transparent; color:#fff; font-size:14px; font-weight:800; text-align:left; }
-  .bsEmneMaerke .bfEmneFirkant{ width:34px; height:34px; border-radius:10px; background:rgba(255,255,255,.22); }
-  .bsEmneMaerke[aria-expanded="true"]{ border-color:var(--ny-sort); }
-  .bfEmner.bsEmneValg{ margin-top:2px; grid-template-columns:repeat(2, minmax(0, 1fr)); }
-  .bsEmneValg .bfEmne{ flex-direction:row; justify-content:flex-start; text-align:left; min-height:52px; padding:6px; border-width:3px; }
-  .bsEmneValg .bfEmneFirkant{ width:38px; height:38px; }
-  .bsEmneValg .bfEmneNavn{ font-size:15px; }
+  /* Beskeder (oversigt): kompakte rækker, filter og to visninger */
+  .bvHoved{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 12px; }
+  .bvHoved h2{ margin:0; font-size:30px; font-weight:800; color:#1F2A24; }
+  .bvAntalI{ font-size:16px; color:#6B7075; }
+  .bvVisning{ display:flex; gap:8px; margin-bottom:10px; }
+  .bvVisKnap{ flex:1 1 0; min-height:44px; border-radius:22px; background:#fff; border:1.5px solid #E6E0D2; color:#1F2A24; font-size:16px; font-weight:800; }
+  .bvVisKnap[aria-pressed="true"]{ background:#1F2A24; border-color:#1F2A24; color:#fff; }
+  .bvFilter{ display:flex; gap:8px; overflow-x:auto; margin:0 -20px 6px; padding:2px 20px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .bvFilter::-webkit-scrollbar{ display:none; }
+  .bvFilterKnap{ flex:0 0 auto; display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 16px; border-radius:22px; background:#fff; border:1.5px solid #E6E0D2; color:#1F2A24; font-size:16px; font-weight:800; white-space:nowrap; }
+  .bvFilterKnap[aria-pressed="true"]{ background:#1F2A24; border-color:#1F2A24; color:#fff; }
+  .bvFilterKnap .bvAntal{ font-weight:600; opacity:.7; }
+  .bvPrik{ width:14px; height:14px; border-radius:50%; flex:0 0 auto; }
+  .bvListe{ padding-bottom:170px; }
+  .bvGruppe{ margin-bottom:10px; }
+  .bvGruppeHoved{ position:sticky; top:var(--bvTop, 0px); z-index:5; display:flex; align-items:center; gap:10px; padding:8px 0; background:var(--f-baggrund); }
+  .bvGruppeIkon{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; flex:0 0 auto; }
+  .bvGruppeIkon.rund{ border-radius:50%; font-size:16px; font-weight:800; }
+  .bvGruppeNavn{ margin:0; flex:1; min-width:0; font-size:21px; font-weight:800; color:#1F2A24; }
+  .bvGruppeAntal{ min-width:28px; height:28px; padding:0 8px; border-radius:14px; background:#EFE9DA; color:#1F2A24; font-size:14px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
+  .bvRække{ background:#fff; border:1px solid #E6E0D2; border-radius:18px; margin-bottom:8px; }
+  .bvRække.åben{ border-color:#1F2A24; box-shadow:0 0 0 1px #1F2A24; }
+  .bvRækkeKnap{ display:flex; align-items:flex-start; gap:12px; width:100%; min-height:44px; padding:12px; text-align:left; background:none; color:#1F2A24; border-radius:18px; }
+  .bvIkon{ width:44px; height:44px; border-radius:14px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .bvTekstDel{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+  .bvTekst{ font-size:17px; font-weight:600; line-height:1.3; overflow-wrap:anywhere; }
+  .bvMeta{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; font-size:14px; line-height:1.3; }
+  .bvLinjeNavn{ font-weight:800; }
+  .bvStatus{ display:inline-flex; align-items:center; gap:4px; color:#555; }
+  .bvTid{ font-weight:700; color:#555; }
+  .bvVigtigt{ background:#F2B84B; color:#2A1D00; font-size:12px; font-weight:800; letter-spacing:.06em; padding:2px 8px; border-radius:6px; }
+  .bvDetaljer{ padding:0 12px 12px; display:flex; flex-direction:column; gap:10px; }
+  .bvDetalje{ font-size:16px; line-height:1.4; overflow-wrap:anywhere; }
+  .bvAfsender{ font-size:14px; color:#555; }
+  .bvHandlinger{ display:flex; gap:8px; }
+  .bvHandling{ flex:1 1 0; min-width:0; min-height:48px; border-radius:12px; background:#fff; border:1.5px solid #1F2A24; color:#1F2A24; font-size:16px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+  .bvHandling.slet{ border-color:#B42318; color:#B42318; }
+  .bvHandling.farlig{ background:#B42318; border-color:#B42318; color:#fff; }
+  .bvSpoerg{ padding:14px 12px 12px; display:flex; flex-direction:column; gap:10px; }
+  .bvSpoergTitel{ font-size:18px; font-weight:800; color:#B42318; }
+  .bvFab{ position:fixed; right:16px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:900; display:inline-flex; align-items:center; gap:8px; min-height:56px; padding:0 22px; border-radius:28px; background:#1F2A24; color:#fff; font-size:18px; font-weight:800; box-shadow:0 6px 18px rgba(31, 42, 36, .3); }
+  @media (min-width:900px){ .bvFab{ bottom:24px; } }
+  #bvArkBaggrund{ position:fixed; inset:0; background:rgba(0, 0, 0, .4); z-index:1100; }
+  #bvArk{ position:fixed; left:0; right:0; bottom:0; z-index:1101; max-width:560px; margin:0 auto; max-height:88vh; overflow:auto; background:#fff; border-radius:22px 22px 0 0; padding:16px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .bvArkHoved{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+  .bvArkHoved h3{ margin:0; font-size:20px; font-weight:800; }
+  .bvArkLuk{ min-height:44px; padding:0 16px; border-radius:22px; background:#F4F2EE; color:#1F2A24; font-size:16px; font-weight:700; }
   .bsKnap.slet{ background:var(--ny-roed-lys); color:var(--ny-roed); border-color:var(--ny-roed); }
   .bsRække.spoerger .bsKnap.slet{ background:var(--ny-roed); color:#fff; }
   .bsStorKnap{
@@ -467,13 +504,13 @@
   .bfChips{ display:flex; flex-wrap:wrap; gap:8px; }
   .bfChip{ display:inline-flex; align-items:center; gap:10px; min-height:48px; padding:6px 16px 6px 8px; border-radius:24px; background:#F4F2EE; color:var(--ny-sort); border:2px solid transparent; font-size:16px; font-weight:700; }
   .bfChip.valgt{ background:var(--ny-sort); color:#fff; }
-  .bfEmner{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
-  .bfEmne{ display:flex; align-items:center; gap:8px; min-height:64px; padding:8px; border-radius:16px; border:4px solid transparent; text-align:left; font-size:16px; font-weight:800; color:#1F2A24; min-width:0; }
-  .bfEmneFirkant{ width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .bfEmner{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+  @media (min-width:700px){ .bfEmner{ grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+  .bfEmner.to{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .bfEmne{ display:flex; align-items:center; gap:10px; min-height:56px; padding:8px; border-radius:16px; border:3px solid transparent; text-align:left; font-size:16px; font-weight:800; color:#1F2A24; min-width:0; }
+  .bfEmneFirkant{ width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .bfEmneNavn{ min-width:0; overflow-wrap:anywhere; line-height:1.15; }
   .bfEmne.valgt{ border-color:#1F2A24; }
-  @media (min-width:900px){ .bfEmneNavn{ font-size:21px; } }
-  @media (max-width:420px){ .bfEmne{ flex-direction:column; justify-content:center; text-align:center; padding:8px 4px; } .bfEmneNavn{ font-size:14px; } }
   .bfKategorier{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
   .bfKategori{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:76px; padding:8px 4px; border-radius:12px; background:#F4F2EE; color:var(--ny-sort); font-size:13px; font-weight:700; border:2px solid transparent; }
   .bfKategori.valgt{ background:var(--ny-sort); color:#fff; }
@@ -1233,9 +1270,13 @@
     <div id="opgaverBesked">
       <!-- Oversigt: beskeder pr. beboer (og Huset) med Ret/Slet -->
       <div id="beskedOversigt">
-        <div class="bsFilterRække"><button type="button" id="beskedFilterAndet" class="bsFilter" aria-pressed="false" onclick="beskedToggleAndet()"></button></div>
-        <div id="beskederListe" class="bsGitter"><div class="loading">Henter beskeder...</div></div>
-        <button type="button" class="bsStorKnap" onclick="beskedNy()"><span data-ikon="plus" data-storrelse="24"></span>Ny besked</button>
+        <div class="bvHoved"><h2>Beskeder</h2><span class="bvAntalI" id="bvAntalI"></span></div>
+        <div class="bvVisning" id="bvVisning" role="group" aria-label="Visning"></div>
+        <div class="bvFilter" id="bvFilter" role="group" aria-label="Filter"></div>
+        <div id="beskederListe" class="bvListe"><div class="loading">Henter beskeder...</div></div>
+        <button type="button" class="bvFab" onclick="beskedNy()"><span data-ikon="plus" data-storrelse="24"></span>Skriv besked</button>
+        <div id="bvArkBaggrund" onclick="lukEmneArk()" hidden></div>
+        <div id="bvArk" role="dialog" aria-modal="true" aria-label="Vælg emne" hidden></div>
       </div>
 
       <!-- Ny besked / Ret besked: trin 1-5 på én side -->
@@ -3279,14 +3320,10 @@ function hentBeskederData(){
 }
 
 // Aktive, ikke-udløbne beskeder til en beboer (eller 'Huset'), vigtige først
-let beskedKunAndet = false;    // filter "Vis kun Andet"
-let beskedEmneÅbenId = null;   // besked hvis emne-liste er åben
-
 function beskedRækkerFor(navn, nu){
   const ud = [];
   Object.keys(beskedCache).forEach(id => {
     const b = beskedCache[id];
-    if(beskedKunAndet && emneFind(b.emne).id !== 'andet') return;
     const v = beskedTilVisning(b, nu);
     if(v && v.beboere.indexOf(navn) !== -1) ud.push({ b: b, v: v });
   });
@@ -3299,6 +3336,7 @@ function beskedVækTekst(v){
   return 'Væk ' + bfDatoTekst(new Date(v.fjernesEfter));
 }
 
+// Fælles knap (bruges også af Dagsplan og Madplan)
 function beskedKnap(tekst, ikon, klasse, handler){
   const knap = fsLav('button', 'bsKnap' + (klasse ? ' ' + klasse : ''));
   knap.type = 'button';
@@ -3313,50 +3351,295 @@ function beskedGenTegn(){
   opdaterBfAktive();
 }
 
-// Emne-mærke (samme farve, ikon og navn som på infoskærmen). Tryk åbner de 9 emner; ét tryk vælger og gemmer.
-function lavEmneMaerke(b){
-  const e = emneFind(b.emne);
-  const knap = fsLav('button', 'bsEmneMaerke');
-  knap.type = 'button';
-  knap.style.background = e.staerk;
-  knap.setAttribute('aria-label', 'Emne: ' + e.navn + '. Tryk for at ændre');
-  knap.setAttribute('aria-expanded', beskedEmneÅbenId === b.id ? 'true' : 'false');
-  const firkant = fsLav('span', 'bfEmneFirkant');
-  firkant.appendChild(emneIkon(e.id, 20, '#FFFFFF'));
-  knap.appendChild(firkant);
-  knap.appendChild(fsLav('span', null, e.navn));
-  knap.addEventListener('click', () => {
-    beskedEmneÅbenId = beskedEmneÅbenId === b.id ? null : b.id;
-    beskedGenTegn();
+// ---- Oversigt: to visninger (efter borger / efter emne), filter og kompakte rækker ----
+const BESKED_VISNING_NOEGLE = 'beskedVisning';
+let beskedVisning = 'borger';
+try{ if(localStorage.getItem(BESKED_VISNING_NOEGLE) === 'emne') beskedVisning = 'emne'; }catch(e){ /* uden lagring virker siden stadig */ }
+let beskedFilter = 'alle';     // 'alle', et borgernavn eller et emne-id
+let beskedÅbenId = null;       // kun én besked er åben ad gangen
+let beskedArkBesked = null;    // besked hvis emne-panel er åbent
+
+function beskedEmneId(b){
+  return emneFind(b.emne).id;
+}
+
+function beskedAlle(nu){
+  const ud = [];
+  Object.keys(beskedCache).forEach(id => {
+    const b = beskedCache[id];
+    const v = beskedTilVisning(b, nu);
+    if(v) ud.push({ b: b, v: v });
   });
+  ud.sort((x, y) => (y.v.vigtig - x.v.vigtig) || (y.v.oprettet - x.v.oprettet));
+  return ud;
+}
+
+// Grupper med mindst én besked. En besked til flere borgere står under hver af dem.
+function beskedGrupper(liste, visning){
+  const grupper = [];
+  if(visning === 'emne'){
+    BESKED_EMNER.forEach(e => grupper.push({ nøgle: e.id, navn: e.navn, emne: e, rækker: [] }));
+    liste.forEach(r => {
+      grupper.find(g => g.nøgle === beskedEmneId(r.b)).rækker.push(r);
+    });
+  } else {
+    beboereListe.map(b => b.navn).concat(['Huset']).forEach(n => grupper.push({ nøgle: n, navn: n, emne: null, rækker: [] }));
+    liste.forEach(r => {
+      r.v.beboere.forEach(n => {
+        let g = grupper.find(x => x.nøgle === n);
+        if(!g){ g = { nøgle: n, navn: n, emne: null, rækker: [] }; grupper.push(g); }
+        g.rækker.push(r);
+      });
+    });
+  }
+  return grupper.filter(g => g.rækker.length > 0);
+}
+
+function beskedFarveFor(navn){
+  return navn === 'Huset' ? '#C2410C' : farveForBeboer(navn);
+}
+
+function tegnBeskedVisning(){
+  const rod = document.getElementById('bvVisning');
+  rod.textContent = '';
+  [['borger', 'Efter borger'], ['emne', 'Efter emne']].forEach(p => {
+    const knap = fsLav('button', 'bvVisKnap', p[1]);
+    knap.type = 'button';
+    knap.setAttribute('aria-pressed', beskedVisning === p[0] ? 'true' : 'false');
+    knap.addEventListener('click', () => {
+      if(beskedVisning === p[0]) return;
+      beskedVisning = p[0];
+      beskedFilter = 'alle';
+      beskedÅbenId = null;
+      try{ localStorage.setItem(BESKED_VISNING_NOEGLE, p[0]); }catch(e){ /* ikke et problem */ }
+      beskedGenTegn();
+    });
+    rod.appendChild(knap);
+  });
+}
+
+function tegnBeskedFilter(antalAlle, grupper){
+  const rod = document.getElementById('bvFilter');
+  rod.textContent = '';
+  const lav = (nøgle, navn, antal, pynt) => {
+    const knap = fsLav('button', 'bvFilterKnap');
+    knap.type = 'button';
+    const valgt = beskedFilter === nøgle;
+    knap.setAttribute('aria-pressed', valgt ? 'true' : 'false');
+    if(pynt) knap.appendChild(pynt(valgt));
+    knap.appendChild(fsLav('span', null, navn));
+    knap.appendChild(fsLav('span', 'bvAntal', String(antal)));
+    knap.addEventListener('click', () => { beskedFilter = nøgle; beskedÅbenId = null; beskedGenTegn(); });
+    rod.appendChild(knap);
+  };
+  lav('alle', 'Alle', antalAlle, null);
+  grupper.forEach(g => {
+    if(g.emne){
+      lav(g.nøgle, g.navn, g.rækker.length, valgt => emneIkon(g.emne.id, 20, valgt ? g.emne.lys : g.emne.staerk));
+    } else {
+      lav(g.nøgle, g.navn, g.rækker.length, () => {
+        const prik = fsLav('span', 'bvPrik');
+        prik.style.background = beskedFarveFor(g.nøgle);
+        return prik;
+      });
+    }
+  });
+}
+
+// Linjen under teksten: emnets navn (efter borger) eller borgerens fornavn (efter emne)
+function lavBeskedLinje(b, v, linje){
+  const meta = fsLav('span', 'bvMeta');
+  if(linje === 'emne'){
+    const e = emneFind(b.emne);
+    const navn = fsLav('span', 'bvLinjeNavn', e.navn);
+    navn.style.color = e.staerk;
+    meta.appendChild(navn);
+  } else {
+    const navne = fsLav('span', 'bvLinjeNavn');
+    v.beboere.forEach((n, i) => {
+      if(i > 0) navne.appendChild(document.createTextNode(', '));
+      const del = fsLav('span', null, n);
+      del.style.color = beskedFarveFor(n);
+      navne.appendChild(del);
+    });
+    meta.appendChild(navne);
+  }
+  const væk = beskedVækTekst(v);
+  const status = fsLav('span', 'bvStatus');
+  status.appendChild(moelleIkon(væk ? 'ur' : 'pin', { stoerrelse: 16, streg: 2 }));
+  status.appendChild(document.createTextNode(væk || 'Bliver stående'));
+  meta.appendChild(status);
+  if(v.tid) meta.appendChild(fsLav('span', 'bvTid', v.tid));
+  if(v.vigtig) meta.appendChild(fsLav('span', 'bvVigtigt', 'VIGTIGT'));
+  return meta;
+}
+
+function lavBeskedHandling(tekst, ikon, klasse, handler){
+  const knap = fsLav('button', 'bvHandling' + (klasse ? ' ' + klasse : ''));
+  knap.type = 'button';
+  knap.appendChild(moelleIkon(ikon, { stoerrelse: 20, streg: 2 }));
+  knap.appendChild(fsLav('span', null, tekst));
+  knap.addEventListener('click', handler);
   return knap;
 }
 
-function lavEmneValg(b){
-  const rod = fsLav('div', 'bfEmner bsEmneValg');
+// Én besked: en række, der åbner/lukker handlinger. Slet spørger altid først.
+function lavBeskedRække(b, v, linje){
+  const e = emneFind(b.emne);
+  const åben = beskedÅbenId === b.id;
+  const række = fsLav('div', 'bvRække' + (åben ? ' åben' : ''));
+
+  if(beskedSletId === b.id){
+    const spørg = fsLav('div', 'bvSpoerg');
+    spørg.appendChild(fsLav('div', 'bvSpoergTitel', 'Slet beskeden?'));
+    spørg.appendChild(fsLav('div', 'bvTekst', v.titel));
+    if(v.beboere.length > 1) spørg.appendChild(fsLav('div', 'bvAfsender', 'Gælder alle ' + v.beboere.length + ' valgte'));
+    const knapper = fsLav('div', 'bvHandlinger');
+    knapper.appendChild(lavBeskedHandling('Annuller', 'luk', '', () => { beskedSletId = null; beskedGenTegn(); }));
+    knapper.appendChild(lavBeskedHandling('Slet', 'slet', 'farlig', () => skjulBesked(b.id, b.fil_sti)));
+    spørg.appendChild(knapper);
+    række.appendChild(spørg);
+    return række;
+  }
+
+  const knap = fsLav('button', 'bvRækkeKnap');
+  knap.type = 'button';
+  knap.dataset.beskedId = b.id;
+  knap.setAttribute('aria-expanded', åben ? 'true' : 'false');
+  const ikon = fsLav('span', 'bvIkon');
+  ikon.style.background = e.staerk;
+  ikon.appendChild(emneIkon(e.id, 26, '#FFFFFF'));
+  knap.appendChild(ikon);
+  const del = fsLav('span', 'bvTekstDel');
+  del.appendChild(fsLav('span', 'bvTekst', v.titel));
+  del.appendChild(lavBeskedLinje(b, v, linje));
+  knap.appendChild(del);
+  knap.addEventListener('click', () => {
+    beskedÅbenId = åben ? null : b.id;
+    beskedSletId = null;
+    beskedGenTegn();
+    const ny = document.querySelector('.bvRækkeKnap[data-besked-id="' + b.id + '"]');
+    if(ny) ny.focus({ preventScroll: true });
+  });
+  række.appendChild(knap);
+
+  if(åben){
+    const detaljer = fsLav('div', 'bvDetaljer');
+    if(b.detalje) detaljer.appendChild(fsLav('div', 'bvDetalje', b.detalje));
+    if(b.afsender) detaljer.appendChild(fsLav('div', 'bvAfsender', 'Fra ' + b.afsender));
+    if(v.fil){
+      const fil = fsLav('button', 'bsFil');
+      fil.type = 'button';
+      fil.appendChild(moelleIkon('vedhaeftning', { stoerrelse: 18 }));
+      fil.appendChild(fsLav('span', null, b.fil_navn || 'Vedhæftet fil'));
+      fil.addEventListener('click', () => åbnBeskedFil(b.id));
+      detaljer.appendChild(fil);
+    }
+    const knapper = fsLav('div', 'bvHandlinger');
+    knapper.appendChild(lavBeskedHandling('Ret', 'rediger', '', () => startRedigerBesked(b)));
+    knapper.appendChild(lavBeskedHandling('Emne', 'maerkat', '', () => åbnEmneArk(b)));
+    knapper.appendChild(lavBeskedHandling('Slet', 'slet', 'slet', () => { beskedSletId = b.id; beskedGenTegn(); }));
+    detaljer.appendChild(knapper);
+    række.appendChild(detaljer);
+  }
+  return række;
+}
+
+function tegnBeskedOversigt(){
+  const container = document.getElementById('beskederListe');
+  container.textContent = '';
+  const nu = new Date();
+  const liste = beskedAlle(nu);
+  const grupper = beskedGrupper(liste, beskedVisning);
+  if(beskedFilter !== 'alle' && !grupper.some(g => g.nøgle === beskedFilter)) beskedFilter = 'alle';
+
+  document.getElementById('bvAntalI').textContent = liste.length + ' i alt';
+  tegnBeskedVisning();
+  tegnBeskedFilter(liste.length, grupper);
+
+  // overskrifterne bliver stående lige under den faste topstribe (Normal/Admin)
+  const top = document.getElementById('topStribe');
+  container.style.setProperty('--bvTop', (top ? top.offsetHeight : 0) + 'px');
+
+  if(liste.length === 0){
+    container.appendChild(fsLav('div', 'fsIngen', 'Ingen beskeder endnu'));
+    return;
+  }
+  grupper.filter(g => beskedFilter === 'alle' || g.nøgle === beskedFilter).forEach(g => {
+    const sek = fsLav('section', 'bvGruppe');
+    const hoved = fsLav('div', 'bvGruppeHoved');
+    if(g.emne){
+      const ikon = fsLav('span', 'bvGruppeIkon');
+      ikon.style.background = g.emne.staerk;
+      ikon.appendChild(emneIkon(g.emne.id, 20, '#FFFFFF'));
+      hoved.appendChild(ikon);
+    } else {
+      const cirkel = fsLav('span', 'bvGruppeIkon rund');
+      cirkel.style.background = beskedFarveFor(g.nøgle);
+      if(g.nøgle === 'Huset') cirkel.appendChild(moelleIkon('forside', { stoerrelse: 18, streg: 2 }));
+      else cirkel.textContent = g.nøgle.charAt(0).toUpperCase();
+      hoved.appendChild(cirkel);
+    }
+    hoved.appendChild(fsLav('h3', 'bvGruppeNavn', g.navn));
+    hoved.appendChild(fsLav('span', 'bvGruppeAntal', String(g.rækker.length)));
+    sek.appendChild(hoved);
+    g.rækker.forEach(r => sek.appendChild(lavBeskedRække(r.b, r.v, beskedVisning === 'emne' ? 'borger' : 'emne')));
+    container.appendChild(sek);
+  });
+}
+
+// ---- Emne-panel (åbner nedefra): ét tryk vælger og gemmer ----
+function lavEmneKnapper(valgtId, vælg){
+  const rod = fsLav('div', 'bfEmner');
   rod.setAttribute('role', 'group');
   rod.setAttribute('aria-label', 'Vælg emne');
-  const nu = emneFind(b.emne).id;
   BESKED_EMNER.forEach(e => {
-    const knap = fsLav('button', 'bfEmne' + (nu === e.id ? ' valgt' : ''));
+    const valgt = valgtId === e.id;
+    const knap = fsLav('button', 'bfEmne' + (valgt ? ' valgt' : ''));
     knap.type = 'button';
     knap.style.background = hexTilLys(e.staerk);
-    knap.setAttribute('aria-pressed', nu === e.id ? 'true' : 'false');
+    knap.setAttribute('aria-pressed', valgt ? 'true' : 'false');
     const firkant = fsLav('span', 'bfEmneFirkant');
     firkant.style.background = e.staerk;
-    firkant.appendChild(emneIkon(e.id, 28, '#FFFFFF'));
+    firkant.appendChild(emneIkon(e.id, 24, '#FFFFFF'));
     knap.appendChild(firkant);
     knap.appendChild(fsLav('span', 'bfEmneNavn', e.navn));
-    knap.addEventListener('click', () => sætBeskedEmne(b, e.id));
+    knap.addEventListener('click', () => vælg(e.id));
     rod.appendChild(knap);
   });
   return rod;
 }
 
+function åbnEmneArk(b){
+  beskedArkBesked = b;
+  const ark = document.getElementById('bvArk');
+  ark.textContent = '';
+  const hoved = fsLav('div', 'bvArkHoved');
+  hoved.appendChild(fsLav('h3', null, 'Vælg emne'));
+  const luk = fsLav('button', 'bvArkLuk', 'Luk');
+  luk.type = 'button';
+  luk.addEventListener('click', lukEmneArk);
+  hoved.appendChild(luk);
+  ark.appendChild(hoved);
+  const rod = lavEmneKnapper(emneFind(b.emne).id, nyt => sætBeskedEmne(b, nyt));
+  rod.classList.add('to');
+  ark.appendChild(rod);
+  document.getElementById('bvArkBaggrund').hidden = false;
+  ark.hidden = false;
+}
+
+function lukEmneArk(){
+  beskedArkBesked = null;
+  document.getElementById('bvArkBaggrund').hidden = true;
+  document.getElementById('bvArk').hidden = true;
+}
+
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && beskedArkBesked) lukEmneArk(); });
+
 // Gemmer med det samme ved ét tryk; ved fejl rulles visningen tilbage.
 async function sætBeskedEmne(b, nyt){
-  beskedEmneÅbenId = null;
-  if(emneFind(b.emne).id === nyt){ beskedGenTegn(); return; }
+  lukEmneArk();
+  if(emneFind(b.emne).id === nyt) return;
   const gammelt = b.emne;
   b.emne = nyt;
   beskedGenTegn();
@@ -3369,103 +3652,6 @@ async function sætBeskedEmne(b, nyt){
     return;
   }
   visToast('Emne: ' + emneFind(nyt).navn);
-}
-
-function beskedToggleAndet(){
-  beskedKunAndet = !beskedKunAndet;
-  beskedEmneÅbenId = null;
-  beskedGenTegn();
-}
-
-// Én besked: titel, mærker (tid, NY, hvornår den forsvinder), Ret og Slet. Slet spørger først.
-function lavBeskedRække(b, v){
-  const række = fsLav('div', 'bsRække' + (v.vigtig ? ' vigtig' : ''));
-
-  if(beskedSletId === b.id){
-    række.classList.add('spoerger');
-    const antal = v.beboere.length > 1 ? ' (gælder alle ' + v.beboere.length + ' valgte)' : '';
-    række.appendChild(fsLav('div', 'bsSpoerg', 'Slet "' + v.titel + '"?' + antal));
-    const knapper = fsLav('div', 'bsKnapper');
-    knapper.appendChild(beskedKnap('Fortryd', null, '', () => { beskedSletId = null; beskedGenTegn(); }));
-    knapper.appendChild(beskedKnap('Ja, slet', 'slet', 'slet', () => skjulBesked(b.id, b.fil_sti)));
-    række.appendChild(knapper);
-    return række;
-  }
-
-  const top = fsLav('div', 'bsTop');
-  const ikon = fsLav('span', 'fsChipIkon');
-  ikon.appendChild(beskedKategoriIkon(v.kategori, 22));
-  top.appendChild(ikon);
-  top.appendChild(fsLav('span', 'bsTitel', v.titel));
-  række.appendChild(top);
-
-  række.appendChild(lavEmneMaerke(b));
-  if(beskedEmneÅbenId === b.id) række.appendChild(lavEmneValg(b));
-
-  if(b.detalje) række.appendChild(fsLav('div', 'bsDetalje', b.detalje));
-
-  const meta = fsLav('div', 'bsMeta');
-  if(v.tid) meta.appendChild(fsLav('span', 'fsTid', v.tid));
-  if(v.ny) meta.appendChild(fsLav('span', 'fsNy', 'NY'));
-  const væk = beskedVækTekst(v);
-  meta.appendChild(fsLav('span', 'bsVæk', væk || 'FAST INFO · Bliver stående'));
-  if(b.afsender) meta.appendChild(fsLav('span', 'bsAfsender', b.afsender));
-  række.appendChild(meta);
-
-  if(v.fil){
-    const fil = fsLav('button', 'bsFil');
-    fil.type = 'button';
-    fil.appendChild(moelleIkon('vedhaeftning', { stoerrelse: 18 }));
-    fil.appendChild(fsLav('span', null, b.fil_navn || 'Vedhæftet fil'));
-    fil.addEventListener('click', () => åbnBeskedFil(b.id));
-    række.appendChild(fil);
-  }
-
-  const knapper = fsLav('div', 'bsKnapper');
-  knapper.appendChild(beskedKnap('Ret', 'rediger', '', () => startRedigerBesked(b)));
-  knapper.appendChild(beskedKnap('Slet', 'slet', 'slet', () => { beskedSletId = b.id; beskedGenTegn(); }));
-  række.appendChild(knapper);
-  return række;
-}
-
-function tegnBeskedOversigt(){
-  const container = document.getElementById('beskederListe');
-  container.textContent = '';
-  const nu = new Date();
-  const grupper = beboereListe.map(b => b.navn).concat(['Huset']);
-
-  // Filterknappen: antal aktive, ikke-udløbne beskeder der stadig står i Andet (hver besked tælles én gang)
-  let antalAndet = 0;
-  Object.keys(beskedCache).forEach(id => {
-    const b = beskedCache[id];
-    if(emneFind(b.emne).id === 'andet' && beskedTilVisning(b, nu)) antalAndet++;
-  });
-  const filterKnap = document.getElementById('beskedFilterAndet');
-  filterKnap.textContent = beskedKunAndet ? 'Viser kun Andet (' + antalAndet + ') · Vis alle' : 'Vis kun Andet (' + antalAndet + ')';
-  filterKnap.setAttribute('aria-pressed', beskedKunAndet ? 'true' : 'false');
-
-  let antalKort = 0;
-  grupper.forEach(navn => {
-    const rækker = beskedRækkerFor(navn, nu);
-    if(beskedKunAndet && rækker.length === 0) return;
-    antalKort++;
-    const kort = fsLav('section', 'bsKort' + (navn === 'Huset' ? ' huset' : ''));
-    const hoved = fsLav('div', 'bsHoved');
-    if(navn === 'Huset'){
-      const cirkel = fsLav('span', 'fsCirkel bfHusCirkel');
-      cirkel.appendChild(moelleIkon('forside', { stoerrelse: 18 }));
-      hoved.appendChild(cirkel);
-    } else {
-      hoved.appendChild(fsBeboerCirkel(navn));
-    }
-    hoved.appendChild(fsLav('h3', 'bsNavn', navn));
-    hoved.appendChild(fsLav('span', 'bsAntal', String(rækker.length)));
-    kort.appendChild(hoved);
-    if(rækker.length === 0) kort.appendChild(fsLav('div', 'fsIngen', 'Ingen beskeder'));
-    rækker.forEach(r => kort.appendChild(lavBeskedRække(r.b, r.v)));
-    container.appendChild(kort);
-  });
-  if(antalKort === 0) container.appendChild(fsLav('div', 'fsIngen', 'Ingen beskeder i Andet – alt er sorteret'));
 }
 
 async function hentBeskeder(){
@@ -3501,6 +3687,8 @@ function visOpgaverMode(){
   document.getElementById('opgaverOverlap').style.display = mode === 'overlap' ? 'block' : 'none';
 
   opdaterNav();
+  const sideHoved = document.querySelector('#opgaver > .sidehoved');
+  if(sideHoved) sideHoved.style.display = mode === 'besked' ? 'none' : '';
   if(mode === 'besked') hentBeskeder();
   if(mode === 'dagsplan') hentDagsplan();
   if(mode === 'afkrydsning') hentAfkrydsningsskema();

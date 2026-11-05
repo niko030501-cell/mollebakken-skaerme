@@ -42,6 +42,8 @@ const MOELLE_IKONER = {
   vedhaeftning: [["path",{"d":"M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"}]],   // tabler: paperclip
   plus: [["path",{"d":"M12 5l0 14"}],["path",{"d":"M5 12l14 0"}]],   // tabler: plus
   tilbage: [["path",{"d":"M5 12l14 0"}],["path",{"d":"M5 12l6 6"}],["path",{"d":"M5 12l6 -6"}]],   // tabler: arrow-left
+  pin: [["path",{"d":"M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4"}],["path",{"d":"M9 15l-4.5 4.5"}],["path",{"d":"M14.5 4l5.5 5.5"}]],   // tabler: pin
+  maerkat: [["path",{"d":"M7.5 7.5m-.5 0a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0"}],["path",{"d":"M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"}]],   // tabler: tag
   luk: [["path",{"d":"M18 6l-12 12"}],["path",{"d":"M6 6l12 12"}]],   // tabler: x
   rediger: [["path",{"d":"M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"}],["path",{"d":"M13.5 6.5l4 4"}]],   // tabler: pencil
   slet: [["path",{"d":"M4 7l16 0"}],["path",{"d":"M10 11l0 6"}],["path",{"d":"M14 11l0 6"}],["path",{"d":"M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"}],["path",{"d":"M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"}]],   // tabler: trash
