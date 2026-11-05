@@ -340,19 +340,26 @@
       --pille-bg: #1F2A24; --pille-tekst: #FFFFFF;
     }
 
+    /* Hele bredden bruges: sektionerne fordeles i op til 3 kolonner (.bKolonner). En sektion, der alene er højere
+       end én kolonne, får hele bredden (.bred) og sætter sine beskeder i kolonner. JS måler højden efter layout. */
     #beskederContainer{
       flex: 1; min-height: 0;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      column-gap: calc(var(--s) * 48);
-      row-gap: calc(var(--s) * 36);
-      align-content: start;
-      align-items: start;
+      display: block;
       overflow: hidden;
     }
+    #beskederContainer > * + *{ margin-top: calc(var(--s) * 28); }
+    .bBeskeder{
+      column-count: 3;
+      column-gap: calc(var(--s) * 36);
+    }
+    .bKolonner{ display: grid; column-gap: calc(var(--s) * 36); align-items: start; }
+    .bKol{ min-width: 0; }
+    .bKol > .bSektion + .bSektion{ margin-top: calc(var(--s) * 28); }
+    .bBeskeder .bBesked{ break-inside: avoid; }
+    #beskederContainer.maal{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: calc(var(--s) * 36); align-items: start; }
+    #beskederContainer.maal > *{ margin-top: 0; }
 
     .bSektion{ min-width: 0; --navnefarve: var(--lys); --ikonfarve: var(--staerk); --ikonbg: #FFFFFF; }
-    .bSektion.obs{ grid-column: span 2; }
     #beskeder.lys .bSektion{ --navnefarve: var(--staerk); --ikonfarve: #FFFFFF; --ikonbg: var(--staerk); }
 
     .bHoved{ display: flex; align-items: center; gap: calc(var(--s) * 16); }
@@ -382,15 +389,26 @@
     }
     .bBesked + .bBesked{
       border-top: 1px solid var(--streg);
-      margin-top: calc(var(--s) * 14);
-      padding-top: calc(var(--s) * 14);
+      margin-top: calc(var(--s) * 10);
+      padding-top: calc(var(--s) * 10);
     }
     .bNavnKol{
-      font-size: calc(var(--s) * var(--n)); font-weight: 800; line-height: 1.3;
+      font-size: calc(var(--s) * var(--n)); font-weight: 800; line-height: 1.25;
       color: var(--navnefarve); overflow-wrap: anywhere;
     }
+    /* Mindste tekst: navnet står foran teksten på samme linje (mere plads til teksten), og overskriften fylder mindre */
+    #beskeder.kompakt .bBesked{ display: block; }
+    #beskeder.kompakt .bNavnKol{ display: inline; margin-right: calc(var(--s) * 8); }
+    #beskeder.kompakt .bTekstKol{ display: inline; line-height: 1.2; }
+    #beskeder.kompakt .bNavnKol{ line-height: 1.2; }
+    #beskeder.kompakt .bKol > .bSektion + .bSektion{ margin-top: calc(var(--s) * 12); }
+    #beskeder.kompakt .bBesked + .bBesked{ margin-top: calc(var(--s) * 7); padding-top: calc(var(--s) * 7); }
+    #beskeder.side.kompakt{ padding-top: calc(var(--s) * 24); padding-bottom: calc(var(--s) * 24); }
+    #beskeder.kompakt .bStreg{ margin: calc(var(--s) * 5) 0 calc(var(--s) * 6); height: calc(var(--s) * 3); }
+    #beskeder.kompakt .bIkonFirkant{ border-radius: calc(var(--s) * 12); }
+    #beskeder.kompakt .bIkonFirkant svg{ width: calc(var(--s) * 20); height: calc(var(--s) * 20); }
     .bTekstKol{
-      font-size: calc(var(--s) * var(--t)); font-weight: 400; line-height: 1.3;
+      font-size: calc(var(--s) * var(--t)); font-weight: 400; line-height: 1.25;
       min-width: 0; overflow-wrap: break-word;
     }
     .bSektion.obs .bTekstKol{ font-size: calc(var(--s) * var(--o)); }
@@ -722,9 +740,30 @@ const BESKED_FALLBACK_BEBOERE = ['Louie', 'Kenneth', 'Lars', 'Niels', 'Leyla'];
 let beboereTavle = [];   // [{ navn, farve }]
 
 // ?test=mange: falske beskeder til at afprøve layoutet. Intet læses eller gemmes i databasen.
-const BESKED_TEST_MANGE = new URLSearchParams(location.search).get('test') === 'mange';
+// ?test=andet&antal=18 (alle i Andet), ?test=alle&antal=20 (fordelt på alle emner), ?test=faa (3 beskeder)
+const BESKED_TEST_MANGE = new URLSearchParams(location.search).has('test');
 
 function lavTestBeskeder(){
+  const testType = new URLSearchParams(location.search).get('test');
+  if(testType !== 'mange'){
+    const antal = testType === 'faa' ? 3 : (parseInt(new URLSearchParams(location.search).get('antal'), 10) || 18);
+    const tekster = ['Hjælp med morgenrutinen og husk at give god tid til at vælge tøj',
+      'Medicin gives kl. 21.15 — dobbelttjek i journalen og skriv under',
+      'Læge kommer torsdag formiddag, skriv gerne spørgsmål ned inden',
+      'Ny aftenstruktur starter i næste uge, brug piktogrammer',
+      'Husk at lægge elektronik væk før hver pause',
+      'Familien besøger i weekenden, der skal bages kage lørdag',
+      'Kørsel er flyttet til kl. 8.15 på tirsdage'];
+    const navneListe = ['Kenneth', 'Niels', 'Leyla', 'Louie', 'Lars', 'Huset'];
+    const ud = [];
+    for(let i = 0; i < antal; i++){
+      ud.push({ id: 'test-' + i, beboere: [navneListe[i % navneListe.length]], titel: tekster[i % tekster.length], besked: tekster[i % tekster.length],
+        kategori: 'info', emne: testType === 'alle' ? BESKED_EMNER[i % BESKED_EMNER.length].id : 'andet', vigtig: i % 5 === 1, prioritet: 'Grøn',
+        hvornaar_dato: null, hvornaar_tid: null, fjernes_efter: null, fil_sti: null, fil_navn: null,
+        created_at: new Date(Date.now() - i * 3600 * 1000).toISOString() });
+    }
+    return ud;
+  }
   const lang = ['Obs på at Kenneth skal have hjælp til at komme i gang med morgenrutinen, og husk at give ham god tid til at vælge tøj',
     'Medicin gives klokken 21.15 — dobbelttjek altid i journalen inden det gives, og skriv under når det er gjort',
     'Læge kommer på besøg torsdag formiddag, så hjælp gerne med at få skrevet spørgsmål ned inden besøget',
@@ -754,6 +793,7 @@ async function hentBeskeder(){
   if(BESKED_TEST_MANGE){
     beboereTavle = BESKED_FALLBACK_BEBOERE.map(function(n){ return { navn: n, farve: null }; });
     document.title = 'Personaletavle (test)';
+    await hentBeskedUdseende();
     visBeskeder(lavTestBeskeder());
     return;
   }
@@ -931,7 +971,7 @@ function beskedTilVisning(r, nu){
 const BESKED_TRIN = [
   { t: 23, o: 26, n: 21, h: 36, b: 56 },
   { t: 22, o: 22, n: 20, h: 32, b: 52 },
-  { t: 20, o: 20, n: 20, h: 30, b: 48 }
+  { t: 20, o: 20, n: 20, h: 24, b: 30, k: 1 }
 ];
 const BESKED_SIDE_MS = 20000;
 let beskedUdseende = 'moerk';   // 'moerk' (standard) eller 'lys', læses fra app_indstillinger ved hver polling
@@ -1017,7 +1057,83 @@ function tegnBeskedDele(dele){
     c.appendChild(lavEl('div', 'bTom', 'Ingen beskeder lige nu'));
     return;
   }
-  dele.forEach(function(d){ c.appendChild(lavEmneSektion(d)); });
+  // Eneste sektion: fuld bredde, beskederne i op til 3 kolonner. Ellers måles først hver sektions højde
+  // i en kolonne (.maal); dem der er højere end én kolonne får hele bredden, resten pakkes i kolonner.
+  const h = c.clientHeight;
+  const sek = dele.map(lavEmneSektion);
+  const bred = [];
+  const højder = [];
+  if(dele.length === 1){
+    bred.push(true);
+  } else {
+    c.classList.add('maal');
+    sek.forEach(function(s){ c.appendChild(s); });
+    sek.forEach(function(s){ bred.push(s.offsetHeight > h); højder.push(s.offsetHeight); });
+    c.classList.remove('maal');
+    c.textContent = '';
+  }
+
+  // Ikke-brede sektioner: fordel dem i op til 3 kolonner så den højeste kolonne bliver så lav som mulig
+  // (målt højde pr. sektion), og rækkefølgen bevares inden for hver kolonne. Ingen kolonner står tomme.
+  let gruppe = [];
+  const tømGruppe = function(){
+    if(gruppe.length === 0) return;
+    const k = Math.min(3, gruppe.length);
+    const hs = gruppe.map(function(g){ return g.h; });
+    const tildel = fordelISøjler(hs, k);
+    const ydre = lavEl('div', 'bKolonner');
+    ydre.style.gridTemplateColumns = 'repeat(' + k + ', minmax(0, 1fr))';
+    const søjler = [];
+    for(let j = 0; j < k; j++){ søjler.push(lavEl('div', 'bKol')); ydre.appendChild(søjler[j]); }
+    gruppe.forEach(function(g, i){ søjler[tildel[i]].appendChild(g.el); });
+    c.appendChild(ydre);
+    gruppe = [];
+  };
+  sek.forEach(function(s, i){
+    if(bred[i]){
+      tømGruppe();
+      const beskeder = lavEl('div', 'bBeskeder');
+      Array.prototype.slice.call(s.querySelectorAll('.bBesked')).forEach(function(b){ beskeder.appendChild(b); });
+      beskeder.style.columnCount = String(Math.min(3, dele[i].beskeder.length));
+      s.appendChild(beskeder);
+      c.appendChild(s);
+      return;
+    }
+    gruppe.push({ el: s, h: højder[i] });
+  });
+  tømGruppe();
+}
+
+// Tildeler hver højde en af k søjler (0..k-1) med lavest mulig højeste søjle. Prøver alle fordelinger op til 10
+// sektioner (3^10 = 59049), ellers den korteste søjle først. Uafgjort: den mest "læselige" (laveste tildeling først).
+function fordelISøjler(hs, k){
+  const gab = 24;
+  const n = hs.length;
+  if(n > 10){
+    const sum = new Array(k).fill(0), ud = [];
+    hs.forEach(function(h){ let m = 0; for(let j = 1; j < k; j++){ if(sum[j] < sum[m]) m = j; } ud.push(m); sum[m] += h + gab; });
+    return ud;
+  }
+  let bedst = null, bedstMax = Infinity, bedstKv = Infinity;
+  const nu = [], sum = new Array(k).fill(0);
+  (function rek(i){
+    if(i === n){
+      if(sum.some(function(v){ return v === 0; })) return;   // ingen tomme søjler
+      const mx = Math.max.apply(null, sum);
+      const kv = sum.reduce(function(a, v){ return a + v * v; }, 0);
+      if(mx < bedstMax - 0.5 || (Math.abs(mx - bedstMax) <= 0.5 && kv < bedstKv)){ bedst = nu.slice(); bedstMax = mx; bedstKv = kv; }
+      return;
+    }
+    for(let j = 0; j < k; j++){
+      if(i === 0 && j > 0) break;   // spejlvendte fordelinger er ens
+      if(sum[j] > 0 || j === 0 || sum[j - 1] > 0){
+        nu[i] = j; sum[j] += hs[i] + gab;
+        if(Math.max.apply(null, sum) <= bedstMax + 0.5) rek(i + 1);
+        sum[j] -= hs[i] + gab;
+      }
+    }
+  })(0);
+  return bedst;
 }
 
 function beskedPasser(){
@@ -1029,6 +1145,7 @@ function sætBeskedTrin(i){
   const t = BESKED_TRIN[i];
   const el = document.getElementById('beskeder');
   ['t', 'o', 'n', 'h', 'b'].forEach(function(k){ el.style.setProperty('--' + k, String(t[k])); });
+  el.classList.toggle('kompakt', !!t.k);
 }
 
 function visBeskedSide(){
