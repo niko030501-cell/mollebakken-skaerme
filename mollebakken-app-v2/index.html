@@ -357,6 +357,46 @@
   .formRække{ display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
   .formRække label{ font-size:12px; font-weight:600; color:var(--tekst-svag); }
 
+  /* ---- Rengøring: farver og ikoner pr. rum ---- */
+  body.rengoringSide{ background:#FAF7F0; }
+  #rengoring.side{ max-width:1400px; color:#1F2A24; font-family:var(--font-sans); }
+  #rengoring .sidehovedTitel{ font-size:44px; font-weight:800; color:#1F2A24; }
+  #rengoring .sidehovedSub{ color:#1F2A24; opacity:.8; }
+  .rgUgenr{ font-size:20px; font-weight:800; color:#1F2A24; }
+
+  .rgStort{ display:grid; grid-template-columns:120px minmax(0, 1fr) 380px; gap:28px; align-items:center; border-radius:28px; padding:28px; margin-bottom:16px; }
+  .rgStortIkon{ width:120px; height:120px; border-radius:28px; background:#fff; display:flex; align-items:center; justify-content:center; }
+  .rgStortMidte{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .rgStortDag{ font-size:16px; font-weight:800; letter-spacing:.06em; }
+  .rgStortRum{ font-size:44px; font-weight:800; line-height:1.08; overflow-wrap:anywhere; }
+  .rgStortNavn{ font-size:24px; font-weight:800; }
+  .rgAnsvarlig{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .rgCirkel{ flex:0 0 auto; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; }
+  .rgOpgaver{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .rgOpgave{ display:flex; align-items:center; gap:10px; background:#fff; border-radius:999px; padding:9px 16px; font-size:18px; font-weight:600; line-height:1.25; }
+  .rgOpgave span:last-child{ min-width:0; overflow-wrap:anywhere; }
+  .rgPrik{ flex:0 0 auto; width:9px; height:9px; border-radius:50%; }
+
+  .rgFliser{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:12px; }
+  .rgFlise{ display:flex; flex-direction:column; align-items:flex-start; gap:10px; min-height:250px; padding:16px 14px; border-radius:22px; border:3px solid transparent; min-width:0; }
+  .rgFliseDag{ font-size:15px; font-weight:800; letter-spacing:.06em; }
+  .rgFliseRum{ font-size:17px; font-weight:800; line-height:1.2; overflow-wrap:break-word; hyphens:auto; }
+  .rgFliseNavn{ font-size:14px; font-weight:800; min-width:0; overflow-wrap:break-word; hyphens:auto; }
+  .rgFlise .rgAnsvarlig{ gap:8px; }
+  .rgKnap{ margin-top:auto; align-self:stretch; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:0 12px; border-radius:12px; background:#2F6B4F; color:#fff; border:2px solid #2F6B4F; font-size:16px; font-weight:800; }
+  .rgKnap.gjort{ background:#fff; color:#25622A; border-color:#25622A; }
+  @media (max-width:1000px){
+    .rgStort{ grid-template-columns:120px minmax(0, 1fr); }
+    .rgOpgaver{ grid-column:1 / -1; }
+  }
+  @media (max-width:900px){ .rgFliser{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  @media (max-width:600px){
+    .rgFliser{ grid-template-columns:1fr; }
+    .rgStort{ grid-template-columns:1fr; padding:20px; }
+    .rgStortRum{ font-size:34px; }
+    #rengoring .sidehovedTitel{ font-size:36px; }
+  }
+
   /* ---- Beskeder: oversigt og Ny besked ---- */
   #opgaverMode, #programMode{ display:none; }   /* menuen vælger tilstand */
 
@@ -1450,12 +1490,10 @@
         <h2 class="sidehovedTitel">Rengøring</h2>
         <p class="sidehovedSub">Hvem har ansvaret, og hvad skal gøres</p>
       </div>
+      <div class="rgUgenr" id="rengoringUgenr"></div>
     </header>
-    <div id="rengoringAktuel" class="kort" style="border-left:6px solid var(--guld);"></div>
-    <div class="kort">
-      <h3 style="margin-top:0;">Hele ugen</h3>
-      <div id="rengoringUge"><div class="loading">Henter rengøringsplan...</div></div>
-    </div>
+    <div id="rengoringAktuel" class="rgStort"></div>
+    <div id="rengoringUge" class="rgFliser"><div class="loading">Henter rengøringsplan...</div></div>
   </div>
 
   <!-- ============ §104 ============ -->
@@ -2079,6 +2117,7 @@ function visSide(side){
   document.querySelectorAll('.side').forEach(el => el.classList.remove('aktiv'));
   document.getElementById(side).classList.add('aktiv');
   document.body.classList.toggle('paaForside', side === 'forside');
+  document.body.classList.toggle('rengoringSide', side === 'rengoring');
 
   const sideSkiftet = aktuelSide !== side;
   aktuelSide = side;
@@ -5160,37 +5199,190 @@ async function hentRengoringData(){
   return { fejl: ugeRes.error || null, aktuelDatoISO, aktuelUgedag, ugensDatoer, ugePerDag, ansvarligPerDato };
 }
 
+// ---- Udseende (kun visning; data og logik ovenfor er uændret) ----
+// RUM-farver. Et andet farvesæt end emne-farverne til beskeder (BESKED_EMNER i shared/emner.js) — bland dem aldrig.
+const RENGOERING_RUMFARVER = {
+  koekken:  { lys: '#FCE3C8', moerk: '#8A4300', ikon: 'M4 11h16v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z M2 11h2 M20 11h2 M8 7h8' },
+  soverum:  { lys: '#DCE8F7', moerk: '#1F4A86', ikon: 'M3 19V6 M3 14h18v5 M21 14v-2a3 3 0 0 0-3-3h-7v5 M7 11.5h.01' },
+  stue:     { lys: '#E1F0DF', moerk: '#25622A', ikon: 'M5 11V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3 M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M6 20v1 M18 20v1' },
+  vaskerum: { lys: '#EADCF5', moerk: '#5B2E86', ikon: 'M5 3h14a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z M4 8h16 M12 18a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
+  kontor:   { lys: '#F9E1E6', moerk: '#8A2A45', ikon: 'M3 8h18 M5 8v11 M19 8v11 M9 12h6 M3 8l2-4h14l2 4' },
+  andet:    { lys: '#ECE8DD', moerk: '#3A4540', ikon: 'M3 11l9-8 9 8 M5 10v10h14V10 M10 20v-6h4v6' }
+};
+
+// Rummet findes ud fra ord i navnet. Soverum/badeværelse tjekkes FØR kontor/personalerum,
+// så "Personale soverum og badeværelse" bliver soverum.
+function rengoringRumType(navn){
+  const n = (navn || '').toLowerCase();
+  if(n.indexOf('køkken') !== -1) return 'koekken';   // dækker også "grovkøkken"
+  if(n.indexOf('soverum') !== -1 || n.indexOf('badeværelse') !== -1) return 'soverum';
+  if(n.indexOf('stue') !== -1 || n.indexOf('gang') !== -1) return 'stue';
+  if(n.indexOf('vaske') !== -1) return 'vaskerum';
+  if(n.indexOf('kontor') !== -1 || n.indexOf('personalerum') !== -1) return 'kontor';
+  return 'andet';
+}
+
+// Opgaveteksten er gemt som én streng. Her deles den kun til visning:
+// rum = før første ":" (ellers før første " - "), opgaver = resten delt ved " - ".
+function rengoringDelOpgave(tekst){
+  const t = (tekst || '').trim();
+  if(!t) return { rum: '', opgaver: [] };
+  const kolon = t.indexOf(':');
+  let rum;
+  let rest;
+  if(kolon !== -1){
+    rum = t.slice(0, kolon);
+    rest = t.slice(kolon + 1);
+  } else {
+    const dele = t.split(' - ');
+    if(dele.length < 2) return { rum: '', opgaver: [t] };   // kan ikke deles: én opgave, grå hus-ikon
+    rum = dele[0];
+    rest = dele.slice(1).join(' - ');
+  }
+  const opgaver = rest.split(' - ').map(function(o){ return o.trim(); }).filter(function(o){ return o; });
+  return { rum: rum.trim(), opgaver: opgaver };
+}
+
+function rengoringRum(tekst){
+  const d = rengoringDelOpgave(tekst);
+  const type = d.rum ? rengoringRumType(d.rum) : 'andet';
+  return { navn: d.rum || 'Rengøring', opgaver: d.opgaver, farver: RENGOERING_RUMFARVER[type] };
+}
+
+// Samme person får altid samme (mørke) farve ud fra navnet
+const RENGOERING_PERSONFARVER = ['#2F6B4F', '#3B5B8C', '#8A4B6B', '#7A5230', '#4B4F8C', '#2F6B6B', '#8C3B3B', '#5B6B2F'];
+
+function rengoringPersonFarve(navn){
+  let h = 0;
+  for(let i = 0; i < navn.length; i++) h = (h * 31 + navn.charCodeAt(i)) % 100003;
+  return RENGOERING_PERSONFARVER[h % RENGOERING_PERSONFARVER.length];
+}
+
+function rengoringInitialer(navn){
+  const dele = navn.trim().split(/\s+/).filter(function(d){ return d; });
+  if(dele.length === 0) return '?';
+  if(dele.length === 1) return dele[0].charAt(0).toUpperCase();
+  return (dele[0].charAt(0) + dele[dele.length - 1].charAt(0)).toUpperCase();
+}
+
+// Ugenummer (ISO) ud fra browserens lokale tid
+function rengoringUgenummer(dato){
+  const d = new Date(dato.getFullYear(), dato.getMonth(), dato.getDate());
+  const dagNr = (d.getDay() + 6) % 7;            // mandag = 0
+  d.setDate(d.getDate() - dagNr + 3);            // torsdag i samme uge
+  const aarsStart = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round(((d - aarsStart) / 86400000 - 3 + ((aarsStart.getDay() + 6) % 7)) / 7);
+}
+
+function rengoringIkon(d, stoerrelse, streg, farve){
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('width', String(stoerrelse));
+  svg.setAttribute('height', String(stoerrelse));
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', farve);
+  svg.setAttribute('stroke-width', String(streg));
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  const sti = document.createElementNS(NS, 'path');
+  sti.setAttribute('d', d);
+  svg.appendChild(sti);
+  return svg;
+}
+
+// Ansvarlig: farvet cirkel med initialer + navn. Mangler en ansvarlig: gul cirkel med "?".
+function rengoringAnsvarlig(navn, cirkelStr, navnKlasse){
+  const boks = fsLav('div', 'rgAnsvarlig');
+  const cirkel = fsLav('span', 'rgCirkel', navn ? rengoringInitialer(navn) : '?');
+  cirkel.style.width = cirkelStr + 'px';
+  cirkel.style.height = cirkelStr + 'px';
+  cirkel.style.fontSize = Math.round(cirkelStr * 0.4) + 'px';
+  if(navn){
+    cirkel.style.background = rengoringPersonFarve(navn);
+    cirkel.style.color = '#FFFFFF';
+  } else {
+    cirkel.style.background = '#F2B84B';
+    cirkel.style.color = '#2A1D00';
+  }
+  boks.appendChild(cirkel);
+  boks.appendChild(fsLav('span', navnKlasse, navn || 'Mangler ansvarlig'));
+  return boks;
+}
+
 async function hentRengoring(){
   if(!sb) return;
 
   const { fejl, aktuelDatoISO, aktuelUgedag, ugensDatoer, ugePerDag, ansvarligPerDato } = await hentRengoringData();
   if(fejl){ console.error(fejl); return; }
 
+  document.getElementById('rengoringUgenr').textContent = 'Uge ' + rengoringUgenummer(effektivMandag(0));
+
+  // ----- Stort kort: den dag der er aktuel (skifter kl. 10:00, se rengoringAktueltDato) -----
   const aktuel = ugePerDag[aktuelUgedag];
-  const aktuelAnsvarlig = ansvarligPerDato[aktuelDatoISO];
+  const rum = rengoringRum(aktuel ? aktuel.opgave : '');
+  const farver = rum.farver;
+  const kort = document.getElementById('rengoringAktuel');
+  kort.textContent = '';
+  kort.style.background = farver.lys;
+  kort.style.color = farver.moerk;
 
-  document.getElementById('rengoringAktuel').innerHTML = `
-    <div style="font-size:12px; color:var(--tekst-svag);">${aktuelDatoISO === datoISO(new Date()) ? 'I DAG' : 'I MORGEN'} — ${aktuelUgedag}</div>
-    <div style="font-size:16px; font-weight:600;">Ansvarlig: ${aktuelAnsvarlig ? escapeHtml(aktuelAnsvarlig) : 'ikke fundet'}</div>
-    <div style="font-size:13px; margin-top:6px;">${aktuel ? escapeHtml(aktuel.opgave) : 'Ingen opgaver angivet'}</div>
-  `;
+  const ikonBoks = fsLav('div', 'rgStortIkon');
+  ikonBoks.appendChild(rengoringIkon(farver.ikon, 72, 1.6, farver.moerk));
+  kort.appendChild(ikonBoks);
 
-  document.getElementById('rengoringUge').innerHTML = ugensDatoer.map(({dag, datoISO: dISO}) => {
-    const række = ugePerDag[dag];
-    const ansvarlig = ansvarligPerDato[dISO];
-    return `
-      <div class="dagsplanRække">
-        <span>
-          <strong>${dag}</strong> — ${ansvarlig ? escapeHtml(ansvarlig) : '–'}<br>
-          <span style="font-size:11px; color:var(--tekst-svag);">${række ? escapeHtml(række.opgave) : ''}</span>
-        </span>
-        <button class="knap knapLille ${række && række.afkrydset ? 'knapGuld' : ''}" onclick="toggleRengoringDag('${dag}')">
-          <span data-ikon="${række && række.afkrydset ? 'check' : 'luk'}" data-storrelse="16"></span>
-        </button>
-      </div>
-    `;
-  }).join('');
-  indsætIkoner(document.getElementById('rengoringUge'));
+  const midte = fsLav('div', 'rgStortMidte');
+  const dagLabel = aktuelDatoISO === datoISO(new Date()) ? 'I DAG' : 'I MORGEN';
+  midte.appendChild(fsLav('div', 'rgStortDag', dagLabel + ' · ' + aktuelUgedag.toUpperCase()));
+  midte.appendChild(fsLav('div', 'rgStortRum', aktuel && aktuel.opgave ? rum.navn : 'Ingen opgaver angivet'));
+  midte.appendChild(rengoringAnsvarlig(ansvarligPerDato[aktuelDatoISO], 44, 'rgStortNavn'));
+  kort.appendChild(midte);
+
+  const liste = fsLav('ul', 'rgOpgaver');
+  rum.opgaver.forEach(function(o){
+    const li = fsLav('li', 'rgOpgave');
+    const prik = fsLav('span', 'rgPrik');
+    prik.style.background = farver.moerk;
+    li.appendChild(prik);
+    li.appendChild(fsLav('span', null, o));
+    liste.appendChild(li);
+  });
+  kort.appendChild(liste);
+
+  // ----- 7 fliser: mandag til søndag -----
+  const uge = document.getElementById('rengoringUge');
+  uge.textContent = '';
+  ugensDatoer.forEach(function(dd){
+    const række = ugePerDag[dd.dag];
+    const r = rengoringRum(række ? række.opgave : '');
+    const f = r.farver;
+    const flise = fsLav('div', 'rgFlise' + (dd.datoISO === aktuelDatoISO ? ' idag' : ''));
+    flise.style.background = f.lys;
+    flise.style.color = f.moerk;
+    if(dd.datoISO === aktuelDatoISO) flise.style.borderColor = f.moerk;
+
+    flise.appendChild(fsLav('div', 'rgFliseDag', dd.dag.toUpperCase()));
+    const ikon = fsLav('div', 'rgFliseIkon');
+    ikon.appendChild(rengoringIkon(f.ikon, 36, 1.7, f.moerk));
+    flise.appendChild(ikon);
+    flise.appendChild(fsLav('div', 'rgFliseRum', række && række.opgave ? r.navn : 'Ingen opgaver'));
+    flise.appendChild(rengoringAnsvarlig(ansvarligPerDato[dd.datoISO], 30, 'rgFliseNavn'));
+
+    // Knappen gør det samme som før: sætter/fjerner afkrydsning på dagen
+    const afkrydset = !!(række && række.afkrydset);
+    const knap = fsLav('button', 'rgKnap' + (afkrydset ? ' gjort' : ''));
+    knap.type = 'button';
+    knap.setAttribute('aria-pressed', afkrydset ? 'true' : 'false');
+    const ikonSpan = fsLav('span', 'ikonSpan');
+    ikonSpan.appendChild(moelleIkon('check', { stoerrelse: 18 }));
+    knap.appendChild(ikonSpan);
+    knap.appendChild(document.createTextNode(afkrydset ? 'Afkrydset' : 'Afkryds'));
+    knap.addEventListener('click', function(){ toggleRengoringDag(dd.dag); });
+    flise.appendChild(knap);
+
+    uge.appendChild(flise);
+  });
 }
 
 async function toggleRengoringDag(dag){
