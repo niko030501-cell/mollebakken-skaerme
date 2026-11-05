@@ -429,6 +429,16 @@
     flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:0 14px;
     border-radius:10px; background:#fff; color:var(--ny-sort); border:1.5px solid var(--ny-sort); font-size:15px; font-weight:700;
   }
+  .bsFilterRække{ margin-bottom:12px; }
+  .bsFilter{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 16px; border-radius:22px; background:#fff; color:var(--ny-sort); border:1.5px solid var(--ny-sort); font-size:15px; font-weight:800; }
+  .bsFilter[aria-pressed="true"]{ background:var(--ny-sort); color:#fff; }
+  .bsEmneMaerke{ display:inline-flex; align-items:center; gap:8px; min-height:44px; align-self:flex-start; max-width:100%; padding:4px 14px 4px 5px; border-radius:12px; border:2px solid transparent; color:#fff; font-size:14px; font-weight:800; text-align:left; }
+  .bsEmneMaerke .bfEmneFirkant{ width:34px; height:34px; border-radius:10px; background:rgba(255,255,255,.22); }
+  .bsEmneMaerke[aria-expanded="true"]{ border-color:var(--ny-sort); }
+  .bfEmner.bsEmneValg{ margin-top:2px; grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .bsEmneValg .bfEmne{ flex-direction:row; justify-content:flex-start; text-align:left; min-height:52px; padding:6px; border-width:3px; }
+  .bsEmneValg .bfEmneFirkant{ width:38px; height:38px; }
+  .bsEmneValg .bfEmneNavn{ font-size:15px; }
   .bsKnap.slet{ background:var(--ny-roed-lys); color:var(--ny-roed); border-color:var(--ny-roed); }
   .bsRække.spoerger .bsKnap.slet{ background:var(--ny-roed); color:#fff; }
   .bsStorKnap{
@@ -1223,6 +1233,7 @@
     <div id="opgaverBesked">
       <!-- Oversigt: beskeder pr. beboer (og Huset) med Ret/Slet -->
       <div id="beskedOversigt">
+        <div class="bsFilterRække"><button type="button" id="beskedFilterAndet" class="bsFilter" aria-pressed="false" onclick="beskedToggleAndet()"></button></div>
         <div id="beskederListe" class="bsGitter"><div class="loading">Henter beskeder...</div></div>
         <button type="button" class="bsStorKnap" onclick="beskedNy()"><span data-ikon="plus" data-storrelse="24"></span>Ny besked</button>
       </div>
@@ -3268,10 +3279,14 @@ function hentBeskederData(){
 }
 
 // Aktive, ikke-udløbne beskeder til en beboer (eller 'Huset'), vigtige først
+let beskedKunAndet = false;    // filter "Vis kun Andet"
+let beskedEmneÅbenId = null;   // besked hvis emne-liste er åben
+
 function beskedRækkerFor(navn, nu){
   const ud = [];
   Object.keys(beskedCache).forEach(id => {
     const b = beskedCache[id];
+    if(beskedKunAndet && emneFind(b.emne).id !== 'andet') return;
     const v = beskedTilVisning(b, nu);
     if(v && v.beboere.indexOf(navn) !== -1) ud.push({ b: b, v: v });
   });
@@ -3298,6 +3313,70 @@ function beskedGenTegn(){
   opdaterBfAktive();
 }
 
+// Emne-mærke (samme farve, ikon og navn som på infoskærmen). Tryk åbner de 9 emner; ét tryk vælger og gemmer.
+function lavEmneMaerke(b){
+  const e = emneFind(b.emne);
+  const knap = fsLav('button', 'bsEmneMaerke');
+  knap.type = 'button';
+  knap.style.background = e.staerk;
+  knap.setAttribute('aria-label', 'Emne: ' + e.navn + '. Tryk for at ændre');
+  knap.setAttribute('aria-expanded', beskedEmneÅbenId === b.id ? 'true' : 'false');
+  const firkant = fsLav('span', 'bfEmneFirkant');
+  firkant.appendChild(emneIkon(e.id, 20, '#FFFFFF'));
+  knap.appendChild(firkant);
+  knap.appendChild(fsLav('span', null, e.navn));
+  knap.addEventListener('click', () => {
+    beskedEmneÅbenId = beskedEmneÅbenId === b.id ? null : b.id;
+    beskedGenTegn();
+  });
+  return knap;
+}
+
+function lavEmneValg(b){
+  const rod = fsLav('div', 'bfEmner bsEmneValg');
+  rod.setAttribute('role', 'group');
+  rod.setAttribute('aria-label', 'Vælg emne');
+  const nu = emneFind(b.emne).id;
+  BESKED_EMNER.forEach(e => {
+    const knap = fsLav('button', 'bfEmne' + (nu === e.id ? ' valgt' : ''));
+    knap.type = 'button';
+    knap.style.background = hexTilLys(e.staerk);
+    knap.setAttribute('aria-pressed', nu === e.id ? 'true' : 'false');
+    const firkant = fsLav('span', 'bfEmneFirkant');
+    firkant.style.background = e.staerk;
+    firkant.appendChild(emneIkon(e.id, 28, '#FFFFFF'));
+    knap.appendChild(firkant);
+    knap.appendChild(fsLav('span', 'bfEmneNavn', e.navn));
+    knap.addEventListener('click', () => sætBeskedEmne(b, e.id));
+    rod.appendChild(knap);
+  });
+  return rod;
+}
+
+// Gemmer med det samme ved ét tryk; ved fejl rulles visningen tilbage.
+async function sætBeskedEmne(b, nyt){
+  beskedEmneÅbenId = null;
+  if(emneFind(b.emne).id === nyt){ beskedGenTegn(); return; }
+  const gammelt = b.emne;
+  b.emne = nyt;
+  beskedGenTegn();
+  const { error } = await sb.from('beskeder').update({ emne: nyt }).eq('id', b.id);
+  if(error){
+    console.error(error);
+    b.emne = gammelt;
+    beskedGenTegn();
+    visToast('Fejl: kunne ikke gemme emne');
+    return;
+  }
+  visToast('Emne: ' + emneFind(nyt).navn);
+}
+
+function beskedToggleAndet(){
+  beskedKunAndet = !beskedKunAndet;
+  beskedEmneÅbenId = null;
+  beskedGenTegn();
+}
+
 // Én besked: titel, mærker (tid, NY, hvornår den forsvinder), Ret og Slet. Slet spørger først.
 function lavBeskedRække(b, v){
   const række = fsLav('div', 'bsRække' + (v.vigtig ? ' vigtig' : ''));
@@ -3319,6 +3398,9 @@ function lavBeskedRække(b, v){
   top.appendChild(ikon);
   top.appendChild(fsLav('span', 'bsTitel', v.titel));
   række.appendChild(top);
+
+  række.appendChild(lavEmneMaerke(b));
+  if(beskedEmneÅbenId === b.id) række.appendChild(lavEmneValg(b));
 
   if(b.detalje) række.appendChild(fsLav('div', 'bsDetalje', b.detalje));
 
@@ -3352,8 +3434,21 @@ function tegnBeskedOversigt(){
   const nu = new Date();
   const grupper = beboereListe.map(b => b.navn).concat(['Huset']);
 
+  // Filterknappen: antal aktive, ikke-udløbne beskeder der stadig står i Andet (hver besked tælles én gang)
+  let antalAndet = 0;
+  Object.keys(beskedCache).forEach(id => {
+    const b = beskedCache[id];
+    if(emneFind(b.emne).id === 'andet' && beskedTilVisning(b, nu)) antalAndet++;
+  });
+  const filterKnap = document.getElementById('beskedFilterAndet');
+  filterKnap.textContent = beskedKunAndet ? 'Viser kun Andet (' + antalAndet + ') · Vis alle' : 'Vis kun Andet (' + antalAndet + ')';
+  filterKnap.setAttribute('aria-pressed', beskedKunAndet ? 'true' : 'false');
+
+  let antalKort = 0;
   grupper.forEach(navn => {
     const rækker = beskedRækkerFor(navn, nu);
+    if(beskedKunAndet && rækker.length === 0) return;
+    antalKort++;
     const kort = fsLav('section', 'bsKort' + (navn === 'Huset' ? ' huset' : ''));
     const hoved = fsLav('div', 'bsHoved');
     if(navn === 'Huset'){
@@ -3370,6 +3465,7 @@ function tegnBeskedOversigt(){
     rækker.forEach(r => kort.appendChild(lavBeskedRække(r.b, r.v)));
     container.appendChild(kort);
   });
+  if(antalKort === 0) container.appendChild(fsLav('div', 'fsIngen', 'Ingen beskeder i Andet – alt er sorteret'));
 }
 
 async function hentBeskeder(){
