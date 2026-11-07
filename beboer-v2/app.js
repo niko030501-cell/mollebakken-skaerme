@@ -585,8 +585,14 @@ function tegn(){
   else if(S.fane === 'traening') tegnTraening(side);
   else if(S.fane === 'statistik') tegnStatistik(side);
   else if(S.fane === 'kostplan') tegnKostplan(side);
-  else if(S.fane === 'medaljer') tegnMedaljer(side);
+  else if(S.fane === 'belonninger') tegnBelonninger(side);
   else tegnMere(side);
+  // Pillen med point øverst til højre (åbner Mine belønninger)
+  var topHoved = side.querySelector('.hoved');
+  if(topHoved && S.fane !== 'belonninger' && visPille()){
+    topHoved.classList.add('medPille');
+    topHoved.appendChild(pointPille());
+  }
   rod.appendChild(side);
   rod.appendChild(bundmenu());
 }
@@ -650,19 +656,23 @@ function bundmenu(){
   nav.setAttribute('aria-label', 'Hovedmenu');
   var inder = lav('div', 'inder');
   var antal = 0;
-  [['hjem', 'Hjem'], ['kalender', 'Kalender'], ['traening', 'Træning'], ['kostplan', 'Kostplan'], ['medaljer', 'Medaljer'], ['statistik', 'Statistik'], ['mere', 'Mere']].forEach(function(p){
+  // Højst 4 faner: Hjem og Mere altid, Træning og Kostplan kun hvis borgeren har dem.
+  // Kalender og Statistik ligger under Mere (og fremhæver Mere).
+  var aktiv = S.fane;
+  if(aktiv === 'kalender' || aktiv === 'statistik') aktiv = 'mere';
+  if(aktiv === 'belonninger') aktiv = (S.forrigeFane === 'kalender' || S.forrigeFane === 'statistik') ? 'mere' : (S.forrigeFane || 'hjem');
+  [['hjem', 'Hjem'], ['traening', 'Træning'], ['kostplan', 'Kostplan'], ['mere', 'Mere']].forEach(function(p){
     if(p[0] !== 'hjem' && p[0] !== 'mere' && !faneSynlig(p[0])) return;
     antal++;
-    var k = lav('button', S.fane === p[0] ? 'aktiv' : '');
+    var k = lav('button', aktiv === p[0] ? 'aktiv' : '');
     k.type = 'button';
-    if(S.fane === p[0]) k.setAttribute('aria-current', 'page');
-    k.appendChild(svgIkon(p[0] === 'medaljer' ? MEDALJE_STIER.medalje : IKONER[p[0]], p[0] === 'mere' ? 3 : 2));
+    if(aktiv === p[0]) k.setAttribute('aria-current', 'page');
+    k.appendChild(svgIkon(IKONER[p[0]], p[0] === 'mere' ? 3 : 2));
     k.appendChild(lav('span', null, p[1]));
     k.addEventListener('click', function(){ S.fane = p[0]; S.visMad = false; tegn(); window.scrollTo(0, 0); });
     inder.appendChild(k);
   });
   inder.style.gridTemplateColumns = 'repeat(' + antal + ', 1fr)';
-  if(antal >= 7) inder.className = 'inder tryk';
   nav.appendChild(inder);
   return nav;
 }
@@ -687,8 +697,8 @@ function tegnHjem(side){
 
   var viserNoget = false;
 
-  // --- Dagens træning ---
-  if(modulSynlig('traening')){
+  // --- Dagens træning (kun for borgere med et træningsprogram) ---
+  if(harTraening()){
   viserNoget = true;
   var tr = lav('section', 'sektion');
   tr.appendChild(lav('h2', null, tema().t.dagensTraening));
@@ -920,6 +930,7 @@ function tegnKalender(side){
   var r = valgNaeste ? rNaeste : rDenne;
 
   var hoved = lav('header', 'hoved');
+  side.appendChild(tilbageKnap('mere'));
   hoved.appendChild(lav('h1', null, stortM(MAANEDER[md]) + ' ' + aar));
   side.appendChild(hoved);
 
@@ -1184,6 +1195,7 @@ function tegnStatistik(side){
   var st = beregnStatistik(nu);
 
   var hoved = lav('header', 'hoved');
+  side.appendChild(tilbageKnap('mere'));
   hoved.appendChild(lav('h1', null, 'Statistik'));
   side.appendChild(hoved);
 
@@ -1256,7 +1268,39 @@ function tegnStatistik(side){
   graf.appendChild(gKort);
   side.appendChild(graf);
 
-  // --- Medaljer ---
+  // Medaljerne for træning ligger nu samlet på siden Mine belønninger
+}
+
+// Træning-delen af Mine belønninger: de eksisterende medaljer (flyttet hertil fra Statistik).
+// Træning giver endnu ingen point.
+function tegnTraeningBelonning(side){
+  var st = beregnStatistik(new Date());
+  var rk = lav('div', 'kort kostRaekke');
+  rk.appendChild(lav('div', 'statStor', String(st.nuvaerende)));
+  rk.appendChild(lav('div', 'statLabel', st.nuvaerende === 1 ? 'uge i træk' : 'uger i træk'));
+  if(st.nuvaerende === 0) rk.appendChild(lav('p', 'kostNyStart', st.total > 0 ? 'Ny start i denne uge' : 'Start i denne uge'));
+  var naeste = null;
+  MEDALJER.forEach(function(m){ if(!naeste && medaljeVaerdi(m, st) < m.graense) naeste = m; });
+  var maal = naeste ? naeste.graense : 1;
+  var nu = naeste ? Math.min(medaljeVaerdi(naeste, st), maal) : maal;
+  var bj = lav('div', 'bjaelke kostBjaelke');
+  bj.setAttribute('role', 'progressbar');
+  bj.setAttribute('aria-valuemin', '0');
+  bj.setAttribute('aria-valuemax', '100');
+  bj.setAttribute('aria-valuenow', String(Math.round(nu / maal * 100)));
+  bj.setAttribute('aria-label', 'Vej til næste medalje');
+  var fyld = lav('div', 'bjaelkeFyld');
+  fyld.style.width = Math.round(nu / maal * 100) + '%';
+  bj.appendChild(fyld);
+  rk.appendChild(bj);
+  if(naeste){
+    var tm0 = tema().medaljer[naeste.id] || {};
+    rk.appendChild(lav('p', 'kostNaeste', 'Næste medalje: ' + (tm0.navn ? tm0.navn + ' (' + naeste.titel + ')' : naeste.titel)));
+  } else {
+    rk.appendChild(lav('p', 'kostNaeste', 'Alle medaljer er hentet. Godt gået!'));
+  }
+  side.appendChild(rk);
+
   var med = lav('section', 'sektion');
   med.appendChild(lav('h2', null, tema().t.medaljer));
   var gitter = lav('div', 'medaljer');
@@ -1277,10 +1321,30 @@ function tegnStatistik(side){
   side.appendChild(med);
 }
 
+function tilbageKnap(fane){
+  var t = lav('button', 'knap lys madTilbage');
+  t.type = 'button';
+  t.appendChild(svgIkon(IKONER.tilbage, 3));
+  t.appendChild(lav('span', null, 'Tilbage'));
+  t.addEventListener('click', function(){ S.fane = fane; tegn(); window.scrollTo(0, 0); });
+  return t;
+}
+
 function tegnMere(side){
   var hoved = lav('header', 'hoved');
   hoved.appendChild(lav('h1', null, 'Mere'));
   side.appendChild(hoved);
+
+  // --- Kalender og Statistik (ligger under Mere, så bundmenuen aldrig bliver for tæt) ---
+  [['kalender', 'Kalender'], ['statistik', 'Statistik']].forEach(function(p){
+    if(!modulSynlig(p[0])) return;
+    var kn = lav('button', 'knap lys madMereKnap');
+    kn.type = 'button';
+    kn.appendChild(svgIkon(IKONER[p[0]], 2));
+    kn.appendChild(lav('span', null, p[1]));
+    kn.addEventListener('click', function(){ S.fane = p[0]; tegn(); window.scrollTo(0, 0); });
+    side.appendChild(kn);
+  });
 
   // --- Ugens mad ---
   if(modulSynlig('mad')){
@@ -1790,8 +1854,36 @@ function harKostplan(){
 
 // Fanerne Kostplan og Medaljer vises kun, hvis beboeren har en kostplan (og modulet ikke er slået fra)
 function faneSynlig(f){
-  if(f === 'kostplan' || f === 'medaljer') return harKostplan();
+  if(f === 'kostplan') return harKostplan();
+  if(f === 'traening') return modulSynlig('traening') && S.programmer.length > 0;
+  if(f === 'belonninger') return visPille();
   return modulSynlig(f);
+}
+
+function harTraening(){
+  return modulSynlig('traening') && S.programmer.length > 0;
+}
+
+// Pillen vises, når borgeren har kostplan eller træning (point kommer fra kostplanen)
+function visPille(){
+  return harKostplan() || harTraening();
+}
+
+function pointPille(){
+  var st = kostStatistik(new Date());
+  var k = lav('button', 'pointPille');
+  k.type = 'button';
+  k.setAttribute('aria-label', 'Dine point: ' + st.punkter + '. Åbn Mine belønninger.');
+  k.appendChild(svgIkon(MEDALJE_STIER.stjerne, 2));
+  k.appendChild(lav('span', 'pointTal', String(st.punkter)));
+  k.addEventListener('click', function(){
+    S.forrigeFane = S.fane;
+    S.visMad = false;
+    S.fane = 'belonninger';
+    tegn();
+    window.scrollTo(0, 0);
+  });
+  return k;
 }
 
 function kostAfkrydsFraServer(liste){
@@ -2104,13 +2196,39 @@ function tegnKostplan(side){
 
 // ---- Fanen Medaljer ----
 
-function tegnMedaljer(side){
+// Siden Mine belønninger: vælger Kostplan / Træning (skjules, hvis borgeren kun har én del)
+function tegnBelonninger(side){
+  side.appendChild(tilbageKnap(S.forrigeFane && S.forrigeFane !== 'belonninger' ? S.forrigeFane : 'hjem'));
+  var hoved = lav('header', 'hoved');
+  hoved.appendChild(lav('h1', null, 'Mine belønninger'));
+  side.appendChild(hoved);
+
+  var delK = harKostplan(), delT = harTraening();
+  if(S.belValg !== 'kost' && S.belValg !== 'traening') S.belValg = delK ? 'kost' : 'traening';
+  if(S.belValg === 'kost' && !delK) S.belValg = 'traening';
+  if(S.belValg === 'traening' && !delT) S.belValg = 'kost';
+
+  if(delK && delT){
+    var valg = lav('div', 'kalValg');
+    valg.setAttribute('role', 'group');
+    valg.setAttribute('aria-label', 'Vælg del');
+    [['kost', 'Kostplan'], ['traening', 'Træning']].forEach(function(v){
+      var aktiv = S.belValg === v[0];
+      var k = lav('button', 'knap ' + (aktiv ? 'accent' : 'lys'), v[1]);
+      k.type = 'button';
+      k.setAttribute('aria-pressed', aktiv ? 'true' : 'false');
+      k.addEventListener('click', function(){ S.belValg = v[0]; tegn(); });
+      valg.appendChild(k);
+    });
+    side.appendChild(valg);
+  }
+  if(!S.indlaest){ side.appendChild(lav('p', 'tom', 'Henter …')); return; }
+  if(S.belValg === 'traening') tegnTraeningBelonning(side); else tegnKostBelonning(side);
+}
+
+function tegnKostBelonning(side){
   var nu = new Date();
   var st = kostStatistik(nu);
-
-  var hoved = lav('header', 'hoved');
-  hoved.appendChild(lav('h1', null, 'Medaljer'));
-  side.appendChild(hoved);
 
   // Næste medalje: den første, der aldrig er hentet. Der tælles ned fra den nuværende række.
   var naeste = null;
