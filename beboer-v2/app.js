@@ -11,6 +11,7 @@ var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 var NOEGLE_TOKEN = 'bv2_token';
 var NOEGLE_CACHE = 'bv2_cache';
 var NOEGLE_KOE = 'bv2_koe';
+var NOEGLE_KOSTKOE = 'bv2_kostkoe';
 var UGEDAGE = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
 var UGEDAGE_ORDEN = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
 var DAGE_KORT = { Mandag:'Man', Tirsdag:'Tir', Onsdag:'Ons', Torsdag:'Tor', Fredag:'Fre', Lørdag:'Lør', Søndag:'Søn' };
@@ -25,6 +26,8 @@ var S = {
   modulerFra: {},   // moduler personalet har slået fra for denne beboer ({ noegle: true }). Tom = alt synligt.
   programmer: [], dagsplan: [], vagter: [], skjulte: [], traeninger: [],
   madplan: {}, visMad: false,
+  kostRegler: [], kostAfkryds: {},   // kostplan: regler og afkrydsninger ("regelId|YYYY-MM-DD" -> true)
+  kostUrls: {}, kostUrlTid: 0,       // signerede billed-URL'er (privat bucket)
   kalendere: [], kalValg: 'denne',
   offline: false, indlaest: false, flow: null,
   fejl: '', loginBusy: false
@@ -110,7 +113,9 @@ var IKONER = {
   bestik: ['M5 3v5a2 2 0 0 0 4 0V3', 'M7 10v11', 'M17 21V3c-2 1.5-3 4-3 7s1 4 3 4'],
   tilbage: ['M15 5l-7 7 7 7'],
   frem: ['M9 5l7 7-7 7'],
-  kalender: ['M4 6h16v14H4z', 'M4 10h16', 'M8 3v4', 'M16 3v4']
+  kalender: ['M4 6h16v14H4z', 'M4 10h16', 'M8 3v4', 'M16 3v4'],
+  kostplan: ['M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0-10 0', 'M2.5 4v5a1.5 1.5 0 0 0 3 0V4', 'M4 10v10', 'M21 20V4c-1.5 1-2.5 3-2.5 6H21'],
+  laas: ['M6 11h12v9H6z', 'M8.5 11V8a3.5 3.5 0 0 1 7 0v3']
 };
 
 // ---------- Temaer ----------
@@ -236,6 +241,24 @@ var TEMAER = {
       m25: { navn: 'Knogle', ikon: 'knogle' },
       m50: { navn: 'Guld-halsbånd', ikon: 'halsbaand' },
       u3:  { navn: 'Garnnøgle', ikon: 'garn' }
+    }
+  },
+  // Hemmeligt tema: åbnes først efter 30 dage i træk på kostplanen
+  legende: {
+    navn: 'Legende', beskrivelse: 'Mørkt med guld',
+    farver: ['#0D0C0A', '#E9C46A', '#F4ECD8'], statuslinje: '#0D0C0A',
+    t: {
+      dagensTraening: 'Dagens træning',
+      start: 'Start træning',
+      taeller: function(i, n){ return 'Øvelse ' + i + ' af ' + n; },
+      saetFaerdig: 'Sæt færdig',
+      pause: 'Hvil',
+      faerdig: function(navn){ return 'Flot klaret, ' + navn + '!'; },
+      medaljer: 'Medaljer',
+      uger: 'Træninger pr. uge'
+    },
+    medaljer: {
+      m10: { ikon: 'medalje' }, m25: { ikon: 'medalje' }, m50: { ikon: 'pokal' }, u3: { ikon: 'flamme' }
     }
   }
 };
@@ -377,12 +400,17 @@ function logUdLokalt(besked){
   S.madplan = {};
   S.kalendere = [];
   S.modulerFra = {};
+  S.kostRegler = [];
+  S.kostAfkryds = {};
+  S.kostUrls = {};
+  S.kostUrlTid = 0;
   S.kalValg = 'denne';
   S.visMad = false;
   S.fejl = besked || '';
   lagSkriv(NOEGLE_TOKEN, null);
   lagSkriv(NOEGLE_CACHE, null);
   lagSkriv(NOEGLE_KOE, null);
+  lagSkriv(NOEGLE_KOSTKOE, null);
   lagSkriv(NOEGLE_TEMA_AFVENTER, null);
   stopFlow();
   stopPoll();
@@ -448,7 +476,8 @@ async function hentAlt(){
       })),
       sb.from('aktivitet_kalendere').select('maaned,titel,storage_path,hentet_at')
         .in('maaned', kalenderMaaneder(kalNu())).eq('aktiv', true),
-      rpc('beboer_synlighed', { p_token: S.token })
+      rpc('beboer_synlighed', { p_token: S.token }),
+      rpc('beboer_kost_hent', { p_token: S.token })
     ]);
   } catch(e){
     S.offline = true;
@@ -497,15 +526,27 @@ async function hentAlt(){
       svar[7].data.forEach(function(k){ if(typeof k === 'string') fra[k] = true; });
       S.modulerFra = fra;
     }
-    lagSkriv(NOEGLE_CACHE, JSON.stringify({
-      navn: S.navn, tema: S.tema, programmer: S.programmer, dagsplan: S.dagsplan, traeninger: S.traeninger,
-      madplan: S.madplan, kalendere: S.kalendere, modulerFra: S.modulerFra
-    }));
+    // Kostplan: fejler hentningen, beholdes det senest kendte
+    var kostSvar = svar[8];
+    if(kostSvar && !kostSvar.fejl && kostSvar.data && Array.isArray(kostSvar.data.regler)){
+      S.kostRegler = kostSvar.data.regler;
+      // Mens en afkrydsning er undervejs, beholdes den lokale tilstand (ellers ville den blinke tilbage)
+      if(kostIgang === 0) S.kostAfkryds = kostAfkrydsFraServer(kostSvar.data.afkrydsning || []);
+    }
+    gemCache();
   }
   S.indlaest = true;
   // Under en træning tegnes skærmen ikke om (billede og nedtælling må ikke nulstilles)
   if(!S.flow) tegn();
-  if(!S.offline){ flushKoe(); sendAfventendeTema(); }
+  if(!S.offline){ flushKoe(); sendAfventendeTema(); kostFlushKoe(); kostHentUrler(); }
+}
+
+function gemCache(){
+  lagSkriv(NOEGLE_CACHE, JSON.stringify({
+    navn: S.navn, tema: S.tema, programmer: S.programmer, dagsplan: S.dagsplan, traeninger: S.traeninger,
+    madplan: S.madplan, kalendere: S.kalendere, modulerFra: S.modulerFra,
+    kostRegler: S.kostRegler, kostAfkryds: S.kostAfkryds
+  }));
 }
 
 function startPoll(){
@@ -532,7 +573,7 @@ function tegn(){
   anvendTema();
   if(S.flow){ tegnFlow(); return; }
   // En fane eller visning der er slået fra, kan ikke åbnes (heller ikke fra gammel tilstand)
-  if(S.fane !== 'hjem' && S.fane !== 'mere' && !modulSynlig(S.fane)) S.fane = 'hjem';
+  if(S.fane !== 'hjem' && S.fane !== 'mere' && !faneSynlig(S.fane)) S.fane = 'hjem';
   if(S.visMad && !modulSynlig('mad')) S.visMad = false;
   var side = lav('div', 'side');
   if(S.offline){
@@ -543,6 +584,8 @@ function tegn(){
   else if(S.fane === 'kalender') tegnKalender(side);
   else if(S.fane === 'traening') tegnTraening(side);
   else if(S.fane === 'statistik') tegnStatistik(side);
+  else if(S.fane === 'kostplan') tegnKostplan(side);
+  else if(S.fane === 'medaljer') tegnMedaljer(side);
   else tegnMere(side);
   rod.appendChild(side);
   rod.appendChild(bundmenu());
@@ -606,16 +649,20 @@ function bundmenu(){
   var nav = lav('nav', 'bund');
   nav.setAttribute('aria-label', 'Hovedmenu');
   var inder = lav('div', 'inder');
-  [['hjem', 'Hjem'], ['kalender', 'Kalender'], ['traening', 'Træning'], ['statistik', 'Statistik'], ['mere', 'Mere']].forEach(function(p){
-    if(p[0] !== 'hjem' && p[0] !== 'mere' && !modulSynlig(p[0])) return;
+  var antal = 0;
+  [['hjem', 'Hjem'], ['kalender', 'Kalender'], ['traening', 'Træning'], ['kostplan', 'Kostplan'], ['medaljer', 'Medaljer'], ['statistik', 'Statistik'], ['mere', 'Mere']].forEach(function(p){
+    if(p[0] !== 'hjem' && p[0] !== 'mere' && !faneSynlig(p[0])) return;
+    antal++;
     var k = lav('button', S.fane === p[0] ? 'aktiv' : '');
     k.type = 'button';
     if(S.fane === p[0]) k.setAttribute('aria-current', 'page');
-    k.appendChild(svgIkon(IKONER[p[0]], p[0] === 'mere' ? 3 : 2));
+    k.appendChild(svgIkon(p[0] === 'medaljer' ? MEDALJE_STIER.medalje : IKONER[p[0]], p[0] === 'mere' ? 3 : 2));
     k.appendChild(lav('span', null, p[1]));
     k.addEventListener('click', function(){ S.fane = p[0]; S.visMad = false; tegn(); window.scrollTo(0, 0); });
     inder.appendChild(k);
   });
+  inder.style.gridTemplateColumns = 'repeat(' + antal + ', 1fr)';
+  if(antal >= 7) inder.className = 'inder tryk';
   nav.appendChild(inder);
   return nav;
 }
@@ -1032,6 +1079,7 @@ var MEDALJE_STIER = {
   kugle:   [cirkelSti(12, 12, 8), 'M9 9h.01', 'M13 8h.01', 'M12 12h.01'],
   turkey:  kegleSti(5).concat(kegleSti(12), kegleSti(19)),
   stjerne: ['M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z'],
+  diamant: ['M6 4h12l3 5-9 11L3 9z', 'M3 9h18', 'M9 4L7 9l5 11', 'M15 4l2 5-5 11'],
   // Gamer
   controller: ['M7 8h10a4 4 0 0 1 4 4v1a3 3 0 0 1-5.2 2L14.5 14h-5l-1.3 1A3 3 0 0 1 3 13v-1a4 4 0 0 1 4-4z',
                'M8 10.5v3', 'M6.5 12h3', 'M16 11h.01', 'M18 12.5h.01'],
@@ -1251,13 +1299,22 @@ function tegnMere(side){
   var gruppe = lav('div', 'temaGruppe');
   gruppe.setAttribute('role', 'radiogroup');
   gruppe.setAttribute('aria-label', 'Tema');
-  ['standard', 'zombie', 'bowling', 'gamer', 'natur', 'dyr'].forEach(function(id){
+  var temaListe = ['standard', 'zombie', 'bowling', 'gamer', 'natur', 'dyr'];
+  // Det hemmelige tema vises (låst) for dem, der har en kostplan
+  if(harKostplan() || S.tema === 'legende') temaListe.push('legende');
+  var legendeLaast = kostStatistik(new Date()).laengste < KOST_TEMA_DAGE && S.tema !== 'legende';
+  temaListe.forEach(function(id){
     var t = TEMAER[id];
     var valgt = S.tema === id;
-    var kn = lav('button', 'temaKnap' + (valgt ? ' valgt' : ''));
+    var laast = id === 'legende' && legendeLaast;
+    var kn = lav('button', 'temaKnap' + (valgt ? ' valgt' : '') + (laast ? ' laast' : ''));
     kn.type = 'button';
     kn.setAttribute('role', 'radio');
     kn.setAttribute('aria-checked', valgt ? 'true' : 'false');
+    if(laast){
+      kn.setAttribute('aria-disabled', 'true');
+      kn.setAttribute('aria-label', 'Hemmeligt tema. Låst, åbnes efter ' + KOST_TEMA_DAGE + ' dage i træk.');
+    }
     var farver = lav('span', 'temaFarver');
     farver.setAttribute('aria-hidden', 'true');
     t.farver.forEach(function(f){
@@ -1267,11 +1324,12 @@ function tegnMere(side){
     });
     kn.appendChild(farver);
     var tekst = lav('span', 'temaTekst');
-    tekst.appendChild(lav('span', 'temaNavn', t.navn));
-    tekst.appendChild(lav('span', 'temaBeskr', t.beskrivelse));
+    tekst.appendChild(lav('span', 'temaNavn', laast ? 'Hemmeligt tema' : t.navn));
+    tekst.appendChild(lav('span', 'temaBeskr', laast ? 'Åbnes efter ' + KOST_TEMA_DAGE + ' dage i træk' : t.beskrivelse));
     kn.appendChild(tekst);
     if(valgt) kn.appendChild(lav('span', 'temaValgt', 'Valgt'));
-    kn.addEventListener('click', function(){ vaelgTema(id); });
+    if(laast) kn.appendChild(svgIkon(IKONER.laas, 2.4));
+    kn.addEventListener('click', function(){ if(!laast) vaelgTema(id); });
     gruppe.appendChild(kn);
   });
   tk.appendChild(gruppe);
@@ -1709,6 +1767,429 @@ function tegnFlowStop(side){
   side.appendChild(stop);
 }
 
+// ---------- Kostplan og medaljer ----------
+// Regler og afkrydsninger hentes med beboer_kost_hent (kun beboerens egne, udledt af token).
+// Point, dage i træk og medaljer GEMMES ikke: alt regnes ud her fra afkrydsningerne.
+// Dage regnes i enhedens lokale tid. Ingen straf: point og medaljer mistes aldrig.
+
+var KOST_PUNKT_MAALTID = 10;     // point for hvert måltid, der er markeret som fulgt
+var KOST_PUNKT_HELDAG = 5;       // ekstra point, når alle dagens måltider er markeret
+var KOST_TEMA_DAGE = 30;         // dage i træk der åbner det hemmelige tema
+var KOST_MEDALJER = [
+  { id: 'bronze',  navn: 'Bronze',  dage: 3,  ikon: 'medalje' },
+  { id: 'soelv',   navn: 'Sølv',    dage: 7,  ikon: 'medalje' },
+  { id: 'guld',    navn: 'Guld',    dage: 14, ikon: 'pokal' },
+  { id: 'diamant', navn: 'Diamant', dage: 30, ikon: 'diamant' }
+];
+var kostIgang = 0;      // antal afkrydsninger der er undervejs til serveren
+var kostKoeBusy = false;
+
+function harKostplan(){
+  return modulSynlig('kostplan') && S.kostRegler.length > 0;
+}
+
+// Fanerne Kostplan og Medaljer vises kun, hvis beboeren har en kostplan (og modulet ikke er slået fra)
+function faneSynlig(f){
+  if(f === 'kostplan' || f === 'medaljer') return harKostplan();
+  return modulSynlig(f);
+}
+
+function kostAfkrydsFraServer(liste){
+  var m = {};
+  liste.forEach(function(a){
+    if(a && typeof a.regel_id === 'string' && typeof a.dato === 'string') m[a.regel_id + '|' + a.dato] = true;
+  });
+  // Afkrydsninger der endnu ikke nåede serveren (offline) lægges oven på
+  laesKostKoe().forEach(function(p){
+    var k = p.regel_id + '|' + p.dato;
+    if(p.fulgt) m[k] = true; else delete m[k];
+  });
+  return m;
+}
+
+// Samme regel som _kost_gaelder i databasen
+function kostGaelder(r, iso){
+  if(r.gyldig_fra > iso) return false;
+  if(r.gyldig_til && iso >= r.gyldig_til) return false;
+  if(r.hvornaar_type === 'hver_dag') return true;
+  if(r.hvornaar_type === 'dato') return r.dato === iso;
+  return r.ugedag === UGEDAGE[lokalDato(iso).getDay()];
+}
+
+function kostDagRegler(iso){
+  return S.kostRegler.filter(function(r){ return kostGaelder(r, iso); }).sort(function(a, b){
+    return (a.maaltid.sortering || 0) - (b.maaltid.sortering || 0);
+  });
+}
+
+function kostFulgt(regelId, iso){
+  return !!S.kostAfkryds[regelId + '|' + iso];
+}
+
+// Point, dage i træk (nu og længste) ud fra afkrydsningerne.
+// En dag uden regler tæller ikke og bryder ikke rækken. I dag brydes rækken aldrig,
+// så længe dagen ikke er slut.
+function kostStatistik(nu){
+  var idag = datoISO(nu);
+  var noegler = Object.keys(S.kostAfkryds);
+  var foerste = null;
+  noegler.forEach(function(k){
+    var d = k.split('|')[1];
+    if(!foerste || d < foerste) foerste = d;
+  });
+  var raekke = 0, laengste = 0, helDage = 0;
+  if(foerste){
+    var d = lokalDato(foerste);
+    var slut = lokalDato(idag);
+    while(d <= slut){
+      var iso = datoISO(d);
+      var regler = kostDagRegler(iso);
+      if(regler.length > 0){
+        var antal = 0;
+        regler.forEach(function(r){ if(kostFulgt(r.id, iso)) antal++; });
+        if(antal === regler.length){
+          raekke++;
+          helDage++;
+          if(raekke > laengste) laengste = raekke;
+        } else if(iso !== idag){
+          raekke = 0;
+        }
+      }
+      d = plusDage(d, 1);
+    }
+  }
+  return {
+    punkter: noegler.length * KOST_PUNKT_MAALTID + helDage * KOST_PUNKT_HELDAG,
+    raekke: raekke, laengste: laengste, harHistorik: !!foerste && foerste < idag
+  };
+}
+
+function laesKostKoe(){
+  try { return JSON.parse(lagLaes(NOEGLE_KOSTKOE) || '[]') || []; } catch(e){ return []; }
+}
+function skrivKostKoe(k){
+  lagSkriv(NOEGLE_KOSTKOE, k.length > 0 ? JSON.stringify(k) : null);
+}
+
+// 'ok' | 'koe' (prøv igen senere) | 'fejl' (afvist af serveren)
+async function kostSendPost(p){
+  var res = await rpc('beboer_kost_afkryds', {
+    p_token: S.token, p_regel_id: p.regel_id, p_dato: p.dato, p_fulgt: p.fulgt
+  });
+  if(res.fejl === 'ingen_forbindelse' || res.fejl === 'ikke_logget_ind') return 'koe';
+  if(res.fejl) return 'fejl';
+  return 'ok';
+}
+
+async function kostFlushKoe(){
+  if(kostKoeBusy || !S.token) return;
+  var k = laesKostKoe();
+  if(k.length === 0) return;
+  kostKoeBusy = true;
+  var rest = [];
+  for(var i = 0; i < k.length; i++){
+    var r = await kostSendPost(k[i]);
+    if(r === 'koe') rest.push(k[i]);
+  }
+  skrivKostKoe(rest);
+  kostKoeBusy = false;
+}
+
+async function kostMarker(r, iso, fulgt){
+  var nok = r.id + '|' + iso;
+  if(fulgt) S.kostAfkryds[nok] = true; else delete S.kostAfkryds[nok];
+  gemCache();
+  tegn();
+  var post = { regel_id: r.id, dato: iso, fulgt: fulgt };
+  kostIgang++;
+  var res = await kostSendPost(post);
+  kostIgang--;
+  if(res === 'koe'){
+    var k = laesKostKoe().filter(function(p){ return !(p.regel_id === post.regel_id && p.dato === post.dato); });
+    k.push(post);
+    skrivKostKoe(k);
+  } else if(res === 'fejl'){
+    hentAlt();   // serveren afviste det: hent det rigtige billede
+  }
+}
+
+// ---- Billeder (privat bucket, signerede URL'er via edge-funktionen) ----
+
+function kostAlleStier(){
+  var s = {};
+  S.kostRegler.forEach(function(r){
+    if(r.gyldig_til) return;
+    if(r.maaltid && r.maaltid.billede_sti) s[r.maaltid.billede_sti] = true;
+    (r.punkter || []).forEach(function(p){ if(p.billede_sti) s[p.billede_sti] = true; });
+  });
+  return Object.keys(s);
+}
+
+var kostUrlBusy = false;
+async function kostHentUrler(){
+  if(kostUrlBusy || !S.token) return;
+  var alle = kostAlleStier();
+  var gammel = Date.now() - S.kostUrlTid > 50 * 60 * 1000;
+  var mangler = gammel ? alle : alle.filter(function(s){ return !S.kostUrls[s]; });
+  if(mangler.length === 0) return;
+  kostUrlBusy = true;
+  try {
+    var svar = await sb.functions.invoke('kost-billede', {
+      body: { action: 'hent', rolle: 'beboer', token: S.token, stier: mangler.slice(0, 80) }
+    });
+    if(!svar.error && svar.data && svar.data.urls){
+      Object.keys(svar.data.urls).forEach(function(s){ S.kostUrls[s] = svar.data.urls[s]; });
+      S.kostUrlTid = Date.now();
+      if(!S.flow && (S.fane === 'kostplan')) tegn();
+    }
+  } catch(e){ /* offline: ikon vises i stedet */ }
+  kostUrlBusy = false;
+}
+
+// Måltid/punkt: eget billede hvis der er et (og det kan hentes), ellers ikon
+function kostSymbolEl(ikon, sti, str, klasse){
+  var boks = lav('span', 'kostSymbol ' + (klasse || ''));
+  boks.style.width = str + 'px';
+  boks.style.height = str + 'px';
+  var visIkon = function(){
+    boks.textContent = '';
+    boks.appendChild(kostIkon(ikon || 'aftensmad', Math.round(str * 0.62), 1.8));
+  };
+  if(sti && S.kostUrls[sti]){
+    var img = document.createElement('img');
+    img.alt = '';
+    img.addEventListener('error', function(){ S.kostUrlTid = 0; visIkon(); });
+    img.src = S.kostUrls[sti];
+    boks.appendChild(img);
+  } else {
+    visIkon();
+  }
+  return boks;
+}
+
+// ---- Fanen Kostplan ----
+
+function kostPunktTekst(r){
+  return (r.punkter || []).map(function(p){ return p.navn + (p.maengde ? ' (' + p.maengde + ')' : ''); }).join(', ');
+}
+
+function kostMaaltidKort(r, iso){
+  var fulgt = kostFulgt(r.id, iso);
+  var k = lav('div', 'kort kostKort' + (fulgt ? ' fulgt' : ''));
+  var hoved = lav('div', 'kostKortHoved');
+  hoved.appendChild(kostSymbolEl(r.maaltid.ikon, r.maaltid.billede_sti, 64, 'kostStor'));
+  hoved.appendChild(lav('h3', null, r.maaltid.navn));
+  k.appendChild(hoved);
+
+  var ul = lav('ul', 'kostPunkter');
+  (r.punkter || []).forEach(function(p){
+    var li = lav('li', 'kostPunkt');
+    if(p.ikon || p.billede_sti) li.appendChild(kostSymbolEl(p.ikon, p.billede_sti, 44, 'kostLille'));
+    var tekst = lav('span', 'kostPunktTekst');
+    tekst.appendChild(lav('span', 'kostPunktNavn', p.navn));
+    if(p.maengde) tekst.appendChild(lav('span', 'kostMaengde', p.maengde));
+    li.appendChild(tekst);
+    ul.appendChild(li);
+  });
+  k.appendChild(ul);
+
+  if(!fulgt){
+    var knap = lav('button', 'knap accent kostFulgtKnap', 'Jeg har fulgt planen');
+    knap.type = 'button';
+    knap.addEventListener('click', function(){ kostMarker(r, iso, true); });
+    k.appendChild(knap);
+  } else {
+    var maerke = lav('div', 'kostFulgtMaerke');
+    maerke.appendChild(lav('span', 'kostFlueben', '✓'));
+    maerke.appendChild(lav('span', null, 'Fulgt planen'));
+    k.appendChild(maerke);
+    var fortryd = lav('button', 'kostFortryd', 'Fortryd');
+    fortryd.type = 'button';
+    fortryd.addEventListener('click', function(){ kostMarker(r, iso, false); });
+    k.appendChild(fortryd);
+  }
+  return k;
+}
+
+function kostDagNavn(iso, nu){
+  var d = lokalDato(iso);
+  var diff = Math.round((d - lokalDato(datoISO(nu))) / 86400000);
+  if(diff === 1) return 'I morgen';
+  return UGEDAGE[d.getDay()] + ' ' + d.getDate() + '. ' + MAANEDER[d.getMonth()].slice(0, 3) + '.';
+}
+
+// Resten af ugen: de næste regler (ugedage til og med søndag). Regler med en bestemt dato
+// vises også, når datoen ligger inden for de næste 7 dage ("ugen før").
+function kostRestenAfUgen(nu, sektion){
+  var idag = lokalDato(datoISO(nu));
+  var soendag = plusDage(ugeStart(nu), 6);
+  var rader = [];
+  var hverDag = S.kostRegler.filter(function(r){
+    return r.hvornaar_type === 'hver_dag' && kostGaelder(r, datoISO(plusDage(idag, 1)));
+  });
+  for(var i = 1; i <= 7; i++){
+    var d = plusDage(idag, i);
+    var iso = datoISO(d);
+    var iUgen = d <= soendag;
+    var regler = kostDagRegler(iso).filter(function(r){
+      return r.hvornaar_type === 'dato' || (iUgen && r.hvornaar_type === 'ugedag');
+    });
+    if(regler.length > 0) rader.push({ iso: iso, regler: regler });
+  }
+  var kort = lav('div', 'kort kostUge');
+  if(hverDag.length > 0){
+    var hd = lav('div', 'kostUgeRække');
+    hd.appendChild(lav('span', 'kostUgeDag', 'Hver dag'));
+    hd.appendChild(lav('span', 'kostUgeTekst', hverDag.map(function(r){ return r.maaltid.navn; }).join(', ')));
+    kort.appendChild(hd);
+  }
+  rader.forEach(function(rd){
+    rd.regler.forEach(function(r, i){
+      var rk = lav('div', 'kostUgeRække');
+      rk.appendChild(lav('span', 'kostUgeDag', i === 0 ? kostDagNavn(rd.iso, nu) : ''));
+      var t = lav('span', 'kostUgeTekst');
+      t.appendChild(lav('strong', null, r.maaltid.navn));
+      var pt = kostPunktTekst(r);
+      if(pt) t.appendChild(lav('span', 'kostUgePunkter', pt));
+      rk.appendChild(t);
+      kort.appendChild(rk);
+    });
+  });
+  if(hverDag.length === 0 && rader.length === 0){
+    kort.appendChild(lav('p', 'tom', 'Der er ikke mere på planen denne uge.'));
+  }
+  sektion.appendChild(kort);
+}
+
+function tegnKostplan(side){
+  var nu = new Date();
+  var iso = datoISO(nu);
+
+  var hoved = lav('header', 'hoved');
+  hoved.appendChild(lav('h1', null, 'Kostplan'));
+  hoved.appendChild(lav('div', 'dato', datoTekst(nu)));
+  side.appendChild(hoved);
+
+  if(!S.indlaest){
+    side.appendChild(lav('p', 'tom', 'Henter …'));
+    return;
+  }
+
+  var idag = lav('section', 'sektion');
+  idag.appendChild(lav('h2', null, 'Kostplan i dag'));
+  var regler = kostDagRegler(iso);
+  if(regler.length === 0){
+    var tom = lav('div', 'kort');
+    tom.appendChild(lav('p', 'tom', 'Ingen kostplan i dag. Slap af.'));
+    idag.appendChild(tom);
+  } else {
+    regler.forEach(function(r){ idag.appendChild(kostMaaltidKort(r, iso)); });
+    var antalFulgt = regler.filter(function(r){ return kostFulgt(r.id, iso); }).length;
+    if(antalFulgt === regler.length){
+      var pt = regler.length * KOST_PUNKT_MAALTID + KOST_PUNKT_HELDAG;
+      var flot = lav('div', 'kostFlot');
+      flot.setAttribute('role', 'status');
+      flot.appendChild(lav('span', 'kostFlotStjerne', '★'));
+      flot.appendChild(lav('span', null, 'Flot! Hele dagen fulgt. +' + pt + ' point'));
+      idag.appendChild(flot);
+    }
+  }
+  side.appendChild(idag);
+
+  var uge = lav('section', 'sektion');
+  uge.appendChild(lav('h2', null, 'Resten af ugen'));
+  kostRestenAfUgen(nu, uge);
+  side.appendChild(uge);
+}
+
+// ---- Fanen Medaljer ----
+
+function tegnMedaljer(side){
+  var nu = new Date();
+  var st = kostStatistik(nu);
+
+  var hoved = lav('header', 'hoved');
+  hoved.appendChild(lav('h1', null, 'Medaljer'));
+  side.appendChild(hoved);
+
+  // Næste medalje: den første, der aldrig er hentet. Der tælles ned fra den nuværende række.
+  var naeste = null;
+  KOST_MEDALJER.forEach(function(m){ if(!naeste && st.laengste < m.dage) naeste = m; });
+
+  var rk = lav('div', 'kort kostRaekke');
+  rk.appendChild(lav('div', 'statStor', String(st.raekke)));
+  rk.appendChild(lav('div', 'statLabel', st.raekke === 1 ? 'dag i træk' : 'dage i træk'));
+  if(st.raekke === 0){
+    rk.appendChild(lav('p', 'kostNyStart', st.harHistorik ? 'Ny start i dag' : 'Start i dag'));
+  }
+  var maal = naeste ? naeste.dage : KOST_MEDALJER[KOST_MEDALJER.length - 1].dage;
+  var pct = Math.max(0, Math.min(100, Math.round(st.raekke / maal * 100)));
+  var bj = lav('div', 'bjaelke kostBjaelke');
+  bj.setAttribute('role', 'progressbar');
+  bj.setAttribute('aria-valuemin', '0');
+  bj.setAttribute('aria-valuemax', '100');
+  bj.setAttribute('aria-valuenow', String(pct));
+  bj.setAttribute('aria-label', 'Vej til næste medalje');
+  var fyld = lav('div', 'bjaelkeFyld');
+  fyld.style.width = pct + '%';
+  bj.appendChild(fyld);
+  rk.appendChild(bj);
+  if(naeste){
+    var rest = Math.max(0, naeste.dage - st.raekke);
+    rk.appendChild(lav('p', 'kostNaeste', 'Næste medalje: ' + naeste.navn + ' om ' + rest + (rest === 1 ? ' dag' : ' dage')));
+  } else {
+    rk.appendChild(lav('p', 'kostNaeste', 'Alle medaljer er hentet. Godt gået!'));
+  }
+  side.appendChild(rk);
+
+  var med = lav('section', 'sektion');
+  med.appendChild(lav('h2', null, 'Dine medaljer'));
+  var gitter = lav('div', 'medaljer');
+  KOST_MEDALJER.forEach(function(m){
+    var optjent = st.laengste >= m.dage;
+    var k = lav('div', 'medalje kostMedalje ' + m.id + (optjent ? ' optjent' : ' ikkeOptjent'));
+    var ikon = lav('div', 'medaljeIkon');
+    ikon.appendChild(svgIkon(MEDALJE_STIER[m.ikon], 1.8));
+    k.appendChild(ikon);
+    k.appendChild(lav('div', 'medaljeTitel', m.navn));
+    k.appendChild(lav('div', 'medaljeStatus', m.dage + ' dage'));
+    if(optjent) k.appendChild(lav('div', 'medaljeKrit', 'Hentet'));
+    gitter.appendChild(k);
+  });
+  med.appendChild(gitter);
+  side.appendChild(med);
+
+  // Hemmeligt tema
+  var aaben = st.laengste >= KOST_TEMA_DAGE;
+  var hk = lav('div', 'kort kostHemmelig' + (aaben ? ' aaben' : ''));
+  var hh = lav('div', 'kostHemmeligHoved');
+  hh.appendChild(svgIkon(aaben ? MEDALJE_STIER.stjerne : IKONER.laas, 2));
+  hh.appendChild(lav('h2', null, 'Hemmeligt tema'));
+  hk.appendChild(hh);
+  var hpct = Math.max(0, Math.min(100, Math.round((aaben ? KOST_TEMA_DAGE : st.raekke) / KOST_TEMA_DAGE * 100)));
+  var hbj = lav('div', 'bjaelke kostBjaelke');
+  hbj.setAttribute('role', 'progressbar');
+  hbj.setAttribute('aria-valuemin', '0');
+  hbj.setAttribute('aria-valuemax', '100');
+  hbj.setAttribute('aria-valuenow', String(hpct));
+  hbj.setAttribute('aria-label', 'Vej til det hemmelige tema');
+  var hf = lav('div', 'bjaelkeFyld');
+  hf.style.width = hpct + '%';
+  hbj.appendChild(hf);
+  hk.appendChild(hbj);
+  hk.appendChild(lav('p', 'meta', aaben
+    ? 'Åbnet! Du finder temaet "Legende" under Mere, når du vælger tema.'
+    : Math.min(st.raekke, KOST_TEMA_DAGE) + ' af ' + KOST_TEMA_DAGE + ' dage i træk. Så åbnes et hemmeligt tema.'));
+  side.appendChild(hk);
+
+  // Samlede point
+  var pk = lav('div', 'kort kostPoint');
+  pk.appendChild(lav('div', 'kostPointTal', String(st.punkter)));
+  pk.appendChild(lav('div', 'statLabel', 'point i alt'));
+  pk.appendChild(lav('p', 'meta', KOST_PUNKT_MAALTID + ' point for hvert måltid + ' + KOST_PUNKT_HELDAG + ' ekstra for en hel dag. Du beholder altid dine point.'));
+  side.appendChild(pk);
+}
+
 // ---------- Start ----------
 
 function start(){
@@ -1727,6 +2208,8 @@ function start(){
     S.madplan = cache.madplan || {};
     S.kalendere = cache.kalendere || [];
     S.modulerFra = cache.modulerFra || {};
+    S.kostRegler = cache.kostRegler || [];
+    S.kostAfkryds = cache.kostAfkryds || {};
   }
 
   rpc('beboer_session_tjek', { p_token: S.token }).then(function(res){

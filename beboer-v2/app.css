@@ -532,3 +532,126 @@ body.kalAaben{ overflow:hidden; }
 .skKast{ font-family: var(--font-display); font-size:44px; line-height:1.4; font-variant-numeric: tabular-nums; }
 .skSum{ font-weight:800; font-size:18px; padding:4px 0 6px; border-top:2px solid var(--ink); font-variant-numeric: tabular-nums; }
 .skForklaring{ margin:12px 0 0; font-size:15px; }
+
+/* ==================================================================
+   KOSTPLAN OG MEDALJER
+   ================================================================== */
+
+/* Bundmenu med 7 faner: lidt mindre tekst, så alt er læsbart på en smal telefon */
+.bund .inder.tryk button{ font-size:11.5px; gap:3px; padding:0 1px; }
+.bund .inder.tryk svg{ width:24px; height:24px; }
+
+.kostSymbol{
+  flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:16px; overflow:hidden; background: var(--bg); color: var(--ink);
+  border:2px solid var(--streg);
+}
+.kostSymbol img{ width:100%; height:100%; object-fit:cover; display:block; }
+.kostSymbol.kostLille{ border-radius:12px; }
+
+.kostKort{ padding:18px; }
+.kostKort + .kostKort{ margin-top:14px; }
+.kostKort.fulgt{ border:3px solid var(--accent); }
+.kostKortHoved{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+.kostKortHoved h3{ font-size:26px; min-width:0; overflow-wrap:anywhere; }
+.kostPunkter{ list-style:none; margin:0 0 16px; padding:0; display:flex; flex-direction:column; gap:10px; }
+.kostPunkt{ display:flex; align-items:center; gap:12px; min-height:44px; }
+.kostPunktTekst{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; min-width:0; }
+.kostPunktNavn{ font-weight:800; font-size:21px; overflow-wrap:anywhere; }
+.kostMaengde{ color: var(--ink-2); font-size:18px; font-weight:700; }
+
+.knap.kostFulgtKnap{ min-height:72px; font-size:24px; border-radius:18px; }
+.kostFulgtMaerke{
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  min-height:72px; border-radius:18px; background: var(--accent); color: var(--accent-ink);
+  font-weight:800; font-size:24px;
+}
+.kostFlueben{ font-size:34px; line-height:1; }
+.kostFortryd{
+  display:block; width:100%; min-height:56px; margin-top:8px; border-radius:14px;
+  background:transparent; color: var(--ink); font-weight:700; font-size:18px;
+  text-decoration:underline; text-underline-offset:4px;
+}
+
+.kostFlot{
+  display:flex; align-items:center; gap:14px; margin-top:14px; padding:18px;
+  border-radius:20px; background: var(--accent); color: var(--accent-ink);
+  font-weight:800; font-size:22px; line-height:1.25;
+}
+.kostFlotStjerne{ font-size:44px; line-height:1; }
+
+.kostUge{ padding:8px 16px; }
+.kostUgeRække{ display:grid; grid-template-columns: 104px 1fr; gap:10px; padding:10px 0; border-bottom:1px solid var(--streg); font-size:17px; }
+.kostUgeRække:last-child{ border-bottom:none; }
+.kostUgeDag{ font-weight:800; color: var(--ink-2); }
+.kostUgeTekst{ display:flex; flex-direction:column; min-width:0; }
+.kostUgePunkter{ color: var(--ink-2); font-size:16px; overflow-wrap:anywhere; }
+
+/* Medaljer */
+.kostRaekke{ text-align:center; padding:22px 16px; margin-bottom:26px; }
+.kostRaekke .statStor{ font-size:84px; }
+.kostNyStart{ margin:10px 0 0; font-size:20px; font-weight:800; }
+.kostBjaelke{ margin:16px 0 10px; }
+.kostNaeste{ margin:0; font-size:20px; font-weight:800; }
+
+.kostMedalje{ position:relative; border-width:3px; }
+.kostMedalje.bronze.optjent{ background:#C98B5A; border-color:#7A4A25; color:#2A1708; }
+.kostMedalje.soelv.optjent{ background:#CBD2D9; border-color:#6B7782; color:#1C232A; }
+.kostMedalje.guld.optjent{ background:#F2C94C; border-color:#8A6A00; color:#2B2100; }
+.kostMedalje.diamant.optjent{ background:#9BE3F7; border-color:#1D7FA0; color:#06212B; }
+.kostMedalje.ikkeOptjent .medaljeIkon{ opacity:.55; }
+.kostMedalje .medaljeKrit{ font-weight:800; }
+
+.kostHemmelig{ margin-top:26px; }
+.kostHemmeligHoved{ display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+.kostHemmeligHoved svg{ width:34px; height:34px; flex:0 0 auto; }
+.kostHemmeligHoved h2{ font-size:24px; }
+.kostHemmelig.aaben{ border:3px solid var(--accent); }
+.kostHemmelig .meta{ margin:0; }
+
+.kostPoint{ margin-top:12px; text-align:center; padding:22px 16px; }
+.kostPointTal{ font-family: var(--font-display); font-weight: var(--display-vaegt); font-size:64px; line-height:1; font-variant-numeric: tabular-nums; }
+.kostPoint .meta{ margin:10px 0 0; font-size:16px; }
+
+/* Låst tema i temavælgeren */
+.temaKnap.laast{ opacity:.7; cursor:not-allowed; border-style:dashed; }
+.temaKnap.laast svg{ width:26px; height:26px; flex:0 0 auto; }
+
+/* ---- Hemmeligt tema: Legende (mørkt med guld) ---- */
+:root[data-tema="legende"]{
+  color-scheme: dark;
+  --bg:      #0D0C0A;
+  --kort:    #1A1813;
+  --ink:     #F4ECD8;
+  --ink-2:   #BFB397;
+  --streg:   #3A3427;
+  --accent:  #E9C46A;
+  --accent-ink: #14110A;
+  --fare:    #E5383B;
+  --fare-tekst: #FF7A7C;
+  --font-display: 'Fraunces', Georgia, serif;
+  --display-vaegt: 600;
+  --knap-bg: #2E2A1F;  --knap-fg: #F4ECD8;
+  --bund-bg: #1A1813;  --bund-fg: #F4ECD8;
+  --nu-bg:   #E9C46A;  --nu-fg:   #14110A;
+  --ikon-bg: #1A1813;  --ikon-fg: #E9C46A;
+  --stop-kant: #E9C46A;
+}
+:root[data-tema="legende"] body::before{
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse at 50% -10%, rgba(233, 196, 106, .16), transparent 60%);
+  pointer-events: none;
+}
+:root[data-tema="legende"] #rod{ position: relative; z-index: 1; }
+:root[data-tema="legende"] .bund{ border-top: 2px solid #E9C46A; }
+:root[data-tema="legende"] .kort{ border-color: #3A3427; }
+:root[data-tema="legende"] .soejleBar{ background: #3A3427; }
+:root[data-tema="legende"] .soejle.denne .soejleBar{ background: #E9C46A; }
+:root[data-tema="legende"] .bjaelkeFyld{ background: #E9C46A; }
+:root[data-tema="legende"] .saetCirkel{ border-color: #E9C46A; }
+:root[data-tema="legende"] .saetCirkel.faerdig{ background: #E9C46A; color: #14110A; }
+:root[data-tema="legende"] .saetCirkel.nu{ background: transparent; box-shadow: 0 0 0 4px #E9C46A; }
+:root[data-tema="legende"] .ugeDag.idag{ border-color: #E9C46A; }
+:root[data-tema="legende"] .medalje.optjent{ border-color: #E9C46A; }
+:root[data-tema="legende"] .flowStjerne{ color: #E9C46A; }

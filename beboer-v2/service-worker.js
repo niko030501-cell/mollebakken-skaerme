@@ -6,7 +6,7 @@
 // Kalenderbilleder (Canva) har samme filnavn, når kalenderen rettes, så de
 // hentes netværk først og caches kun som offline-fallback.
 
-const CACHE_NAVN = 'beboer-v2-7';
+const CACHE_NAVN = 'beboer-v2-8';
 const BILLEDE_CACHE = 'beboer-v2-billeder';
 const BILLEDE_STI = '/storage/v1/object/public/ovelse-billeder/';
 const KALENDER_STI = '/storage/v1/object/public/aktivitet-billeder/plakater/';
@@ -19,7 +19,8 @@ const APP_SKAL = [
   './icon-192.png?v=2',
   './icon-512.png?v=2',
   './supabase-js.min.js',
-  '../shared/tokens.css'
+  '../shared/tokens.css',
+  '../shared/kost-ikoner.js'
 ];
 
 self.addEventListener('install', (event) => {

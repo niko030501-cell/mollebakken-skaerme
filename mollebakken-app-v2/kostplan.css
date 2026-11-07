@@ -1,0 +1,83 @@
+/* Kostplan (personalets side under Beboerapp). Alle trykflader er mindst 44 px. */
+
+.kostRegel{ padding:14px 16px; }
+.kostRegelHoved{ display:flex; align-items:center; gap:12px; min-width:0; }
+.kostRegelTitel{ flex:1; margin:0; font-size:19px; line-height:1.25; min-width:0; overflow-wrap:anywhere; }
+.kostIkonKnap{
+  flex:0 0 auto; width:48px; height:48px; border-radius:12px;
+  background:#e8eeeb; color:var(--mørk); border:none;
+  display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.kostIkonKnap svg{ display:block; }
+
+.kostSymbol{
+  flex:0 0 auto; width:36px; height:36px; border-radius:10px; overflow:hidden;
+  background:#e8eeeb; color:var(--mørk);
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.kostSymbolBillede{ width:100%; height:100%; }
+.kostSymbolBillede img{ width:100%; height:100%; object-fit:cover; display:block; }
+.kostPunktBilledKnap .kostSymbol{ width:32px; height:32px; background:transparent; }
+
+.kostPunktListe{ list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.kostPunkt{ display:flex; align-items:center; gap:10px; min-height:36px; font-size:17px; }
+.kostPunkt .kostSymbol{ width:30px; height:30px; border-radius:8px; }
+.kostPunktNavn{ font-weight:600; min-width:0; overflow-wrap:anywhere; }
+.kostPunktMaengde{ color:var(--tekst-svag); font-size:15px; }
+
+.kostStatusTekst{ margin:6px 0 0; font-size:17px; font-weight:700; }
+
+.kostStorKnap{ min-height:48px; font-size:16px; }
+.kostSlet{ color:var(--rød); }
+
+.kostKopiBorger{ margin:14px 0 6px; font-size:16px; }
+.kostKopiRække{ display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:56px; padding:6px 0; border-bottom:1px solid #eef2ef; }
+.kostKopiRække:last-child{ border-bottom:none; }
+.kostKopiTekst{ min-width:0; }
+
+/* Billede til måltidet: Ikon / Eget billede */
+.kostSkifter{ display:flex; gap:4px; padding:4px; background:#e8eeeb; border-radius:12px; margin-bottom:10px; }
+.kostSkifterKnap{
+  flex:1 1 0; min-height:44px; border-radius:9px; background:transparent; border:none;
+  color:var(--mørk); font-size:16px; font-weight:700; cursor:pointer;
+}
+.kostSkifterKnap.til{ background:var(--mørk); color:#fff; }
+
+.kostIkonGitter{ display:grid; grid-template-columns:repeat(auto-fill, minmax(52px, 1fr)); gap:8px; }
+.kostIkonValg{
+  min-width:52px; min-height:52px; border-radius:12px; background:#fff;
+  border:2px solid #d1d9d6; color:var(--mørk);
+  display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+  font-size:15px; font-weight:700; padding:0 6px;
+}
+.kostIkonValg.valgt{ border-color:var(--mørk); background:var(--guld); }
+.kostFlere{ background:#e8eeeb; border-color:#e8eeeb; }
+
+.kostUploadBoks{ display:inline-flex; }
+
+/* Punkter i formularen */
+.kostPunktForm{
+  display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:8px; align-items:start;
+  padding:10px 0; border-bottom:1px solid #eef2ef;
+}
+.kostPunktFelter{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+.kostPunktFelter input{ min-height:48px; width:100%; }
+.kostPunktKnapper{ display:flex; flex-direction:column; gap:8px; }
+.kostPunktPanel{ grid-column:1 / -1; background:#f6f8f7; border-radius:12px; padding:12px; }
+@media (min-width:700px){
+  .kostPunktFelter{ flex-direction:row; }
+  .kostPunktFelter input:first-child{ flex:1.4 1 0; }
+  .kostPunktFelter input:last-child{ flex:1 1 0; }
+}
+
+/* Dialog: ny/ret måltidstype */
+.kostDialogLag{
+  position:fixed; inset:0; z-index:2000; background:rgba(20, 30, 28, .55);
+  display:flex; align-items:flex-start; justify-content:center; overflow:auto;
+  padding:calc(16px + env(safe-area-inset-top)) 12px 24px;
+}
+.kostDialogBoks{
+  width:100%; max-width:520px; background:#fff; border-radius:16px; padding:18px;
+  margin:auto 0;
+}
+body.kostDialogAaben{ overflow:hidden; }

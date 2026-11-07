@@ -20,6 +20,7 @@
 
 <link rel="stylesheet" href="../shared/tokens.css">
 <link rel="stylesheet" href="piktogram-admin.css">
+<link rel="stylesheet" href="kostplan.css">
 
 <style>
   :root{
@@ -1232,6 +1233,7 @@
 
 <script src="supabase-js.min.js"></script>
 <script src="../shared/ikoner.js"></script>
+<script src="../shared/kost-ikoner.js"></script>
 <script src="../shared/emner.js"></script>
 <script src="../shared/moededag.js"></script>
 
@@ -6512,6 +6514,7 @@ function trVis(){
   trStop();
   trPoll = setInterval(function(){
     if(aktuelSide === 'traening' && trMode === 'log' && !document.hidden) trOpdaterLog();
+    if(aktuelSide === 'traening' && trMode === 'kostplan' && !kost.dialog && !document.hidden) kostHent();
   }, 60000);
 }
 
@@ -6575,8 +6578,8 @@ function trTegn(){
   const rod = document.getElementById('trIndhold');
   if(!rod) return;
   rod.textContent = '';
-  document.getElementById('trNytKnap').hidden = !(trToken && trMode !== 'editor' && trMode !== 'ovelseForm');
-  document.getElementById('trNytTekst').textContent = trMode === 'ovelser' ? 'Ny øvelse' : 'Nyt program';
+  document.getElementById('trNytKnap').hidden = !(trToken && trMode !== 'editor' && trMode !== 'ovelseForm' && trMode !== 'regelForm');
+  document.getElementById('trNytTekst').textContent = trMode === 'ovelser' ? 'Ny øvelse' : (trMode === 'kostplan' ? 'Tilføj regel' : 'Nyt program');
 
   if(!trToken){
     const kort = trEl('div', 'kort');
@@ -6613,11 +6616,11 @@ function trTegn(){
   top.appendChild(navnRække);
   rod.appendChild(top);
 
-  if(trMode !== 'editor' && trMode !== 'ovelseForm'){
+  if(trMode !== 'editor' && trMode !== 'ovelseForm' && trMode !== 'regelForm'){
     const vælger = document.createElement('select');
     vælger.className = 'modeVælger';
     vælger.setAttribute('aria-label', 'Visning');
-    [['programmer', 'Programmer'], ['ovelser', 'Øvelser'], ['log', 'Seneste træninger'], ['beboere', 'Koder og enheder'], ['synlighed', 'Hvad beboeren ser']].forEach(function(p){
+    [['programmer', 'Programmer'], ['ovelser', 'Øvelser'], ['kostplan', 'Kostplan'], ['log', 'Seneste træninger'], ['beboere', 'Koder og enheder'], ['synlighed', 'Hvad beboeren ser']].forEach(function(p){
       const o = document.createElement('option');
       o.value = p[0];
       o.textContent = p[1];
@@ -6632,6 +6635,8 @@ function trTegn(){
 
   if(trMode === 'editor') trTegnEditor(rod);
   else if(trMode === 'ovelseForm') trTegnOvelseForm(rod);
+  else if(trMode === 'regelForm') kostTegnForm(rod);
+  else if(trMode === 'kostplan') kostTegn(rod);
   else if(trMode === 'ovelser') trTegnOvelser(rod);
   else if(trMode === 'log') trTegnLog(rod);
   else if(trMode === 'beboere') trTegnBeboere(rod);
@@ -7020,7 +7025,9 @@ function trBucketFilnavn(url){
 }
 
 function trNyHovedHandling(){
-  if(trMode === 'ovelser') trNyOvelse(); else trNytProgram();
+  if(trMode === 'ovelser') trNyOvelse();
+  else if(trMode === 'kostplan') kostNyRegel();
+  else trNytProgram();
 }
 
 function trTegnOvelser(rod){
@@ -7449,6 +7456,7 @@ const BEBOERAPP_MODULER = [
   { noegle: 'paaarbejde', navn: 'På arbejde nu',   beskrivelse: 'Hvem der er på arbejde, på Hjem' },
   { noegle: 'kalender',   navn: 'Kalender',        beskrivelse: 'Fanen Kalender' },
   { noegle: 'statistik',  navn: 'Statistik',       beskrivelse: 'Fanen Statistik' },
+  { noegle: 'kostplan',   navn: 'Kostplan og medaljer', beskrivelse: 'Fanerne Kostplan og Medaljer (vises kun, hvis beboeren har en kostplan)' },
   { noegle: 'tema',       navn: 'Vælg tema',       beskrivelse: 'Valg af tema under Mere' }
 ];
 
@@ -8117,5 +8125,6 @@ if('serviceWorker' in navigator){
 </script>
 
 <script src="piktogram-admin.js"></script>
+<script src="kostplan.js"></script>
 </body>
 </html>
