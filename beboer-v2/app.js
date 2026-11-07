@@ -1899,13 +1899,12 @@ function kostAfkrydsFraServer(liste){
   return m;
 }
 
-// Samme regel som _kost_gaelder i databasen
+// Samme regel som _kost_gaelder i databasen (en regel har en liste af ugedage eller en dato)
 function kostGaelder(r, iso){
   if(r.gyldig_fra > iso) return false;
   if(r.gyldig_til && iso >= r.gyldig_til) return false;
-  if(r.hvornaar_type === 'hver_dag') return true;
   if(r.hvornaar_type === 'dato') return r.dato === iso;
-  return r.ugedag === UGEDAGE[lokalDato(iso).getDay()];
+  return (r.ugedage || []).indexOf(UGEDAGE[lokalDato(iso).getDay()]) >= 0;
 }
 
 function kostDagRegler(iso){
@@ -2070,7 +2069,7 @@ function kostMaaltidKort(r, iso){
   var k = lav('div', 'kort kostKort' + (fulgt ? ' fulgt' : ''));
   var hoved = lav('div', 'kostKortHoved');
   hoved.appendChild(kostSymbolEl(r.maaltid.ikon, r.maaltid.billede_sti, 64, 'kostStor'));
-  hoved.appendChild(lav('h3', null, r.maaltid.navn));
+  hoved.appendChild(lav('h2', null, r.maaltid.navn));
   k.appendChild(hoved);
 
   var ul = lav('ul', 'kostPunkter');
@@ -2110,29 +2109,30 @@ function kostDagNavn(iso, nu){
   return UGEDAGE[d.getDay()] + ' ' + d.getDate() + '. ' + MAANEDER[d.getMonth()].slice(0, 3) + '.';
 }
 
-// Resten af ugen: de næste regler (ugedage til og med søndag). Regler med en bestemt dato
-// vises også, når datoen ligger inden for de næste 7 dage ("ugen før").
+// Resten af ugen: ugedagsregler til og med søndag. Regler med en bestemt dato vises også,
+// når datoen ligger inden for de næste 7 dage. Regler for alle dage samles på én linje.
 function kostRestenAfUgen(nu, sektion){
   var idag = lokalDato(datoISO(nu));
   var soendag = plusDage(ugeStart(nu), 6);
   var rader = [];
-  var hverDag = S.kostRegler.filter(function(r){
-    return r.hvornaar_type === 'hver_dag' && kostGaelder(r, datoISO(plusDage(idag, 1)));
-  });
+  var alleDage = S.kostRegler.filter(function(r){
+    return !r.gyldig_til && r.hvornaar_type === 'ugedag' && (r.ugedage || []).length === 7;
+  }).sort(function(a, b){ return (a.maaltid.sortering || 0) - (b.maaltid.sortering || 0); });
   for(var i = 1; i <= 7; i++){
     var d = plusDage(idag, i);
     var iso = datoISO(d);
     var iUgen = d <= soendag;
     var regler = kostDagRegler(iso).filter(function(r){
-      return r.hvornaar_type === 'dato' || (iUgen && r.hvornaar_type === 'ugedag');
+      if(r.hvornaar_type === 'dato') return true;
+      return iUgen && (r.ugedage || []).length < 7;
     });
     if(regler.length > 0) rader.push({ iso: iso, regler: regler });
   }
   var kort = lav('div', 'kort kostUge');
-  if(hverDag.length > 0){
+  if(alleDage.length > 0){
     var hd = lav('div', 'kostUgeRække');
-    hd.appendChild(lav('span', 'kostUgeDag', 'Hver dag'));
-    hd.appendChild(lav('span', 'kostUgeTekst', hverDag.map(function(r){ return r.maaltid.navn; }).join(', ')));
+    hd.appendChild(lav('span', 'kostUgeDag', 'Alle dage'));
+    hd.appendChild(lav('span', 'kostUgeTekst', alleDage.map(function(r){ return r.maaltid.navn; }).join(', ')));
     kort.appendChild(hd);
   }
   rader.forEach(function(rd){
@@ -2147,12 +2147,13 @@ function kostRestenAfUgen(nu, sektion){
       kort.appendChild(rk);
     });
   });
-  if(hverDag.length === 0 && rader.length === 0){
+  if(alleDage.length === 0 && rader.length === 0){
     kort.appendChild(lav('p', 'tom', 'Der er ikke mere på planen denne uge.'));
   }
   sektion.appendChild(kort);
 }
 
+// Fanen Kostplan: kun dagens måltider. Point og medaljer ligger under Mine belønninger.
 function tegnKostplan(side){
   var nu = new Date();
   var iso = datoISO(nu);
@@ -2167,15 +2168,13 @@ function tegnKostplan(side){
     return;
   }
 
-  var idag = lav('section', 'sektion');
-  idag.appendChild(lav('h2', null, 'Kostplan i dag'));
   var regler = kostDagRegler(iso);
   if(regler.length === 0){
     var tom = lav('div', 'kort');
-    tom.appendChild(lav('p', 'tom', 'Ingen kostplan i dag. Slap af.'));
-    idag.appendChild(tom);
+    tom.appendChild(lav('p', 'tom kostIngen', 'Ingen kostplan i dag'));
+    side.appendChild(tom);
   } else {
-    regler.forEach(function(r){ idag.appendChild(kostMaaltidKort(r, iso)); });
+    regler.forEach(function(r){ side.appendChild(kostMaaltidKort(r, iso)); });
     var antalFulgt = regler.filter(function(r){ return kostFulgt(r.id, iso); }).length;
     if(antalFulgt === regler.length){
       var pt = regler.length * KOST_PUNKT_MAALTID + KOST_PUNKT_HELDAG;
@@ -2183,14 +2182,18 @@ function tegnKostplan(side){
       flot.setAttribute('role', 'status');
       flot.appendChild(lav('span', 'kostFlotStjerne', '★'));
       flot.appendChild(lav('span', null, 'Flot! Hele dagen fulgt. +' + pt + ' point'));
-      idag.appendChild(flot);
+      side.appendChild(flot);
     }
   }
-  side.appendChild(idag);
 
-  var uge = lav('section', 'sektion');
-  uge.appendChild(lav('h2', null, 'Resten af ugen'));
-  kostRestenAfUgen(nu, uge);
+  // Resten af ugen: skjult bag en tekstknap
+  var uge = lav('section', 'sektion kostUgeSektion');
+  var knap = lav('button', 'kostUgeKnap', S.kostUgeAaben ? 'Skjul resten af ugen' : 'Se resten af ugen');
+  knap.type = 'button';
+  knap.setAttribute('aria-expanded', S.kostUgeAaben ? 'true' : 'false');
+  knap.addEventListener('click', function(){ S.kostUgeAaben = !S.kostUgeAaben; tegn(); });
+  uge.appendChild(knap);
+  if(S.kostUgeAaben) kostRestenAfUgen(nu, uge);
   side.appendChild(uge);
 }
 

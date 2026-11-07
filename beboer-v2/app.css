@@ -662,3 +662,19 @@ body.kalAaben{ overflow:hidden; }
 :root[data-tema="legende"] .ugeDag.idag{ border-color: #E9C46A; }
 :root[data-tema="legende"] .medalje.optjent{ border-color: #E9C46A; }
 :root[data-tema="legende"] .flowStjerne{ color: #E9C46A; }
+
+/* ---- Enklere Kostplan-fane ---- */
+.kostKort{ padding:14px 16px; }
+.kostKortHoved{ margin-bottom:8px; }
+.kostKortHoved h2{ font-size:28px; min-width:0; overflow-wrap:anywhere; }
+.kostPunkter{ margin-bottom:12px; gap:6px; }
+.kostPunktNavn{ font-size:20px; }
+.knap.kostFulgtKnap, .kostFulgtMaerke{ min-height:64px; font-size:22px; }
+.kostFortryd{ min-height:48px; margin-top:4px; }
+.kostIngen{ font-size:24px; font-weight:800; text-align:center; padding:18px 0; color: var(--ink); }
+.kostUgeSektion{ margin-top:18px; }
+.kostUgeKnap{
+  display:block; width:100%; min-height:52px; background:transparent; color: var(--ink);
+  font-weight:800; font-size:18px; text-decoration:underline; text-underline-offset:4px;
+}
+.kostUgeSektion .kostUge{ margin-top:8px; }

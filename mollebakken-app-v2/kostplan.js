@@ -58,30 +58,62 @@ function kostLilleStart(t){
   return t ? t.charAt(0).toLowerCase() + t.slice(1) : t;
 }
 
+const KOST_DAGE_KORT = { Mandag: 'Man', Tirsdag: 'Tir', Onsdag: 'Ons', Torsdag: 'Tor', Fredag: 'Fre', Lørdag: 'Lør', Søndag: 'Søn' };
+const KOST_DAGE_BOGSTAV = { Mandag: 'M', Tirsdag: 'T', Onsdag: 'O', Torsdag: 'T', Fredag: 'F', Lørdag: 'L', Søndag: 'S' };
+
+// "Alle dage", "Fredag", "Man, ons, fre" eller en dato
 function kostHvornaarTekst(r){
-  if(r.hvornaar_type === 'hver_dag') return 'Hver dag';
-  if(r.hvornaar_type === 'ugedag') return r.ugedag;
-  return kostStortStart(kostDatoTekst(r.dato));
+  if(r.hvornaar_type === 'dato') return kostStortStart(kostDatoTekst(r.dato));
+  const dage = UGEDAGE.filter(function(d){ return (r.ugedage || []).indexOf(d) >= 0; });
+  if(dage.length === 7) return 'Alle dage';
+  if(dage.length === 1) return dage[0];
+  return dage.map(function(d, i){
+    const k = KOST_DAGE_KORT[d];
+    return i === 0 ? k : k.toLowerCase();
+  }).join(', ');
+}
+
+// Lange ord (fx "Mellemmåltid") får en blød bindestreg ved sammensætningen, så de ikke brydes midt i
+function kostBryd(navn){
+  const vokal = 'aeiouyæøåé';
+  return String(navn).split(' ').map(function(ord){
+    if(ord.length < 9) return ord;
+    const lav = ord.toLowerCase();
+    let kand = [];
+    for(let i = 3; i <= ord.length - 3; i++){
+      if(vokal.indexOf(lav[i - 1]) < 0 && vokal.indexOf(lav[i]) < 0) kand.push(i);
+    }
+    const medS = kand.filter(function(i){ return lav[i - 1] === 's'; });
+    if(medS.length > 0) kand = medS;
+    if(kand.length === 0) return ord;
+    const midt = ord.length / 2;
+    let bedst = kand[0];
+    kand.forEach(function(i){
+      const a = Math.abs(i - midt), b = Math.abs(bedst - midt);
+      if(a < b || (a === b && i > bedst)) bedst = i;
+    });
+    return ord.slice(0, bedst) + '­' + ord.slice(bedst);
+  }).join(' ');
 }
 
 function kostTitel(r){
-  return kostHvornaarTekst(r) + ' · ' + kostLilleStart(r.maaltid.navn);
+  return r.maaltid.navn + ' (' + kostHvornaarTekst(r).toLowerCase() + ')';
 }
 
 // Samme regel som _kost_gaelder i databasen
 function kostGaelder(r, iso){
   if(r.gyldig_fra > iso) return false;
   if(r.gyldig_til && iso >= r.gyldig_til) return false;
-  if(r.hvornaar_type === 'hver_dag') return true;
   if(r.hvornaar_type === 'dato') return r.dato === iso;
-  return r.ugedag === UGEDAGE[(kostLokalDato(iso).getDay() + 6) % 7];
+  return (r.ugedage || []).indexOf(UGEDAGE[(kostLokalDato(iso).getDay() + 6) % 7]) >= 0;
 }
 
 function kostSorterRegler(liste){
   const rang = function(r){
-    if(r.hvornaar_type === 'hver_dag') return 0;
-    if(r.hvornaar_type === 'ugedag') return 1 + UGEDAGE.indexOf(r.ugedag);
-    return 10;
+    if(r.hvornaar_type === 'dato') return 100;
+    const d = r.ugedage || [];
+    if(d.length === 7) return 0;
+    return 1 + Math.min.apply(null, d.map(function(x){ return UGEDAGE.indexOf(x); }).concat([6]));
   };
   return liste.slice().sort(function(a, b){
     const d = rang(a) - rang(b);
@@ -330,7 +362,10 @@ function kostReglKort(r){
   const kort = trEl('div', 'kort kostRegel');
   const hoved = trEl('div', 'kostRegelHoved');
   hoved.appendChild(kostSymbol(r.maaltid.ikon, r.maaltid.billede_sti, null, 26));
-  hoved.appendChild(trEl('h3', 'kostRegelTitel', kostTitel(r)));
+  const tekst = trEl('div', 'kostRegelTekst');
+  tekst.appendChild(trEl('h3', 'kostRegelTitel', r.maaltid.navn));
+  tekst.appendChild(trEl('div', 'kostRegelDage', kostHvornaarTekst(r)));
+  hoved.appendChild(tekst);
   const ret = trEl('button', 'kostIkonKnap');
   ret.type = 'button';
   ret.setAttribute('aria-label', 'Rediger regel: ' + kostTitel(r));
@@ -604,42 +639,47 @@ function kostNyKladdePunkt(){
   return { navn: '', maengde: '', ikon: null, sti: null, blob: null, preview: null, aaben: false, visAlle: false };
 }
 
+function kostKladdeFraMaaltid(k, m){
+  k.maaltid_id = m ? m.id : '';
+  k.maaltFane = m && m.billede_sti ? 'billede' : 'ikon';
+  k.maaltIkon = m ? m.ikon : 'aftensmad';
+  k.maaltSti = m ? m.billede_sti : null;
+  k.maaltBlob = null; k.maaltPreview = null;
+  k.maaltOrigIkon = m ? m.ikon : null; k.maaltOrigSti = m ? m.billede_sti : null;
+  k.maaltAlle = false;
+}
+
 function kostNyRegel(){
   if(!kost.data || !kost.borger) return;
-  const m = kost.data.maaltider[0] || null;
-  kost.kladde = {
+  const k = {
     id: null, borger_id: kost.borger,
-    hvornaar: 'hver_dag', dato: '',
-    maaltid_id: m ? m.id : '',
-    maaltFane: m && m.billede_sti ? 'billede' : 'ikon',
-    maaltIkon: m ? m.ikon : 'aftensmad', maaltSti: m ? m.billede_sti : null,
-    maaltBlob: null, maaltPreview: null, maaltOrigIkon: m ? m.ikon : null, maaltOrigSti: m ? m.billede_sti : null,
-    maaltAlle: false,
+    modus: 'dage', dage: [], dato: '',
+    visSkift: false,
     punkter: [kostNyKladdePunkt()],
-    origStier: [], fejl: '', fokus: 0
+    origStier: [], fejl: '', fokus: null
   };
+  kostKladdeFraMaaltid(k, null);
+  kost.kladde = k;
   trMode = 'regelForm';
   trTegn();
   window.scrollTo(0, 0);
 }
 
 function kostRedigerRegel(r){
-  const m = r.maaltid;
-  kost.kladde = {
+  const k = {
     id: r.id, borger_id: r.borger_id,
-    hvornaar: r.hvornaar_type === 'hver_dag' ? 'hver_dag' : (r.hvornaar_type === 'dato' ? 'dato' : r.ugedag),
-    dato: r.dato || '',
-    maaltid_id: r.maaltid_id,
-    maaltFane: m.billede_sti ? 'billede' : 'ikon',
-    maaltIkon: m.ikon, maaltSti: m.billede_sti,
-    maaltBlob: null, maaltPreview: null, maaltOrigIkon: m.ikon, maaltOrigSti: m.billede_sti,
-    maaltAlle: false,
+    modus: r.hvornaar_type === 'dato' ? 'dato' : 'dage',
+    dage: (r.ugedage || []).slice(), dato: r.dato || '',
+    visSkift: false,
     punkter: r.punkter.map(function(p){
       return { navn: p.navn, maengde: p.maengde || '', ikon: p.ikon, sti: p.billede_sti, blob: null, preview: null, aaben: false, visAlle: false };
     }),
     origStier: r.punkter.map(function(p){ return p.billede_sti; }).filter(Boolean),
     fejl: '', fokus: null
   };
+  kostKladdeFraMaaltid(k, r.maaltid);
+  k.maaltid_id = r.maaltid_id;
+  kost.kladde = k;
   trMode = 'regelForm';
   trTegn();
   window.scrollTo(0, 0);
@@ -656,108 +696,125 @@ function kostLukForm(){
   trTegn();
 }
 
+// Lille tekstlink (mindst 44 px høj trykflade)
+function kostLink(tekst, ved){
+  const l = trEl('button', 'kostLink', tekst);
+  l.type = 'button';
+  l.addEventListener('click', ved);
+  return l;
+}
+
+function kostTrinHoved(nr, tekst){
+  const h = trEl('h3', 'kostTrinTitel');
+  h.appendChild(trEl('span', 'kostTrinNr', String(nr)));
+  h.appendChild(document.createTextNode(tekst));
+  return h;
+}
+
+// Én skærm, tre trin: 1 måltid, 2 dage, 3 hvad og hvor meget
 function kostTegnForm(rod){
   const k = kost.kladde;
   if(!k || !kost.data){ trMode = 'kostplan'; kostTegn(rod); return; }
 
-  const kort = trEl('div', 'kort');
-  kort.appendChild(trEl('h3', null, k.id ? 'Rediger regel' : 'Ny regel'));
+  const kort = trEl('div', 'kort kostForm');
+  kort.appendChild(trEl('h3', 'kostFormTitel', k.id ? 'Rediger regel' : 'Ny regel'));
   kort.appendChild(trEl('p', 'trMeta', 'Til: ' + kostBorgerNavn(k.borger_id)));
 
-  // Hvornår
-  const hRække = trEl('div', 'formRække');
-  hRække.appendChild(trEl('label', null, 'Hvornår'));
-  const hSel = document.createElement('select');
-  const hVal = [['dato', 'Bestemt dato'], ['hver_dag', 'Hver dag']].concat(UGEDAGE.map(function(d){ return [d, d]; }));
-  hVal.forEach(function(p){
-    const o = document.createElement('option');
-    o.value = p[0];
-    o.textContent = p[1];
-    if(p[0] === k.hvornaar) o.selected = true;
-    hSel.appendChild(o);
+  // ---- Trin 1: måltid ----
+  kort.appendChild(kostTrinHoved(1, 'Hvilket måltid?'));
+  const gitter = trEl('div', 'kostMaaltidGitter');
+  kost.data.maaltider.forEach(function(m){
+    const valgt = m.id === k.maaltid_id;
+    const knap = trEl('button', 'kostMaaltidKnap' + (valgt ? ' valgt' : ''));
+    knap.type = 'button';
+    knap.setAttribute('aria-pressed', valgt ? 'true' : 'false');
+    knap.appendChild(kostSymbol(valgt ? k.maaltIkon : m.ikon, valgt ? k.maaltSti : m.billede_sti, valgt ? k.maaltPreview : null, 26));
+    knap.appendChild(trEl('span', 'kostMaaltidNavn', kostBryd(m.navn)));
+    knap.addEventListener('click', function(){ kostVaelgMaaltid(m.id); });
+    gitter.appendChild(knap);
   });
-  hSel.addEventListener('change', function(){ k.hvornaar = hSel.value; trTegn(); });
-  hRække.appendChild(hSel);
-  kort.appendChild(hRække);
+  const nyt = trEl('button', 'kostMaaltidKnap kostNytMaaltid');
+  nyt.type = 'button';
+  nyt.appendChild(trEl('span', 'kostPlus', '+'));
+  nyt.appendChild(trEl('span', 'kostMaaltidNavn', 'Nyt måltid'));
+  nyt.addEventListener('click', function(){ kostAabnDialog(null, function(id){ kostVaelgMaaltid(id); }); });
+  gitter.appendChild(nyt);
+  kort.appendChild(gitter);
 
-  if(k.hvornaar === 'dato'){
-    const dRække = trEl('div', 'formRække');
-    dRække.appendChild(trEl('label', null, 'Dato'));
-    const dInput = document.createElement('input');
-    dInput.type = 'date';
-    dInput.value = k.dato;
-    dInput.addEventListener('input', function(){ k.dato = dInput.value; });
-    dRække.appendChild(dInput);
-    kort.appendChild(dRække);
+  if(k.maaltid_id){
+    kort.appendChild(kostLink(k.visSkift ? 'Skjul ikon og billede' : 'Skift ikon eller billede', function(){ k.visSkift = !k.visSkift; trTegn(); }));
+    if(k.visSkift){
+      kort.appendChild(kostBilledeValg({
+        fane: k.maaltFane, ikon: k.maaltIkon, sti: k.maaltSti, preview: k.maaltPreview, visAlle: k.maaltAlle,
+        skiftFane: function(f){ k.maaltFane = f; trTegn(); },
+        vaelgIkon: function(n){ k.maaltIkon = n; k.maaltFane = 'ikon'; trTegn(); },
+        skiftAlle: function(){ k.maaltAlle = !k.maaltAlle; trTegn(); },
+        nytBillede: function(blob, preview){
+          if(k.maaltPreview){ try { URL.revokeObjectURL(k.maaltPreview); } catch(e){ /* ignorer */ } }
+          k.maaltBlob = blob; k.maaltPreview = preview; k.maaltFane = 'billede'; trTegn();
+        },
+        fjernBillede: function(){
+          if(k.maaltPreview){ try { URL.revokeObjectURL(k.maaltPreview); } catch(e){ /* ignorer */ } }
+          k.maaltBlob = null; k.maaltPreview = null; k.maaltSti = null; k.maaltFane = 'ikon'; trTegn();
+        }
+      }));
+      kort.appendChild(trEl('div', 'trHjaelp', 'Ikon og billede gælder alle regler med dette måltid.'));
+    }
   }
 
-  // Måltid
-  const mRække = trEl('div', 'formRække');
-  mRække.appendChild(trEl('label', null, 'Måltid'));
-  const mSel = document.createElement('select');
-  kost.data.maaltider.forEach(function(m){
-    const o = document.createElement('option');
-    o.value = m.id;
-    o.textContent = m.navn;
-    if(m.id === k.maaltid_id) o.selected = true;
-    mSel.appendChild(o);
-  });
-  const nyO = document.createElement('option');
-  nyO.value = '__ny';
-  nyO.textContent = '+ Nyt måltid';
-  mSel.appendChild(nyO);
-  mSel.addEventListener('change', function(){
-    if(mSel.value === '__ny'){
-      mSel.value = k.maaltid_id;
-      kostAabnDialog(null, function(nyId){
-        kostVaelgMaaltid(nyId);
+  // ---- Trin 2: dage ----
+  kort.appendChild(kostTrinHoved(2, 'Hvilke dage?'));
+  if(k.modus === 'dage'){
+    const række = trEl('div', 'kostDagRække');
+    UGEDAGE.forEach(function(dag){
+      const til = k.dage.indexOf(dag) >= 0;
+      const b = trEl('button', 'kostDagKnap' + (til ? ' til' : ''), KOST_DAGE_BOGSTAV[dag]);
+      b.type = 'button';
+      b.setAttribute('aria-label', dag);
+      b.setAttribute('aria-pressed', til ? 'true' : 'false');
+      b.addEventListener('click', function(){
+        const i = k.dage.indexOf(dag);
+        if(i >= 0) k.dage.splice(i, 1); else k.dage.push(dag);
+        b.classList.toggle('til', i < 0);
+        b.setAttribute('aria-pressed', i < 0 ? 'true' : 'false');
       });
-      return;
-    }
-    kostVaelgMaaltid(mSel.value);
-  });
-  mRække.appendChild(mSel);
-  kort.appendChild(mRække);
+      række.appendChild(b);
+    });
+    kort.appendChild(række);
+    const links = trEl('div', 'kostLinkRække');
+    links.appendChild(kostLink('Alle dage', function(){ k.dage = UGEDAGE.slice(); trTegn(); }));
+    links.appendChild(kostLink('Bestemt dato', function(){ k.modus = 'dato'; trTegn(); }));
+    kort.appendChild(links);
+  } else {
+    const dInput = document.createElement('input');
+    dInput.type = 'date';
+    dInput.className = 'kostDatoFelt';
+    dInput.value = k.dato;
+    dInput.setAttribute('aria-label', 'Dato');
+    dInput.addEventListener('input', function(){ k.dato = dInput.value; });
+    kort.appendChild(dInput);
+    kort.appendChild(kostLink('Vælg ugedage i stedet', function(){ k.modus = 'dage'; trTegn(); }));
+  }
 
-  kort.appendChild(kostBilledeValg({
-    fane: k.maaltFane, ikon: k.maaltIkon, sti: k.maaltSti, preview: k.maaltPreview, visAlle: k.maaltAlle,
-    skiftFane: function(f){ k.maaltFane = f; trTegn(); },
-    vaelgIkon: function(n){ k.maaltIkon = n; k.maaltFane = 'ikon'; trTegn(); },
-    skiftAlle: function(){ k.maaltAlle = !k.maaltAlle; trTegn(); },
-    nytBillede: function(blob, preview){
-      if(k.maaltPreview){ try { URL.revokeObjectURL(k.maaltPreview); } catch(e){ /* ignorer */ } }
-      k.maaltBlob = blob; k.maaltPreview = preview; k.maaltFane = 'billede'; trTegn();
-    },
-    fjernBillede: function(){
-      if(k.maaltPreview){ try { URL.revokeObjectURL(k.maaltPreview); } catch(e){ /* ignorer */ } }
-      k.maaltBlob = null; k.maaltPreview = null; k.maaltSti = null; k.maaltFane = 'ikon'; trTegn();
-    }
-  }));
-  kort.appendChild(trEl('div', 'trHjaelp', 'Ikon og billede gælder alle regler med dette måltid.'));
-  rod.appendChild(kort);
-
-  // Punkter
-  const pKort = trEl('div', 'kort');
-  pKort.appendChild(trEl('h3', null, 'Punkter'));
-  pKort.appendChild(trEl('p', 'trMeta', 'Mængden er valgfri. Skriv fx "1 portion", "100 g" eller "2". Den kan også stå tom.'));
-  k.punkter.forEach(function(p, i){ pKort.appendChild(kostPunktRække(k, p, i)); });
-  const tilfoej = trKnap('Tilføj punkt', 'sekundaer kostStorKnap', function(){
+  // ---- Trin 3: hvad og hvor meget ----
+  kort.appendChild(kostTrinHoved(3, 'Hvad og hvor meget?'));
+  k.punkter.forEach(function(p, i){ kort.appendChild(kostPunktRække(k, p, i)); });
+  kort.appendChild(kostLink('Tilføj mere', function(){
     k.punkter.push(kostNyKladdePunkt());
     k.fokus = k.punkter.length - 1;
     trTegn();
-  });
-  pKort.appendChild(tilfoej);
-  rod.appendChild(pKort);
+  }));
 
-  if(k.fejl) rod.appendChild(trEl('div', 'trFejl', k.fejl));
+  if(k.fejl) kort.appendChild(trEl('div', 'trFejl', k.fejl));
 
-  const knapper = trEl('div', 'trKnapRække');
-  const gem = trKnap(kost.gemmer ? 'Gemmer …' : 'Gem regel', 'knapGuld kostStorKnap', kostGemRegel);
+  const gem = trKnap(kost.gemmer ? 'Gemmer …' : 'Gem regel', 'knapGuld kostGemStor', kostGemRegel);
   gem.disabled = kost.gemmer;
-  knapper.appendChild(gem);
-  knapper.appendChild(trKnap('Annuller', 'sekundaer kostStorKnap', kostLukForm));
-  if(k.id) knapper.appendChild(trKnap('Slet regel', 'sekundaer kostStorKnap kostSlet', kostSletRegel));
-  rod.appendChild(knapper);
+  kort.appendChild(gem);
+  const under = trEl('div', 'kostLinkRække kostMidt');
+  under.appendChild(kostLink('Annuller', kostLukForm));
+  if(k.id) under.appendChild(kostLink('Slet regel', kostSletRegel));
+  kort.appendChild(under);
+  rod.appendChild(kort);
 
   if(k.fokus != null){
     const nr = k.fokus;
@@ -774,11 +831,7 @@ function kostVaelgMaaltid(id){
   const m = kostMaaltid(id);
   if(!k || !m) return;
   if(k.maaltPreview){ try { URL.revokeObjectURL(k.maaltPreview); } catch(e){ /* ignorer */ } }
-  k.maaltid_id = id;
-  k.maaltFane = m.billede_sti ? 'billede' : 'ikon';
-  k.maaltIkon = m.ikon; k.maaltSti = m.billede_sti;
-  k.maaltBlob = null; k.maaltPreview = null;
-  k.maaltOrigIkon = m.ikon; k.maaltOrigSti = m.billede_sti;
+  kostKladdeFraMaaltid(k, m);
   trTegn();
 }
 
@@ -791,8 +844,8 @@ function kostPunktRække(k, p, i){
   nav.id = 'kostPunktNavn' + i;
   nav.maxLength = 60;
   nav.value = p.navn;
-  nav.placeholder = 'Navn, fx Havregryn';
-  nav.setAttribute('aria-label', 'Navn på punkt ' + (i + 1));
+  nav.placeholder = 'Hvad, fx Havregryn';
+  nav.setAttribute('aria-label', 'Hvad (punkt ' + (i + 1) + ')');
   nav.addEventListener('input', function(){ p.navn = nav.value; });
   række.appendChild(nav);
 
@@ -800,21 +853,12 @@ function kostPunktRække(k, p, i){
   maengde.type = 'text';
   maengde.maxLength = 40;
   maengde.value = p.maengde;
-  maengde.placeholder = 'Mængde (kan stå tom)';
-  maengde.setAttribute('aria-label', 'Mængde på punkt ' + (i + 1));
+  maengde.placeholder = 'Hvor meget (valgfrit)';
+  maengde.setAttribute('aria-label', 'Hvor meget (punkt ' + (i + 1) + ')');
   maengde.addEventListener('input', function(){ p.maengde = maengde.value; });
   række.appendChild(maengde);
   boks.appendChild(række);
 
-  const knapper = trEl('div', 'kostPunktKnapper');
-  const bi = trEl('button', 'kostIkonKnap kostPunktBilledKnap');
-  bi.type = 'button';
-  bi.setAttribute('aria-label', 'Ikon eller billede til punkt ' + (i + 1));
-  bi.setAttribute('aria-expanded', p.aaben ? 'true' : 'false');
-  bi.appendChild(kostSymbol(p.ikon, p.sti, p.preview, 22));
-  if(!p.ikon && !p.sti && !p.preview) bi.appendChild(moelleIkon('kamera', { stoerrelse: 22 }));
-  bi.addEventListener('click', function(){ p.aaben = !p.aaben; trTegn(); });
-  knapper.appendChild(bi);
   const slet = trEl('button', 'kostIkonKnap');
   slet.type = 'button';
   slet.setAttribute('aria-label', 'Slet punkt ' + (i + 1));
@@ -825,12 +869,20 @@ function kostPunktRække(k, p, i){
     if(k.punkter.length === 0) k.punkter.push(kostNyKladdePunkt());
     trTegn();
   });
-  knapper.appendChild(slet);
-  boks.appendChild(knapper);
+  boks.appendChild(slet);
+
+  // Skjult som standard: ikon eller billede til punktet
+  const harSymbol = !!(p.ikon || p.sti || p.preview);
+  const mere = trEl('button', 'kostLink kostPunktMere');
+  mere.type = 'button';
+  mere.setAttribute('aria-expanded', p.aaben ? 'true' : 'false');
+  if(harSymbol) mere.appendChild(kostSymbol(p.ikon, p.sti, p.preview, 20));
+  mere.appendChild(document.createTextNode(p.aaben ? 'Skjul ikon og billede' : (harSymbol ? 'Skift ikon eller billede' : 'Tilføj ikon eller billede')));
+  mere.addEventListener('click', function(){ p.aaben = !p.aaben; trTegn(); });
+  boks.appendChild(mere);
 
   if(p.aaben){
     const panel = trEl('div', 'kostPunktPanel');
-    panel.appendChild(trEl('div', 'trMeta', 'Ikon eller eget billede (valgfrit)'));
     panel.appendChild(kostIkonVaelger(p.ikon, p.visAlle, function(n){
       p.ikon = n; p.sti = null; p.blob = null;
       if(p.preview){ try { URL.revokeObjectURL(p.preview); } catch(e){ /* ignorer */ } }
@@ -860,16 +912,17 @@ async function kostGemRegel(){
   const punkter = k.punkter.filter(function(p){ return p.navn.trim() || p.maengde.trim(); });
   let fejl = '';
   if(!navn) fejl = 'Skriv dit navn øverst på siden.';
-  else if(!k.maaltid_id) fejl = 'Vælg et måltid.';
-  else if(k.hvornaar === 'dato' && !k.dato) fejl = 'Vælg en dato.';
-  else if(punkter.length === 0) fejl = 'Tilføj mindst ét punkt.';
-  else if(punkter.some(function(p){ return !p.navn.trim(); })) fejl = 'Alle punkter skal have et navn.';
+  else if(!k.maaltid_id) fejl = 'Trin 1: vælg et måltid.';
+  else if(k.modus === 'dage' && k.dage.length === 0) fejl = 'Trin 2: vælg mindst én dag.';
+  else if(k.modus === 'dato' && !k.dato) fejl = 'Trin 2: vælg en dato.';
+  else if(punkter.length === 0) fejl = 'Trin 3: skriv mindst ét punkt.';
+  else if(punkter.some(function(p){ return !p.navn.trim(); })) fejl = 'Trin 3: alle rækker skal have noget i "Hvad".';
   if(fejl){ k.fejl = fejl; trTegn(); return; }
 
   kost.gemmer = true; k.fejl = '';
   trTegn();
   try {
-    // 1. Måltidets ikon/billede (gælder alle regler med måltidet)
+    // 1. Måltidets ikon/billede (gælder alle regler med måltidet) — kun hvis det er ændret
     let maaltSti = k.maaltFane === 'billede' ? k.maaltSti : null;
     if(k.maaltFane === 'billede' && k.maaltBlob) maaltSti = await kostUpload(k.maaltBlob);
     const maaltIkon = k.maaltFane === 'ikon' ? k.maaltIkon : null;
@@ -895,9 +948,8 @@ async function kostGemRegel(){
     // 3. Selve reglen
     const res = await trKald('personale_kost_gem_regel', {
       p_regel_id: k.id, p_borger_id: k.borger_id, p_maaltid_id: k.maaltid_id,
-      p_hvornaar_type: k.hvornaar === 'dato' ? 'dato' : (k.hvornaar === 'hver_dag' ? 'hver_dag' : 'ugedag'),
-      p_ugedag: UGEDAGE.indexOf(k.hvornaar) >= 0 ? k.hvornaar : null,
-      p_dato: k.hvornaar === 'dato' ? k.dato : null,
+      p_ugedage: k.modus === 'dage' ? k.dage : null,
+      p_dato: k.modus === 'dato' ? k.dato : null,
       p_punkter: udPunkter, p_navn: navn, p_lokal_dato: kostDatoIdag()
     });
     if(res.fejl) throw new Error(res.fejl);
