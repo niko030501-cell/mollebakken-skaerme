@@ -319,7 +319,7 @@
        Alle farver er faste værdier (ikke browserens mørke tilstand). Lyst tema er standard (.lys). */
     #beskeder{
       --basis: 1px; --s: var(--basis);
-      --t: 22; --th: 20; --luft: 12;
+      --t: 20; --th: 20; --luft: 12;
       --bg: #1B2A26; --tekst: #FFFFFF; --streg: rgba(255,255,255,0.22);
       --dato: #B8C4BF; --stille: #B8C4BF;
       --pille-bg: #FFFFFF; --pille-tekst: #1B2A26;
@@ -381,6 +381,7 @@
     .bFortsat{ font-size: calc(var(--s) * 14); font-weight: 700; line-height: 1.2; opacity: .9; }
     .bAntal{ flex: 0 0 auto; font-size: calc(var(--s) * 24); font-weight: 800; }
     .bKolBody{ flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .bKolInde{ min-width: 0; }
     .bIngen{ font-size: calc(var(--s) * 20); color: var(--stille); padding-top: calc(var(--s) * 14); }
 
     /* En besked: ikon-firkant + emne + mærker, derefter teksten */
@@ -440,6 +441,7 @@
       --pille-bg: #FFFFFF; --pille-tekst: #1F2A24; --streg: rgba(255,255,255,0.25);
     }
     #beskeder:not(.lys) .bHuset{ background: #0E1815; border: 1px solid rgba(255,255,255,0.25); }
+    .bHusetInde{ flex: 1 1 auto; min-width: 0; display: flex; align-items: flex-start; column-gap: calc(var(--s) * 24); }
     .bHusetLabel{ flex: 0 0 auto; font-size: calc(var(--s) * 28); font-weight: 800; line-height: 1.1; color: #FFFFFF; padding-top: calc(var(--s) * 4); }
     .bHusetBesk{ flex: 1 1 auto; min-width: 0; display: grid; column-gap: calc(var(--s) * 28); row-gap: calc(var(--s) * 4); }
     .bHuset .bBesked{ padding: calc(var(--s) * 4) 0; border-top: 0; }
@@ -960,17 +962,9 @@ function beskedTilVisning(r, nu){
 // ---- Beskeder: én kolonne pr. navn ----
 // Kolonnerne følger tavlens rækkefølge (beboereTavle). En besked til flere beboere står under hvert navn;
 // hører den også til Huset, står den også i Huset-bjælken. I hver kolonne: VIGTIGT først, derefter nyeste først.
-// Alt står altid samlet på én skærm, aldrig i sider. Passer det ikke, mindskes teksten trinvist
-// (24 → 14 px; under 20 kun når der er mange beskeder). Skærmen er ikke touch, så der scrolles aldrig.
+// Alt står altid samlet på én skærm, aldrig i sider. Hver kolonne (og Huset-bjælken) får automatisk den største
+// tekststørrelse, der passer (zoom), så intet klippes. Skærmen er ikke touch, så der scrolles aldrig.
 
-const BESKED_TRIN = [
-  { t: 24, th: 20, luft: 14 },
-  { t: 22, th: 20, luft: 12 },
-  { t: 20, th: 20, luft: 9 },
-  { t: 18, th: 18, luft: 7 },
-  { t: 16, th: 16, luft: 6 },
-  { t: 14, th: 14, luft: 5 }
-];
 const BESKED_MAANEDER = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'];
 let beskedUdseende = 'lys';     // 'lys' (standard) eller 'moerk', læses fra app_indstillinger ved hver polling
 let beskedAlle = [];            // beskeder klar til visning (beskedTilVisning)
@@ -1069,77 +1063,66 @@ function lavKolonne(b, liste, total, fortsat){
   hoved.appendChild(lavEl('div', 'bAntal', String(total)));
   kol.appendChild(hoved);
   const body = lavEl('div', 'bKolBody');
-  if(total === 0) body.appendChild(lavEl('div', 'bIngen', 'Ingen beskeder'));
-  liste.forEach(function(v){ body.appendChild(lavBesked(v)); });
+  const inde = lavEl('div', 'bKolInde');
+  if(total === 0) inde.appendChild(lavEl('div', 'bIngen', 'Ingen beskeder'));
+  liste.forEach(function(v){ inde.appendChild(lavBesked(v)); });
+  body.appendChild(inde);
   kol.appendChild(body);
   return kol;
 }
 
-function lavHuset(liste, antalKol, fastH, loft){
+function lavHuset(liste, antalKol){
   const bar = lavEl('div', 'bHuset');
-  if(fastH > 0) bar.style.height = fastH + 'px';
-  else bar.style.maxHeight = loft + 'px';
-  bar.appendChild(lavEl('div', 'bHusetLabel', 'Huset'));
+  const inde = lavEl('div', 'bHusetInde');
+  inde.appendChild(lavEl('div', 'bHusetLabel', 'Huset'));
   const grid = lavEl('div', 'bHusetBesk');
   grid.style.gridTemplateColumns = 'repeat(' + Math.max(1, antalKol) + ', minmax(0, 1fr))';
   liste.forEach(function(v){ grid.appendChild(lavBesked(v)); });
-  bar.appendChild(grid);
+  inde.appendChild(grid);
+  bar.appendChild(inde);
   return bar;
 }
 
-// side = { kol: [liste pr. kolonne], total: [antal pr. kolonne], fortsat: [bool], huset: liste eller null, husetKol, husetH }
-function tegnBeskedSide(side){
-  const c = document.getElementById('beskederContainer');
-  c.textContent = '';
-  const rækker = lavEl('div', 'bKolonner');
-  beboereTavle.forEach(function(b, i){
-    rækker.appendChild(lavKolonne(b, side.kol[i], side.total[i], side.fortsat[i]));
-  });
-  c.appendChild(rækker);
-  if(side.huset) c.appendChild(lavHuset(side.huset, side.husetKol, side.husetH, Math.floor(c.clientHeight * 0.45)));
-}
-
-// Står alt inden for sine rammer (intet klippet)? medHuset: tjek også Huset-bjælken
-function beskedPasser(medHuset){
-  const c = document.getElementById('beskederContainer');
-  const kroppe = c.querySelectorAll('.bKolBody');
-  for(let i = 0; i < kroppe.length; i++){
-    if(kroppe[i].scrollHeight > kroppe[i].clientHeight + 1) return false;
+// Finder den største skalering (zoom) af indholdet, der stadig passer i maks pixels højde.
+// Indholdet tegnes i designstørrelse (zoom 1 = tekst på 20 designpixler) og må vokse op til hoej.
+// Skaleringen mindsker også ikon, mærker og afstande, så hele kolonnen følger med.
+const BESKED_ZOOM_MIN = 0.4;
+function tilpasZoom(inde, maks, hoej){
+  const h = function(z){ inde.style.zoom = String(z); return inde.getBoundingClientRect().height; };
+  if(h(hoej) <= maks + 0.5) return;
+  let lav = BESKED_ZOOM_MIN, top = hoej, bedst = BESKED_ZOOM_MIN;
+  for(let i = 0; i < 9; i++){
+    const mid = (lav + top) / 2;
+    if(h(mid) <= maks + 0.5){ bedst = mid; lav = mid; } else { top = mid; }
   }
-  const bar = c.querySelector('.bHuset');
-  if(medHuset && bar && bar.scrollHeight > bar.clientHeight + 1) return false;
-  return true;
-}
-
-function sætBeskedTrin(i){
-  const t = BESKED_TRIN[i];
-  const el = document.getElementById('beskeder');
-  el.style.setProperty('--t', String(t.t));
-  el.style.setProperty('--th', String(t.th));
-  el.style.setProperty('--luft', String(t.luft));
+  inde.style.zoom = String(bedst);
 }
 
 function tilpasBeskedRækker(){
-  const container = document.getElementById('beskederContainer');
-  if(!container || container.clientHeight === 0) return;   // siden er ikke synlig — måles igen når den vises
+  const c = document.getElementById('beskederContainer');
+  if(!c || c.clientHeight === 0) return;   // siden er ikke synlig — måles igen når den vises
 
   document.getElementById('beskeder').classList.toggle('lys', beskedUdseende === 'lys');
 
   const data = beskedData();
-  const total = data.kol.map(function(l){ return l.length; });
-  const side = {
-    kol: data.kol, total: total,
-    fortsat: total.map(function(){ return false; }),
-    huset: data.huset.length > 0 ? data.huset : null,
-    husetKol: Math.min(3, data.huset.length), husetH: 0
-  };
+  c.textContent = '';
+  const rækker = lavEl('div', 'bKolonner');
+  beboereTavle.forEach(function(b, i){
+    rækker.appendChild(lavKolonne(b, data.kol[i], data.kol[i].length, false));
+  });
+  c.appendChild(rækker);
 
-  // Alt står altid på én side: prøv trinene fra størst til mindst tekst, og stop ved det første der passer
-  for(let i = 0; i < BESKED_TRIN.length; i++){
-    sætBeskedTrin(i);
-    tegnBeskedSide(side);
-    if(beskedPasser(true)) break;
+  // Huset-bjælken først (højst 45 % af højden), derefter får hver kolonne den største tekst, der passer i resten
+  if(data.huset.length > 0){
+    const bar = lavHuset(data.huset, Math.min(3, data.huset.length));
+    c.appendChild(bar);
+    const loft = c.clientHeight * 0.45;
+    const polstring = bar.getBoundingClientRect().height - bar.firstChild.getBoundingClientRect().height;
+    tilpasZoom(bar.firstChild, loft - polstring, 1);
   }
+  Array.prototype.forEach.call(c.querySelectorAll('.bKolBody'), function(body){
+    tilpasZoom(body.firstChild, body.clientHeight, 1.2);
+  });
 }
 
 function visBeskeder(data){
