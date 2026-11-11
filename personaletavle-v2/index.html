@@ -319,7 +319,7 @@
        Alle farver er faste værdier (ikke browserens mørke tilstand). Lyst tema er standard (.lys). */
     #beskeder{
       --basis: 1px; --s: var(--basis);
-      --t: 22; --luft: 12;
+      --t: 22; --th: 20; --luft: 12;
       --bg: #1B2A26; --tekst: #FFFFFF; --streg: rgba(255,255,255,0.22);
       --dato: #B8C4BF; --stille: #B8C4BF;
       --pille-bg: #FFFFFF; --pille-tekst: #1B2A26;
@@ -443,19 +443,8 @@
     .bHusetLabel{ flex: 0 0 auto; font-size: calc(var(--s) * 28); font-weight: 800; line-height: 1.1; color: #FFFFFF; padding-top: calc(var(--s) * 4); }
     .bHusetBesk{ flex: 1 1 auto; min-width: 0; display: grid; column-gap: calc(var(--s) * 28); row-gap: calc(var(--s) * 4); }
     .bHuset .bBesked{ padding: calc(var(--s) * 4) 0; border-top: 0; }
-    .bHuset .bTekst{ font-size: calc(var(--s) * 20); }
+    .bHuset .bTekst{ font-size: calc(var(--s) * var(--th)); }
 
-    .bSideMaerke{
-      flex: 0 0 auto;
-      align-self: flex-end;
-      font-size: calc(var(--s) * 20);
-      font-weight: 800;
-      background: var(--pille-bg); color: var(--pille-tekst);
-      border-radius: calc(var(--s) * 999);
-      padding: calc(var(--s) * 3) calc(var(--s) * 14);
-      white-space: nowrap;
-    }
-    .bSideMaerke[hidden]{ display: none; }
 
     /* ---- Loading ---- */
 
@@ -518,7 +507,6 @@
   <div id="beskederContainer">
     <div class="loading">Henter beskeder...</div>
   </div>
-  <div class="bSideMaerke" id="beskedSideMaerke" hidden></div>
 </div>
 
 <!-- ==================== DAGSPLAN ==================== -->
@@ -972,21 +960,20 @@ function beskedTilVisning(r, nu){
 // ---- Beskeder: én kolonne pr. navn ----
 // Kolonnerne følger tavlens rækkefølge (beboereTavle). En besked til flere beboere står under hvert navn;
 // hører den også til Huset, står den også i Huset-bjælken. I hver kolonne: VIGTIGT først, derefter nyeste først.
-// Passer det ikke på skærmen, mindskes teksten trinvist (aldrig under 20), og som sidste udvej deles
-// beskederne i sider, der skifter hvert 20. sekund (alle kolonner bladrer samtidig). Skærmen er ikke touch.
+// Alt står altid samlet på én skærm, aldrig i sider. Passer det ikke, mindskes teksten trinvist
+// (24 → 14 px; under 20 kun når der er mange beskeder). Skærmen er ikke touch, så der scrolles aldrig.
 
 const BESKED_TRIN = [
-  { t: 24, luft: 14 },
-  { t: 22, luft: 12 },
-  { t: 20, luft: 9 }
+  { t: 24, th: 20, luft: 14 },
+  { t: 22, th: 20, luft: 12 },
+  { t: 20, th: 20, luft: 9 },
+  { t: 18, th: 18, luft: 7 },
+  { t: 16, th: 16, luft: 6 },
+  { t: 14, th: 14, luft: 5 }
 ];
-const BESKED_SIDE_MS = 20000;
 const BESKED_MAANEDER = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'];
 let beskedUdseende = 'lys';     // 'lys' (standard) eller 'moerk', læses fra app_indstillinger ved hver polling
 let beskedAlle = [];            // beskeder klar til visning (beskedTilVisning)
-let beskedSider = [];           // sider { kol, total, fortsat, huset, husetKol, husetH } — tom når alt står på én side
-let beskedSideIndex = 0;
-let beskedSideTimer = null;
 
 function lavEl(tag, klasse, tekst){
   const e = document.createElement(tag);
@@ -1109,7 +1096,7 @@ function tegnBeskedSide(side){
     rækker.appendChild(lavKolonne(b, side.kol[i], side.total[i], side.fortsat[i]));
   });
   c.appendChild(rækker);
-  if(side.huset) c.appendChild(lavHuset(side.huset, side.husetKol, side.husetH, Math.floor(c.clientHeight * 0.4)));
+  if(side.huset) c.appendChild(lavHuset(side.huset, side.husetKol, side.husetH, Math.floor(c.clientHeight * 0.45)));
 }
 
 // Står alt inden for sine rammer (intet klippet)? medHuset: tjek også Huset-bjælken
@@ -1128,106 +1115,8 @@ function sætBeskedTrin(i){
   const t = BESKED_TRIN[i];
   const el = document.getElementById('beskeder');
   el.style.setProperty('--t', String(t.t));
+  el.style.setProperty('--th', String(t.th));
   el.style.setProperty('--luft', String(t.luft));
-}
-
-function visBeskedSide(){
-  const maerke = document.getElementById('beskedSideMaerke');
-  if(beskedSider.length > 1){
-    if(beskedSideIndex >= beskedSider.length) beskedSideIndex = 0;
-    tegnBeskedSide(beskedSider[beskedSideIndex]);
-  }
-  maerke.hidden = beskedSider.length < 2;
-  maerke.textContent = (beskedSideIndex + 1) + ' / ' + beskedSider.length;
-}
-
-// En enkelt besked, der alene er for høj til en kolonne, deles på ord: det første stykke, der passer, og resten
-// (som fortsættes på næste side). passerMed(liste) tegner og svarer, om listen passer i kolonnen.
-function delBesked(v, passerMed){
-  const ord = v.titel.split(' ');
-  if(ord.length < 2) return { foerste: v, rest: null };
-  const stykke = function(n){ return Object.assign({}, v, { titel: ord.slice(0, n).join(' '), fil: null }); };
-  let lav = 1, hoej = ord.length - 1, bedst = 1;
-  while(lav <= hoej){
-    const mid = Math.floor((lav + hoej) / 2);
-    if(passerMed([stykke(mid)])){ bedst = mid; lav = mid + 1; } else { hoej = mid - 1; }
-  }
-  return {
-    foerste: stykke(bedst),
-    rest: Object.assign({}, v, { titel: ord.slice(bedst).join(' '), fortsatTekst: true, tid: '', vigtig: false, ny: false })
-  };
-}
-
-// Deler beskederne i sider ved den mindste tekst. Huset-bjælken måles først (alle sider får samme højde),
-// derefter hver kolonne for sig. Måler ved at tegne hver kandidat-side.
-function lavBeskedSider(data, total){
-  const container = document.getElementById('beskederContainer');
-  const husetAntal = data.huset.length;
-  const husetKol = Math.min(3, husetAntal);
-  const tomKol = data.kol.map(function(){ return []; });
-  const ingenFortsat = total.map(function(){ return false; });
-  const lavSide = function(kol, fortsat, huset, husetH){
-    return { kol: kol, total: total, fortsat: fortsat, huset: huset, husetKol: husetKol, husetH: husetH };
-  };
-
-  const husetSider = [];
-  let husetH = 0;
-  if(husetAntal > 0){
-    let cur = [];
-    const husetPasserMed = function(forsøg){
-      tegnBeskedSide(lavSide(tomKol, ingenFortsat, forsøg, 0));
-      return beskedPasser(true);
-    };
-    const husetKø = data.huset.slice();
-    while(husetKø.length > 0){
-      const v = husetKø.shift();
-      if(husetPasserMed(cur.concat([v]))){ cur.push(v); continue; }
-      if(cur.length > 0){ husetSider.push(cur); cur = []; husetKø.unshift(v); continue; }
-      const del = delBesked(v, husetPasserMed);
-      husetSider.push([del.foerste]);
-      if(del.rest) husetKø.unshift(del.rest);
-    }
-    if(cur.length > 0) husetSider.push(cur);
-    husetSider.forEach(function(s){
-      tegnBeskedSide(lavSide(tomKol, ingenFortsat, s, 0));
-      husetH = Math.max(husetH, container.querySelector('.bHuset').offsetHeight);
-    });
-  }
-
-  const kolSider = data.kol.map(function(liste, c){
-    const sider = [];
-    let cur = [];
-    const passerMed = function(forsøg){
-      const kol = tomKol.slice();
-      kol[c] = forsøg;
-      tegnBeskedSide(lavSide(kol, ingenFortsat, husetAntal > 0 ? husetSider[0] : null, husetH));
-      return beskedPasser(false);   // Huset-bjælken har fast højde og er målt for sig
-    };
-    const kø = liste.slice();
-    while(kø.length > 0){
-      const v = kø.shift();
-      if(passerMed(cur.concat([v]))){ cur.push(v); continue; }
-      if(cur.length > 0){ sider.push(cur); cur = []; kø.unshift(v); continue; }
-      const del = delBesked(v, passerMed);   // alene for høj: fortsæt resten på næste side
-      sider.push([del.foerste]);
-      if(del.rest) kø.unshift(del.rest);
-    }
-    if(cur.length > 0) sider.push(cur);
-    return sider;
-  });
-
-  let antal = Math.max(1, husetSider.length);
-  kolSider.forEach(function(s){ antal = Math.max(antal, s.length); });
-  const sider = [];
-  for(let p = 0; p < antal; p++){
-    sider.push(lavSide(
-      kolSider.map(function(s){ return s[p] || []; }),
-      kolSider.map(function(s){ return p > 0 && !!s[p]; }),
-      husetAntal > 0 ? husetSider[p % husetSider.length] : null,
-      husetH
-    ));
-  }
-  return sider;
 }
 
 function tilpasBeskedRækker(){
@@ -1235,47 +1124,21 @@ function tilpasBeskedRækker(){
   if(!container || container.clientHeight === 0) return;   // siden er ikke synlig — måles igen når den vises
 
   document.getElementById('beskeder').classList.toggle('lys', beskedUdseende === 'lys');
-  const maerke = document.getElementById('beskedSideMaerke');
-  maerke.hidden = true;
-  beskedSider = [];
 
   const data = beskedData();
   const total = data.kol.map(function(l){ return l.length; });
-  const enkelt = {
+  const side = {
     kol: data.kol, total: total,
     fortsat: total.map(function(){ return false; }),
     huset: data.huset.length > 0 ? data.huset : null,
     husetKol: Math.min(3, data.huset.length), husetH: 0
   };
 
-  // 1) Alt på én side: prøv trinene fra størst til mindst tekst
-  let passer = false;
-  for(let i = 0; i < BESKED_TRIN.length && !passer; i++){
+  // Alt står altid på én side: prøv trinene fra størst til mindst tekst, og stop ved det første der passer
+  for(let i = 0; i < BESKED_TRIN.length; i++){
     sætBeskedTrin(i);
-    tegnBeskedSide(enkelt);
-    passer = beskedPasser(true);
-  }
-
-  // 2) Ellers sider ved mindste tekst, med sideindikator nederst (måles med indikatoren synlig)
-  if(!passer){
-    maerke.hidden = false;
-    maerke.textContent = '1 / 1';
-    const sider = lavBeskedSider(data, total);
-    if(sider.length > 1){
-      beskedSider = sider;
-    } else {
-      maerke.hidden = true;
-      tegnBeskedSide(sider[0]);
-    }
-  }
-  visBeskedSide();
-
-  if(beskedSider.length > 1 && !beskedSideTimer){
-    beskedSideTimer = setInterval(function(){
-      if(aktuelSide !== 'beskeder' || beskedSider.length < 2) return;
-      beskedSideIndex = (beskedSideIndex + 1) % beskedSider.length;
-      visBeskedSide();
-    }, BESKED_SIDE_MS);
+    tegnBeskedSide(side);
+    if(beskedPasser(true)) break;
   }
 }
 
